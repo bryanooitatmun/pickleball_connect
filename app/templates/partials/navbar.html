@@ -1,0 +1,76 @@
+<!-- app/templates/partials/navbar.html -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-80 backdrop-blur-md shadow-sm transition-all duration-300">
+    <div class="container mx-auto px-6 py-3">
+      <div class="flex items-center justify-between">
+        <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
+          <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+            <span class="text-white font-bold text-xl">P</span>
+          </div>
+          <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Pickleball Connect</span>
+        </a>
+        
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex items-center space-x-8">
+          {% if current_user.is_authenticated %}
+            {% if current_user.is_admin %}
+              <a href="{{ url_for('admin.courts') }}" class="text-gray-600 hover:text-blue-600 transition-colors">Admin Dashboard</a>
+            {% elif current_user.is_coach %}
+              <a href="{{ url_for('coaches.dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors">Coach Dashboard</a>
+            {% else %}
+              <a href="{{ url_for('students.dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors">Student Dashboard</a>
+            {% endif %}
+            <a href="{{ url_for('auth.logout') }}" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Logout
+            </a>
+          {% else %}
+            <a href="#" class="login-btn bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Login
+            </a>
+          {% endif %}
+        </div>
+        
+        <!-- Mobile Menu Button -->
+        <div class="md:hidden">
+          <button id="mobile-menu-button" class="text-gray-500 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="md:hidden hidden bg-white rounded-lg mt-4 shadow-lg p-6 space-y-4">
+        {% if current_user.is_authenticated %}
+          {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.courts') }}" class="block text-gray-600 hover:text-blue-600 transition-colors">Admin Dashboard</a>
+          {% elif current_user.is_coach %}
+            <a href="{{ url_for('coaches.dashboard') }}" class="block text-gray-600 hover:text-blue-600 transition-colors">Coach Dashboard</a>
+          {% else %}
+            <a href="{{ url_for('students.dashboard') }}" class="block text-gray-600 hover:text-blue-600 transition-colors">Student Dashboard</a>
+          {% endif %}
+          <a href="{{ url_for('auth.logout') }}" class="block w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all text-center">
+            Logout
+          </a>
+        {% else %}
+          <a href="#" class="login-btn block w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all text-center">
+            Login
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+  
+  <script>
+    // Mobile menu toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+      
+      if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', function() {
+          mobileMenu.classList.toggle('hidden');
+        });
+      }
+    });
+  </script>

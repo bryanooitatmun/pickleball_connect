@@ -1,0 +1,1825 @@
+{% extends 'base.html' %}
+
+{% block extra_styles %}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.scroll-section {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 1s ease;
+}
+
+.scroll-section.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Custom CSS for scrollable modal */
+.scrollable-modal {
+  max-height: 80vh;
+  /* Set a maximum height for the modal */
+  overflow-y: auto;
+  /* Enable vertical scrolling */
+}
+
+@media (max-width: 640px) {
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+    /* Stack hours and boxes vertically on small screens */
+  }
+
+  .text-right {
+    text-align: left;
+    /* Align hour labels to the left on small screens */
+  }
+}
+
+/* Improve modal scrolling on mobile devices */
+@media (max-width: 768px) {
+  .scrollable-modal {
+    padding: 1rem;
+    margin: 1rem;
+  }
+
+  #calendar {
+    font-size: 0.75rem;
+  }
+
+  #availability-grid {
+    font-size: 0.75rem;
+  }
+
+  #selected-timeslots {
+    max-height: 30vh;
+  }
+}
+
+/* Style for the selected date in calendar */
+.selected-date {
+  background-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: bold;
+}
+
+/* Smooth transition for time slot selection */
+#availability-grid>div {
+  transition: all 0.2s ease;
+}
+
+/* Total cost highlighting */
+#current-total {
+  font-size: 1.25rem;
+}
+
+/* Loading spinner */
+.loader {
+  border-top-color: #4158D0;
+  -webkit-animation: spinner 1.5s linear infinite;
+  animation: spinner 1.5s linear infinite;
+}
+
+@-webkit-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+{% endblock %}
+
+{% block head_scripts %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/ScrollTrigger.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  <!-- Loading Indicator -->
+  <div id="loading-overlay" class="fixed inset-0 bg-gray-50 bg-opacity-75 flex items-center justify-center z-50">
+    <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-24 w-24"></div>
+  </div>
+  
+  <!-- Main Content -->
+  <div class="pt-32 pb-12 container mx-auto px-6">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden scroll-section">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
+        <div class="relative">
+          <div class="bg-blue-100 h-64 w-64 rounded-full absolute -z-10 -top-10 -left-10 opacity-30"></div>
+          <img id="coach-image" src="/api/placeholder/400/400" alt="Coach Profile"
+            class="w-full h-full object-cover rounded-xl shadow-xl relative z-10">
+          <div id="dupr-badge"
+            class="absolute top-4 right-4 bg-blue-600 text-white text-sm font-bold px-4 py-1 rounded-full">
+            DUPR 5.2
+          </div>
+        </div>
+        <div>
+          <h1 id="coach-name"
+            class="text-4xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Coach Name</h1>
+
+          <div class="flex items-center mb-4">
+            <div id="coach-stars" class="flex text-yellow-400">
+              <!-- Star ratings will be dynamically generated -->
+            </div>
+            <span id="coach-rating" class="text-gray-600 ml-2">4.8/5</span>
+          </div>
+
+          <div class="space-y-3 mb-6">
+            <p class="flex items-center text-gray-700">
+              <span class="w-32 inline-block font-semibold">Coaching Rate:</span>
+              <span id="coach-rate" class="font-bold text-blue-600">$50/hour</span>
+            </p>
+            <p class="flex items-center text-gray-700">
+              <span class="w-32 inline-block font-semibold">Sessions:</span>
+              <span id="coach-sessions">120 completed</span>
+            </p>
+            <p class="flex items-center text-gray-700">
+              <span class="w-32 inline-block font-semibold">Courts:</span>
+              <span id="coach-courts">Loading...</span>
+            </p>
+          </div>
+
+          <p id="coach-bio" class="text-gray-700 mb-8 leading-relaxed">
+            Loading coach biography...
+          </p>
+
+          <button id="schedule-btn"
+            class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-xl transform hover:scale-105 transition-all">
+            Schedule Session
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Modal -->
+
+  <div id="schedule-modal"
+    class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-3/4 lg:w-3/4 p-6 scrollable-modal">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-800">Schedule a Session</h2>
+        <div class="flex items-center space-x-4">
+          <div class="text-sm font-medium bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+            Sessions: <span id="session-count">0</span>
+          </div>
+          <div>
+            <span class="text-lg font-bold text-blue-600">Total: $<span id="current-total">0</span></span>
+            <div id="savings-container" class="text-sm text-green-600 hidden">
+              Savings: $<span id="total-savings">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Calendar -->
+        <div class="lg:col-span-2">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Left side: Court and Calendar -->
+            <div>
+              <!-- Court Selection -->
+              <div class="mb-6 bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+                <label for="court-select" class="font-bold mb-2 block text-lg text-blue-800">1. Select a Court</label>
+                <p class="mb-2 text-gray-600 text-sm">Choose a court to see available time slots</p>
+                <select id="court-select"
+                  class="w-full p-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
+                  <option value="">-- Select a court --</option>
+                  <!-- Court options will be populated dynamically -->
+                </select>
+              </div>
+
+              <!-- Date Selection -->
+              <div class="mb-2">
+                <label class="font-bold mb-2 block text-lg text-gray-700">2. Select a Date</label>
+              </div>
+
+              <div id="calendar-container" class="transition-all duration-300">
+                <!-- Month Navigation and Display -->
+                <div class="flex justify-between items-center mb-3">
+                  <button id="prev-month" class="text-gray-700 hover:text-blue-600 transition-colors">&#10094;</button>
+                  <h3 id="current-month-year" class="text-lg font-bold"></h3>
+                  <button id="next-month" class="text-gray-700 hover:text-blue-600 transition-colors">&#10095;</button>
+                </div>
+                
+                <!-- Calendar -->
+                <div id="calendar" class="grid grid-cols-7 gap-1 text-sm">
+                  <!-- Calendar days will be dynamically populated here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Right side: Time Slots -->
+            <div>
+              <!-- Selected Date Display -->
+              <h3 id="selected-date" class="text-lg font-bold mb-2"></h3>
+
+              <!-- Availability Legend -->
+              <div class="flex flex-wrap gap-3 text-xs text-gray-600 mb-2">
+                <div class="flex items-center space-x-1">
+                  <div class="w-3 h-3 bg-blue-200 rounded-sm"></div>
+                  <span>Available</span>
+                </div>
+                <div class="flex items-center space-x-1">
+                  <div class="w-3 h-3 bg-orange-300 rounded-sm"></div>
+                  <span>Booked</span>
+                </div>
+                <div class="flex items-center space-x-1">
+                  <div class="w-3 h-3 bg-gray-300 rounded-sm"></div>
+                  <span>Unavailable</span>
+                </div>
+              </div>
+
+              <!-- Availability Grid -->
+              <div>
+                <h4 class="font-bold mb-2">Available Time Slots</h4>
+                <div id="availability-grid"
+                  class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
+                  <!-- Time slots will be populated here -->
+                </div>
+              </div>
+
+              <!-- Court Fee Information -->
+              <div class="mt-4 p-3 bg-gray-50 rounded-lg text-sm">
+                <h4 class="font-bold mb-2">Court Fee Information</h4>
+                <div id="court-fee-info" class="text-gray-600">
+                  <p>Select a court to view fee information.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pricing Plans Section -->
+          <div class="mt-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+            <h3 class="font-bold text-lg text-blue-800 mb-3">3. Special Pricing & Packages</h3>
+            <div id="pricing-plans-container" class="space-y-3">
+              <!-- Pricing plans will be populated here -->
+              <p class="text-sm text-gray-500">No special pricing plans available</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Selected Sessions and Fee Breakdown -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="font-bold text-lg mb-3">Selected Sessions</h3>
+          <div id="selected-timeslots" class="space-y-2 max-h-40 overflow-y-auto mb-4">
+            <!-- Selected timeslots will be dynamically populated here -->
+            <div class="text-center py-6 text-gray-500">
+              <p>No sessions selected yet</p>
+            </div>
+          </div>
+
+          <hr class="my-4 border-gray-300">
+
+          <!-- Fee Breakdown -->
+          <div class="mb-4">
+            <h4 class="font-bold mb-2">Fee Breakdown</h4>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span>Coach Fees:</span>
+                <span>$<span id="coach-fee-total">0.00</span></span>
+              </div>
+              <div class="flex justify-between">
+                <span>Court Fees:</span>
+                <span>$<span id="court-fee-total">0.00</span></span>
+              </div>
+              <div id="discount-info" class="text-green-600 hidden">
+                <div class="flex justify-between">
+                  <span>Discount:</span>
+                  <span>-$<span id="discount-amount">0.00</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Cost -->
+          <div class="bg-blue-100 p-3 rounded-lg">
+            <div class="flex justify-between text-lg font-bold">
+              <span>Total Cost:</span>
+              <span>$<span id="current-total-copy">0.00</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule Button -->
+      <button id="schedule-button"
+        class="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-xl transform hover:scale-105 transition-all w-full">
+        Continue to Booking
+      </button>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmation-modal"
+    class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-1/2 p-8 scrollable-modal">
+      <h2 class="text-2xl font-bold mb-2 text-gray-800">Confirm Your Bookings</h2>
+      <p class="text-gray-600 mb-4">You are booking <span id="confirmation-session-count" class="font-bold">0</span>
+        sessions.</p>
+
+      <div id="confirmation-timeslots" class="space-y-3">
+        <!-- Confirmation timeslots will be dynamically populated here -->
+      </div>
+
+      <p class="text-xl font-bold mt-6">Total Price: <span class="text-blue-600">$<span id="total-price">0</span></span>
+      </p>
+
+      <div class="mt-8 flex justify-end space-x-4">
+        <button id="cancel-button"
+          class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+          Cancel
+        </button>
+        <button id="confirm-button"
+          class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Section -->
+  <div id="password-modal"
+    class="custom-modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-8 border w-96 shadow-lg rounded-xl bg-white">
+      <div class="text-center">
+        <div
+          class="h-16 w-16 mx-auto rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center mb-6">
+          <span class="text-white font-bold text-2xl">P</span>
+        </div>
+        <h3 class="text-xl font-bold mb-6 text-gray-800">Create Password</h3>
+        <div class="absolute top-2 right-2">
+          <button type="button" class="close-modal text-gray-400 hover:text-gray-600">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <form id="password-form" class="mt-4">
+          <input type="password" id="password" placeholder="Password"
+            class="w-full px-4 py-3 mb-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500" minlength="8"
+            pattern=".*\d+.*" required>
+          <p class="text-xs text-left text-gray-500 mb-4">Password must be at least 8 characters and include at least
+            one number</p>
+          <input type="password" id="confirm-password" placeholder="Confirm Password"
+            class="w-full px-4 py-3 mb-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500" minlength="8"
+            pattern=".*\d+.*" required>
+          <div id="password-match-error" class="text-red-500 text-sm mb-4 hidden">Passwords do not match</div>
+          <button type="submit"
+            class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">Submit</button>
+        </form>
+        <p class="mt-4 text-gray-600"><a href="#"
+            class="back-to-registration text-blue-500 font-medium hover:underline">Back to registration</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guest User Info Modal -->
+  <div id="guest-info-modal"
+    class="custom-modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-8 border w-96 shadow-lg rounded-xl bg-white">
+      <div class="text-center">
+        <div
+          class="h-16 w-16 mx-auto rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center mb-6">
+          <span class="text-white font-bold text-2xl">P</span>
+        </div>
+        <h3 class="text-xl font-bold mb-4 text-gray-800">Enter Your Details</h3>
+        <p class="text-gray-600 mb-6">Please enter your information to continue with the booking</p>
+        <div class="absolute top-2 right-2">
+          <button type="button" class="close-modal text-gray-400 hover:text-gray-600">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <form id="guest-info-form" class="mt-4">
+          <input type="text" name="first_name" placeholder="First Name" required
+            class="w-full px-4 py-3 mb-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+          <input type="text" name="last_name" placeholder="Last Name" required
+            class="w-full px-4 py-3 mb-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+          <input type="email" name="email" placeholder="Email" required
+            class="w-full px-4 py-3 mb-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+          <input type="tel" name="phone" placeholder="Phone Number" required
+            class="w-full px-4 py-3 mb-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+          <input type="number" name="dupr_rating" placeholder="DUPR Rating (optional)" step="0.1" min="1" max="8"
+            class="w-full px-4 py-3 mb-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+
+          <div class="mt-6 flex items-center mb-4">
+            <input id="create-account-checkbox" type="checkbox"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <label for="create-account-checkbox" class="ml-2 block text-sm text-gray-700">
+              Create an account for future bookings
+            </label>
+          </div>
+
+          <div id="create-account-fields" class="hidden">
+            <input type="password" id="guest-password" placeholder="Password"
+              class="w-full px-4 py-3 mb-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500" minlength="8"
+              pattern=".*\d+.*">
+            <p class="text-xs text-left text-gray-500 mb-4">Password must be at least 8 characters and include at least
+              one number</p>
+            <input type="password" id="guest-confirm-password" placeholder="Confirm Password"
+              class="w-full px-4 py-3 mb-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500" minlength="8"
+              pattern=".*\d+.*">
+          </div>
+
+          <button type="submit"
+            class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">Continue
+            to Payment</button>
+        </form>
+        <p class="mt-4 text-gray-600">Already have an account? <a href="#"
+            class="login-link text-blue-500 font-medium hover:underline">Login</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div id="success-modal"
+    class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-1/2 max-w-lg p-8 text-center">
+      <div class="mb-6">
+        <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold mb-2 text-gray-800">Booking Successful!</h2>
+      <p class="text-lg text-gray-600 mb-4">Your sessions have been booked successfully.</p>
+      <p class="text-sm text-gray-500 mb-6">Confirmation number: <span id="confirmation-number"
+          class="font-bold"></span></p>
+      <p class="text-sm text-gray-500 mb-6">A confirmation email has been sent to your email address.</p>
+      <button id="success-done-btn"
+        class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+        Done
+      </button>
+    </div>
+  </div>
+
+
+{% endblock %}
+
+{% block scripts %}
+
+  <!-- Script for Profile and Booking Functionality -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // DOM Elements
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+      const loadingOverlay = document.getElementById('loading-overlay');
+      const loginModal = document.getElementById('login-modal');
+      const registerModal = document.getElementById('register-modal');
+      const passwordModal = document.getElementById('password-modal');
+      const scheduleModal = document.getElementById('schedule-modal');
+      const confirmationModal = document.getElementById('confirmation-modal');
+      const guestInfoModal = document.getElementById('guest-info-modal');
+      const successModal = document.getElementById('success-modal');
+
+      // Coach profile elements
+      const coachName = document.getElementById('coach-name');
+      const coachImage = document.getElementById('coach-image');
+      const duprBadge = document.getElementById('dupr-badge');
+      const coachStars = document.getElementById('coach-stars');
+      const coachRating = document.getElementById('coach-rating');
+      const coachRate = document.getElementById('coach-rate');
+      const coachSessions = document.getElementById('coach-sessions');
+      const coachCourts = document.getElementById('coach-courts');
+      const coachBio = document.getElementById('coach-bio');
+      const scheduleBtn = document.getElementById('schedule-btn');
+
+      // Schedule elements
+      const courtSelect = document.getElementById('court-select');
+      const currentMonthYear = document.getElementById('current-month-year');
+      const calendar = document.getElementById('calendar');
+      const selectedDate = document.getElementById('selected-date');
+      const availabilityGrid = document.getElementById('availability-grid');
+      const selectedTimeslots = document.getElementById('selected-timeslots');
+      const currentTotal = document.getElementById('current-total');
+      const currentTotalCopy = document.getElementById('current-total-copy');
+      const scheduleButton = document.getElementById('schedule-button');
+
+      // Global state
+      let coachData = null;
+      let selectedCourtId = null;
+      let currentDate = new Date();
+      let allAvailabilities = {};
+      let selectedSlots = [];
+      let selectedPricingPlan = null;
+      let availablePricingPlans = [];
+      const isUserLoggedIn = {% if current_user.is_authenticated %}true{% else %}false{% endif %};
+
+      // Utility Functions
+      function formatMoney(amount) {
+        return parseFloat(amount).toFixed(2);
+      }
+
+      function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+
+      // Generate star rating HTML
+      function generateStars(rating) {
+        let starsHtml = '';
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+
+        // Add full stars
+        for (let i = 0; i < fullStars; i++) {
+          starsHtml += '<i class="fas fa-star"></i>';
+        }
+
+        // Add half star if needed
+        if (hasHalfStar) {
+          starsHtml += '<i class="fas fa-star-half-alt"></i>';
+        }
+
+        // Add empty stars to make 5 total
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+        for (let i = 0; i < emptyStars; i++) {
+          starsHtml += '<i class="far fa-star"></i>';
+        }
+
+        return starsHtml;
+      }
+
+      // Modal handling
+      function showModal(modal) {
+        document.querySelectorAll('.custom-modal').forEach(m => {
+          m.classList.add('hidden');
+        });
+        modal.classList.remove('hidden');
+      }
+
+      function hideAllModals() {
+        document.querySelectorAll('.custom-modal').forEach(modal => {
+          modal.classList.add('hidden');
+        });
+      }
+
+      // Mobile menu toggle
+      mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+
+      // Login/register modal toggles
+      document.querySelectorAll('.login-btn, .login-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          showModal(loginModal);
+        });
+      });
+
+      document.querySelectorAll('.register-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          showModal(registerModal);
+        });
+      });
+
+      document.querySelector('.back-to-registration').addEventListener('click', (e) => {
+        e.preventDefault();
+        showModal(registerModal);
+      });
+
+      // Close modal buttons
+      document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', () => {
+          hideAllModals();
+        });
+      });
+
+      // Close modals when clicking outside
+      window.addEventListener('click', (event) => {
+        if (event.target.classList.contains('custom-modal')) {
+          hideAllModals();
+        }
+      });
+
+      // Password form validation
+      document.getElementById('continue-to-password').addEventListener('click', (e) => {
+        e.preventDefault();
+
+        // Form validation
+        const registrationForm = document.getElementById('registration-form');
+        const formIsValid = registrationForm.checkValidity();
+
+        if (formIsValid) {
+          showModal(passwordModal);
+        } else {
+          // Trigger browser's form validation UI
+          registrationForm.reportValidity();
+        }
+      });
+
+      // Password match validation
+      const passwordForm = document.getElementById('password-form');
+      passwordForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        const passwordMatchError = document.getElementById('password-match-error');
+
+        if (password !== confirmPassword) {
+          passwordMatchError.classList.remove('hidden');
+        } else {
+          passwordMatchError.classList.add('hidden');
+          // Registration would happen here in a real app
+          alert('Registration successful! You can now log in.');
+          hideAllModals();
+          showModal(loginModal);
+        }
+      });
+
+      // Guest account checkbox toggle
+      document.getElementById('create-account-checkbox').addEventListener('change', function () {
+        const accountFields = document.getElementById('create-account-fields');
+        if (this.checked) {
+          accountFields.classList.remove('hidden');
+
+          // Make password fields required when checkbox is checked
+          document.getElementById('guest-password').required = true;
+          document.getElementById('guest-confirm-password').required = true;
+        } else {
+          accountFields.classList.add('hidden');
+
+          // Remove required attribute when checkbox is unchecked
+          document.getElementById('guest-password').required = false;
+          document.getElementById('guest-confirm-password').required = false;
+        }
+      });
+
+      // Guest info form submission
+      document.getElementById('guest-info-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        // Check if user wants to create an account
+        const createAccount = document.getElementById('create-account-checkbox').checked;
+
+        if (createAccount) {
+          // Validate passwords match
+          const password = document.getElementById('guest-password').value;
+          const confirmPassword = document.getElementById('guest-confirm-password').value;
+
+          if (password !== confirmPassword) {
+            alert('Passwords do not match');
+            return;
+          }
+        }
+
+        // Collect form data
+        const formData = new FormData(this);
+        const userData = Object.fromEntries(formData.entries());
+
+        // Submit booking
+        submitBooking(userData);
+      });
+
+      // Fetch coach data
+      async function fetchCoachData() {
+        try {
+          // Extract coach id from URL
+          const coachId =  {{ coach.id }}  || 1; // Default to 1 if no ID is provided
+
+          const response = await fetch(`/coach/api/coach/${coachId}`);
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch coach data');
+          }
+
+          coachData = await response.json();
+
+          // Update UI with coach data
+          coachName.textContent = `${coachData.first_name} ${coachData.last_name}`;
+          document.title = `${coachData.first_name} ${coachData.last_name} - Pickleball Connect`;
+          duprBadge.textContent = `DUPR ${coachData.dupr_rating.toFixed(1)}`;
+          coachStars.innerHTML = generateStars(coachData.avg_rating);
+          coachRating.textContent = `${coachData.avg_rating.toFixed(1)}/5`;
+          coachRate.textContent = `${coachData.hourly_rate}/hour`;
+          coachSessions.textContent = `${coachData.sessions_completed} completed`;
+
+          // Format courts list
+          const courtNames = coachData.courts.map(court => court.name).join(', ');
+          coachCourts.textContent = courtNames;
+
+          coachBio.textContent = coachData.biography || 'No biography available.';
+
+          // Populate court select dropdown
+          courtSelect.innerHTML = '<option value="">Select a court</option>';
+          coachData.courts.forEach(court => {
+            const option = document.createElement('option');
+            option.value = court.id;
+            option.textContent = court.name;
+            courtSelect.appendChild(option);
+          });
+
+          // Hide loading overlay
+          loadingOverlay.classList.add('hidden');
+
+        } catch (error) {
+          console.error('Error fetching coach data:', error);
+          alert('Failed to load coach profile. Please try again later.');
+        }
+      }
+
+      function setSelectedDate(dateStr) {
+        const dateObj = new Date(dateStr);
+        // Format for display
+        selectedDate.textContent = dateObj.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        // Store the original date string in a data attribute for easy access
+        selectedDate.dataset.date = dateStr;
+      }
+
+      // Generate calendar for given month/year
+      function generateCalendar(year, month) {
+        calendar.innerHTML = ""; // Clear previous calendar
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDay = firstDay.getDay(); // 0 (Sunday) to 6 (Saturday)
+
+        // Update month/year display
+        currentMonthYear.textContent = new Intl.DateTimeFormat('en-US', {
+          month: 'long',
+          year: 'numeric'
+        }).format(firstDay);
+
+        // Create day name headers
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+        dayNames.forEach(day => {
+          const dayCell = document.createElement("div");
+          dayCell.textContent = day;
+          dayCell.className = "mt-3 p-2 text-center font-bold";
+          calendar.appendChild(dayCell);
+        });
+
+        // Add empty cells for days before the first day of the month
+        for (let i = 0; i < startingDay; i++) {
+          const emptyCell = document.createElement("div");
+          emptyCell.className = "text-center text-gray-400";
+          calendar.appendChild(emptyCell);
+        }
+
+        // Add days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateObj = new Date(year, month, day);
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; // Format: YYYY-MM-DD
+
+          const cell = document.createElement("div");
+          cell.textContent = day;
+          cell.className = "text-center p-2 rounded-lg";
+          cell.dataset.date = dateStr; // Add data attribute for the date
+
+          // Determine if this date has availability data
+          const hasAvailabilityData = allAvailabilities[dateStr] &&
+            (allAvailabilities[dateStr].available.length > 0 ||
+              allAvailabilities[dateStr].booked.length > 0);
+
+          // Disable past dates
+          if (dateObj < new Date().setHours(0, 0, 0, 0)) {
+            cell.className += " bg-gray-200 text-gray-400 cursor-not-allowed";
+          }
+          // If court is selected and has availability
+          else if (selectedCourtId && hasAvailabilityData) {
+            cell.className += " bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer";
+            cell.addEventListener("click", () => {
+              // Remove previous selection
+              document.querySelectorAll("#calendar div.selected-date").forEach(div => {
+                div.classList.remove("selected-date");
+              });
+
+              // Add selection to this date
+              cell.classList.add("selected-date");
+
+              // Get the date from the data attribute
+              const dateStr = cell.dataset.date;
+
+              // Update selected date display
+              setSelectedDate(dateStr);
+
+              // Populate available time slots
+              populateAvailabilityGrid(dateStr);
+            });
+          }
+          // No availability data yet or no court selected
+          else {
+            cell.className += " bg-gray-200 text-gray-500 cursor-not-allowed";
+          }
+
+          calendar.appendChild(cell);
+        }
+      }
+
+      // Fetch availability data for the selected court and date
+      async function fetchAvailability(courtId, year, month) {
+        try {
+          // Reset all availabilities for this month
+          allAvailabilities = {};
+
+          // Create dates for all days in the month
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+          for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; // Format: YYYY-MM-DD
+
+            // Don't fetch for past dates
+            if (date < new Date().setHours(0, 0, 0, 0)) {
+              continue;
+            }
+
+            // Fetch availability from API
+            const response = await fetch(`/booking/api/availability/${coachData.id}/${courtId}/${dateStr}`);
+
+            if (!response.ok) {
+              console.error(`Failed to fetch availability for ${dateStr}`);
+              continue;
+            }
+
+            const data = await response.json();
+
+            // Store availability data including court fees and pricing plans
+            allAvailabilities[dateStr] = {
+              available: data.available || [],
+              booked: data.booked || [],
+              court_fees: data.court_fees || [],
+              pricing_plans: data.pricing_plans || []
+            };
+          }
+
+          // Store pricing plans globally for easy access
+          availablePricingPlans = allAvailabilities[Object.keys(allAvailabilities)[0]]?.pricing_plans || [];
+
+          // Update the pricing plan options in the UI
+          updatePricingPlanOptions();
+
+          // Regenerate calendar now that we have availability data
+          generateCalendar(year, month);
+
+        } catch (error) {
+          console.error('Error fetching availability:', error);
+        }
+      }
+
+
+      function updatePricingPlanOptions() {
+        const container = document.getElementById('pricing-plans-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (!availablePricingPlans || availablePricingPlans.length === 0) {
+          container.innerHTML = `
+      <p class="text-sm text-gray-500">No special pricing plans available</p>
+    `;
+          return;
+        }
+
+        // Check if the user is logged in
+        const isLoggedIn = typeof isUserLoggedIn !== 'undefined' ? isUserLoggedIn : false;
+
+        // For guest users, show a message about available discounts that require login
+        if (!isLoggedIn) {
+          // Check if there are any first-time discount plans
+          const hasFirstTimeDiscounts = availablePricingPlans.some(plan => plan.first_time_only);
+
+          if (hasFirstTimeDiscounts) {
+            // Add login/register prompt for first-time discounts
+            const loginPrompt = document.createElement('div');
+            loginPrompt.className = 'bg-blue-50 p-4 rounded-lg mb-4 border border-blue-300';
+            loginPrompt.innerHTML = `
+        <div class="flex items-start">
+          <div class="flex-shrink-0 mt-0.5">
+            <svg class="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-blue-800">Special Discounts Available!</h3>
+            <div class="mt-1 text-sm text-blue-700">
+              <p>First-time student discounts are available. <a href="#" class="font-bold login-btn">Login</a> or <a href="#" class="font-bold register-btn">Register</a> to access these special rates.</p>
+            </div>
+          </div>
+        </div>
+      `;
+            container.appendChild(loginPrompt);
+
+            // Add event listeners to the login/register links
+            loginPrompt.querySelector('.login-btn').addEventListener('click', function (e) {
+              e.preventDefault();
+              // Show login modal
+              showModal(loginModal);
+            });
+
+            loginPrompt.querySelector('.register-btn').addEventListener('click', function (e) {
+              e.preventDefault();
+              // Show registration modal
+              showModal(registerModal);
+            });
+          }
+        }
+
+        // Function to check if user is eligible for first-time discount
+        const checkFirstTimeStatus = async () => {
+          if (!isLoggedIn) {
+            // Guest users are not eligible for first-time discounts
+            return false;
+          }
+
+          try {
+            // Try to fetch previous bookings with this coach
+            const response = await fetch(`/api/student/has-previous-bookings/${coachData.id}`);
+            if (!response.ok) {
+              throw new Error('Failed to check booking history');
+            }
+
+            const data = await response.json();
+            return !data.has_previous_bookings;
+          } catch (error) {
+            console.error('Error checking first-time status:', error);
+            // Default to assuming not first time when there's an error
+            return false;
+          }
+        };
+
+        // Update the UI based on the first-time status
+        checkFirstTimeStatus().then(isFirstTime => {
+          // Create HTML for each applicable pricing plan
+          availablePricingPlans.forEach(plan => {
+            // For guest users, only show non-first-time discount plans
+            if (!isLoggedIn && plan.first_time_only) return;
+
+            // For logged-in users, check eligibility for first-time discounts
+            if (isLoggedIn && plan.first_time_only && !isFirstTime) return;
+
+            // Skip seasonal plans outside of valid date range
+            if (plan.valid_from && plan.valid_to) {
+              const today = new Date();
+              if (new Date(plan.valid_from) > today || new Date(plan.valid_to) < today) return;
+            }
+
+            const planDiv = document.createElement('div');
+            planDiv.className = 'bg-blue-50 p-3 rounded-lg mb-2 border border-blue-200';
+
+            let discountText = '';
+            if (plan.discount_type_amount === 'percentage') {
+              discountText = `${plan.discount_amount}% off`;
+            } else {
+              discountText = `$${plan.discount_amount} off`;
+            }
+
+            // Special display for package deals
+            if (plan.discount_type === 'package') {
+              planDiv.innerHTML = `
+          <div class="flex justify-between mb-1">
+            <span class="font-semibold">${plan.name}</span>
+            <span class="text-blue-700">${discountText}</span>
+          </div>
+          <p class="text-sm text-gray-600">${plan.description}</p>
+          <p class="text-xs text-blue-800 mt-1">Book ${plan.sessions_required} sessions to activate (${selectedSlots.length}/${plan.sessions_required} selected)</p>
+          <div class="flex justify-end mt-2">
+            <button class="text-sm px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 select-pricing-plan-btn ${selectedSlots.length >= plan.sessions_required ? '' : 'opacity-50 cursor-not-allowed'}" 
+              data-plan-id="${plan.id}" ${selectedSlots.length >= plan.sessions_required ? '' : 'disabled'}>
+              Select
+            </button>
+          </div>
+        `;
+            } else {
+              planDiv.innerHTML = `
+          <div class="flex justify-between mb-1">
+            <span class="font-semibold">${plan.name}</span>
+            <span class="text-blue-700">${discountText}</span>
+          </div>
+          <p class="text-sm text-gray-600">${plan.description}</p>
+          <div class="flex justify-end mt-2">
+            <button class="text-sm px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 select-pricing-plan-btn" data-plan-id="${plan.id}">
+              Select
+            </button>
+          </div>
+        `;
+            }
+
+            container.appendChild(planDiv);
+          });
+
+          // Add event listeners to the "Select" buttons
+          document.querySelectorAll('.select-pricing-plan-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+              const planId = parseInt(this.getAttribute('data-plan-id'));
+
+              // Find the plan data
+              const plan = availablePricingPlans.find(p => p.id === planId);
+
+              // Check if this plan is already selected
+              const isAlreadySelected = selectedPricingPlan && selectedPricingPlan.id === planId;
+
+              if (isAlreadySelected) {
+                // User is clicking an already selected plan, so unselect it
+                selectedPricingPlan = null;
+
+                // Reset button to unselected state
+                this.classList.remove('bg-green-600');
+                this.classList.add('bg-blue-600');
+                this.textContent = 'Select';
+
+                // Update prices without discount
+                updatePricesWithDiscount();
+                return;
+              }
+
+              // New plan selection
+
+              // Check if meets minimum sessions for package deals
+              if (plan.discount_type === 'package' && selectedSlots.length < plan.sessions_required) {
+                alert(`You need to select at least ${plan.sessions_required} sessions to use this package deal.`);
+                return;
+              }
+
+              // Set selected plan
+              selectedPricingPlan = plan;
+
+              // Update UI to show selected plan
+              document.querySelectorAll('.select-pricing-plan-btn').forEach(b => {
+                b.classList.remove('bg-green-600');
+                b.classList.add('bg-blue-600');
+                b.textContent = 'Select';
+              });
+
+              this.classList.remove('bg-blue-600');
+              this.classList.add('bg-green-600');
+              this.textContent = 'Selected';
+
+              // Update prices with the selected discount
+              updatePricesWithDiscount();
+            });
+          });
+        });
+      }
+      // Add this function to update prices with selected discount
+      function updatePricesWithDiscount() {
+        if (!selectedPricingPlan) {
+          // No discount applied, reset to base prices
+          selectedSlots.forEach(slot => {
+            slot.discounted_price = slot.price;
+          });
+        } else {
+          // Apply discount based on the selected plan
+          if (selectedPricingPlan.discount_type_amount === 'percentage') {
+            const discount = selectedPricingPlan.discount_amount / 100;
+
+            selectedSlots.forEach(slot => {
+              // Only apply discount to coach fee, not court fee
+              const coachFee = coachData.hourly_rate;
+              const discountAmount = coachFee * discount;
+              slot.discounted_price = slot.price - discountAmount;
+            });
+          } else {
+            // Fixed discount - distribute evenly across all slots
+            const totalSlots = selectedSlots.length;
+            const discountPerSlot = selectedPricingPlan.discount_amount / totalSlots;
+
+            selectedSlots.forEach(slot => {
+              slot.discounted_price = Math.max(0, slot.price - discountPerSlot);
+            });
+          }
+        }
+
+        // Update UI displays
+        updateSelectedTimeslotsUI();
+        updateTotalPrice();
+      }
+
+      // Populate availability grid for selected date
+      function populateAvailabilityGrid(date) {
+        availabilityGrid.innerHTML = ""; // Clear previous slots
+
+        // Update the selectedDate element with the correctly formatted date
+        const displayDate = new Date(date);
+        selectedDate.textContent = displayDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
+        if (!allAvailabilities[date]) {
+          availabilityGrid.innerHTML = "<p class='text-center text-gray-500 py-4'>No availability data for this date.</p>";
+          return;
+        }
+
+        const availability = allAvailabilities[date];
+
+        if (availability.available.length === 0 && availability.booked.length === 0) {
+          availabilityGrid.innerHTML = "<p class='text-center text-gray-500 py-4'>No time slots available on this date.</p>";
+          return;
+        }
+
+        // Create a set of all times (both available and booked)
+        const allTimes = new Set();
+
+        availability.available.forEach(slot => allTimes.add(slot.time));
+        availability.booked.forEach(slot => allTimes.add(slot.time));
+
+        // Convert to sorted array
+        const timeSlots = Array.from(allTimes).sort((a, b) => {
+          return new Date(`2000/01/01 ${a}`) - new Date(`2000/01/01 ${b}`);
+        });
+
+        // Create a time slot element for each time
+        timeSlots.forEach(time => {
+          const timeSlot = document.createElement("div");
+          timeSlot.className = "p-2 rounded-lg text-center text-sm"; // Default styling
+          timeSlot.textContent = time;
+
+          // Find if this slot is in our selected slots
+          const isSelected = selectedSlots.some(slot =>
+            slot.date === date && slot.time === time && slot.courtId === selectedCourtId
+          );
+
+          // Find if this slot is available
+          const availableSlot = availability.available.find(slot => slot.time === time);
+          const isBooked = availability.booked.some(slot => slot.time === time);
+
+          if (isSelected) {
+            timeSlot.className += " bg-blue-500 text-white cursor-pointer";
+            timeSlot.addEventListener("click", () => removeSelectedSlot(date, time, selectedCourtId));
+          }
+          else if (availableSlot) {
+            timeSlot.className += " bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer";
+            timeSlot.addEventListener("click", () => addSelectedSlot(date, time, availableSlot.id, selectedCourtId));
+          }
+          else if (isBooked) {
+            timeSlot.className += " bg-orange-300 text-white cursor-not-allowed";
+          }
+          else {
+            timeSlot.className += " bg-gray-300 text-gray-500 cursor-not-allowed";
+          }
+
+          availabilityGrid.appendChild(timeSlot);
+        });
+      }
+
+      // Add a selected time slot
+      function addSelectedSlot(date, time, availabilityId, courtId) {
+        // Check if already selected
+        if (selectedSlots.some(slot => slot.date === date && slot.time === time && slot.courtId === courtId)) {
+          return;
+        }
+
+        const courtName = courtSelect.options[courtSelect.selectedIndex].text;
+
+        // Get availability data for this date
+        const dateAvailability = allAvailabilities[date];
+
+        // Find the specific availability item
+        const availabilityItem = dateAvailability.available.find(item => item.id === availabilityId);
+
+        // Get court fee for this time
+        const courtFee = availabilityItem ? availabilityItem.court_fee : 0;
+
+        // Calculate total price (coach fee + court fee)
+        const totalPrice = parseFloat(coachData.hourly_rate) + parseFloat(courtFee);
+
+        selectedSlots.push({
+          date,
+          time,
+          availabilityId,
+          courtId,
+          courtName,
+          coach_fee: parseFloat(coachData.hourly_rate),
+          court_fee: parseFloat(courtFee),
+          price: totalPrice,
+          discounted_price: totalPrice // Will be updated if discount applied
+        });
+
+        // Update session count
+        const sessionCount = document.getElementById('session-count');
+        if (sessionCount) {
+          sessionCount.textContent = selectedSlots.length;
+        }
+
+        // If we have a pricing plan selected, update the prices
+        if (selectedPricingPlan) {
+          updatePricesWithDiscount();
+        } else {
+          updateSelectedTimeslotsUI();
+          updateTotalPrice();
+        }
+
+        // Update package eligibility statuses
+        updatePricingPlanOptions();
+
+        populateAvailabilityGrid(date);
+      }
+      // Remove a selected time slot
+      function removeSelectedSlot(date, time, courtId) {
+        selectedSlots = selectedSlots.filter(slot =>
+          !(slot.date === date && slot.time === time && slot.courtId === courtId)
+        );
+
+        // Update session count
+        const sessionCount = document.getElementById('session-count');
+        if (sessionCount) {
+          sessionCount.textContent = selectedSlots.length;
+        }
+
+        // If we have a pricing plan selected, check if it's still applicable
+        if (selectedPricingPlan && selectedPricingPlan.discount_type === 'package'
+          && selectedSlots.length < selectedPricingPlan.sessions_required) {
+          // No longer eligible for this package
+          selectedPricingPlan = null;
+          alert('You no longer have enough sessions selected for the package deal.');
+        }
+
+        // Update pricing and UI
+        if (selectedPricingPlan) {
+          updatePricesWithDiscount();
+        } else {
+          updatePricesWithDiscount();
+          updateSelectedTimeslotsUI();
+          updateTotalPrice();
+        }
+
+        // Update package eligibility statuses
+        updatePricingPlanOptions();
+
+        populateAvailabilityGrid(date);
+      }
+
+      // Update the selected timeslots UI
+      function updateSelectedTimeslotsUI() {
+        const container = document.getElementById('selected-timeslots');
+        container.innerHTML = "";
+
+        if (selectedSlots.length === 0) {
+          // Show a message when no slots are selected
+          const emptyMessage = document.createElement("div");
+          emptyMessage.className = "text-gray-500 text-sm italic text-center py-2";
+          emptyMessage.textContent = "No sessions selected yet";
+          container.appendChild(emptyMessage);
+          return;
+        }
+
+        // Sort slots by date and time
+        const sortedSlots = [...selectedSlots].sort((a, b) => {
+          const dateA = new Date(a.date + ' ' + a.time);
+          const dateB = new Date(b.date + ' ' + b.time);
+          return dateA - dateB;
+        });
+
+        // Create UI elements for each selected slot
+        sortedSlots.forEach(slot => {
+          const slotDiv = document.createElement("div");
+          slotDiv.className = "flex justify-between items-center bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm mb-2";
+
+          // Format price display
+          let priceDisplay = '';
+          if (slot.discounted_price < slot.price) {
+            // Show discount
+            priceDisplay = `<span class="line-through text-gray-500">$${slot.price.toFixed(2)}</span> $${slot.discounted_price.toFixed(2)}`;
+          } else {
+            priceDisplay = `$${slot.price.toFixed(2)}`;
+          }
+
+          slotDiv.innerHTML = `
+      <div>
+        <div class="font-medium">${formatDate(slot.date)}</div>
+        <div>${slot.time} at <span class="font-semibold">${slot.courtName}</span></div>
+        <div class="text-xs text-blue-600 mt-1">
+          Coach: $${slot.coach_fee.toFixed(2)} | Court: $${slot.court_fee.toFixed(2)}
+        </div>
+        <div class="font-medium">${priceDisplay}</div>
+      </div>
+      <button class="text-red-500 hover:text-red-700 p-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    `;
+
+          // Add remove button functionality
+          const removeButton = slotDiv.querySelector('button');
+          removeButton.addEventListener('click', () => {
+            removeSelectedSlot(slot.date, slot.time, slot.courtId);
+          });
+
+          container.appendChild(slotDiv);
+        });
+      }
+
+      // Update total price display
+      function updateTotalPrice() {
+        // Calculate subtotals
+        const coachTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.coach_fee), 0);
+        const courtTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
+
+        // Calculate total with any discounts applied
+        const grandTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.discounted_price), 0);
+
+        // Update display
+        currentTotal.textContent = formatMoney(grandTotal);
+        currentTotalCopy.textContent = formatMoney(grandTotal);
+
+        // Update subtotals if elements exist
+        const coachTotalElement = document.getElementById('coach-fee-total');
+        const courtTotalElement = document.getElementById('court-fee-total');
+
+        if (coachTotalElement) coachTotalElement.textContent = formatMoney(coachTotal);
+        if (courtTotalElement) courtTotalElement.textContent = formatMoney(courtTotal);
+
+        // Calculate savings if any
+        const originalTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
+        const savings = originalTotal - grandTotal;
+
+        const savingsElement = document.getElementById('total-savings');
+        const savingsContainer = document.getElementById('savings-container');
+
+        if (savingsElement && savingsContainer) {
+          if (savings > 0) {
+            savingsElement.textContent = formatMoney(savings);
+            savingsContainer.classList.remove('hidden');
+          } else {
+            savingsContainer.classList.add('hidden');
+          }
+        }
+
+        // Also update the confirmation modal if open
+        const totalPriceElement = document.getElementById('total-price');
+        if (totalPriceElement) {
+          totalPriceElement.textContent = formatMoney(grandTotal);
+        }
+      }
+
+      // Populate confirmation modal
+      function populateConfirmationModal() {
+        const container = document.getElementById('confirmation-timeslots');
+        container.innerHTML = "";
+
+        // Sort slots by date and time
+        const sortedSlots = [...selectedSlots].sort((a, b) => {
+          const dateA = new Date(a.date + ' ' + a.time);
+          const dateB = new Date(b.date + ' ' + b.time);
+          return dateA - dateB;
+        });
+
+        // Create UI elements for each selected slot
+        sortedSlots.forEach(slot => {
+          const slotDiv = document.createElement("div");
+          slotDiv.className = "bg-blue-100 text-blue-800 px-4 py-3 rounded-lg mb-2";
+
+          // Format price display
+          let priceDisplay = '';
+          if (slot.discounted_price < slot.price) {
+            // Show discount
+            priceDisplay = `<span class="line-through text-gray-500">$${slot.price.toFixed(2)}</span> $${slot.discounted_price.toFixed(2)}`;
+          } else {
+            priceDisplay = `$${slot.price.toFixed(2)}`;
+          }
+
+          slotDiv.innerHTML = `
+      <div class="flex justify-between">
+        <div>
+          <span class="font-medium">${formatDate(slot.date)} at ${slot.time}</span>
+          <div class="text-sm">${slot.courtName}</div>
+          <div class="text-xs mt-1">Coach: $${slot.coach_fee.toFixed(2)} | Court: $${slot.court_fee.toFixed(2)}</div>
+        </div>
+        <div class="font-bold">${priceDisplay}</div>
+      </div>
+    `;
+
+          container.appendChild(slotDiv);
+        });
+
+        // Calculate subtotals
+        const coachTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.coach_fee), 0);
+        const courtTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
+
+        // Calculate total with any discounts applied
+        const grandTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.discounted_price), 0);
+
+        // Add subtotals section
+        const subtotalsDiv = document.createElement('div');
+        subtotalsDiv.className = 'mt-4 p-4 bg-gray-50 rounded-lg';
+
+        subtotalsDiv.innerHTML = `
+    <div class="flex justify-between mb-2">
+      <span class="text-gray-600">Coach Fees:</span>
+      <span>$${formatMoney(coachTotal)}</span>
+    </div>
+    <div class="flex justify-between mb-2">
+      <span class="text-gray-600">Court Fees:</span>
+      <span>$${formatMoney(courtTotal)}</span>
+    </div>
+  `;
+
+        // Add discount info if applicable
+        if (selectedPricingPlan) {
+          const originalTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
+          const savings = originalTotal - grandTotal;
+
+          if (savings > 0) {
+            subtotalsDiv.innerHTML += `
+        <div class="flex justify-between mb-2 text-green-600">
+          <span>Discount (${selectedPricingPlan.name}):</span>
+          <span>-$${formatMoney(savings)}</span>
+        </div>
+      `;
+          }
+        }
+
+        container.appendChild(subtotalsDiv);
+
+        // Update total price
+        document.getElementById('total-price').textContent = formatMoney(grandTotal);
+
+        // Update session count if available
+        const sessionCountElement = document.getElementById('confirmation-session-count');
+        if (sessionCountElement) {
+          sessionCountElement.textContent = selectedSlots.length;
+        }
+      }
+
+      // Add this function to update the court fee information display
+      function updateCourtFeeInfo() {
+        const container = document.getElementById('court-fee-info');
+        if (!container) return;
+
+        if (!selectedCourtId || !allAvailabilities) {
+          container.innerHTML = '<p>Select a court to view fee information.</p>';
+          return;
+        }
+
+        // Get the first date that has court fee information
+        const firstDateWithFees = Object.keys(allAvailabilities).find(date =>
+          allAvailabilities[date]?.court_fees?.length > 0
+        );
+
+        if (!firstDateWithFees) {
+          container.innerHTML = '<p>No fee information available for this court.</p>';
+          return;
+        }
+
+        const fees = allAvailabilities[firstDateWithFees].court_fees;
+
+        if (fees.length === 0) {
+          container.innerHTML = '<p>No fee information available for this court.</p>';
+          return;
+        }
+
+        let html = '<div class="space-y-2">';
+
+        fees.forEach(fee => {
+          html += `
+      <div class="flex justify-between">
+        <span>${fee.start_time} - ${fee.end_time}</span>
+        <span class="font-semibold">$${fee.fee}/hour</span>
+      </div>
+    `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
+
+      // Submit the booking to the server
+      async function submitBooking(userData = null) {
+        try {
+      // Group availabilities by court
+          const courtAvailabilities = {};
+
+          selectedSlots.forEach(slot => {
+            if (!courtAvailabilities[slot.courtId]) {
+              courtAvailabilities[slot.courtId] = [];
+            }
+            courtAvailabilities[slot.courtId].push(slot.availabilityId);
+          });
+
+          // Prepare the bookings data - now an array of bookings
+          const bookingsData = Object.keys(courtAvailabilities).map(courtId => ({
+            coach_id: coachData.id,
+            court_id: parseInt(courtId),
+            availability_ids: courtAvailabilities[courtId],
+            pricing_plan_id: selectedPricingPlan ? selectedPricingPlan.id : null
+          }));
+
+          // Add user data if provided (for guest booking)
+          const requestData = {
+            bookings: bookingsData
+          };
+
+          if (userData) {
+            requestData.user_data = userData;
+
+            // Include account creation flag if checked
+            if (document.getElementById('create-account-checkbox').checked) {
+              requestData.user_data.create_account = true;
+              requestData.user_data.password = document.getElementById('guest-password').value;
+            }
+          }
+
+          if (!requestData.user_data?.dupr_rating) {
+            if (requestData.user_data) {
+              requestData.user_data.dupr_rating = 0.0;
+            }
+          }
+
+          // Show loading overlay
+          loadingOverlay.classList.remove('hidden');
+
+          // Send the booking request
+          const response = await fetch('/booking/api/bookings/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+          });
+
+          // Hide loading overlay
+          loadingOverlay.classList.add('hidden');
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create booking');
+          }
+
+          const result = await response.json();
+
+          // Show success message
+          hideAllModals();
+
+          // Update confirmation number in success modal
+          document.getElementById('confirmation-number').textContent = result.confirmation_number;
+
+          // Show success modal
+          showModal(successModal);
+
+          // Reset state
+          selectedSlots = [];
+          selectedPricingPlan = null;
+          selectedCourtId = null;
+          updateSelectedTimeslotsUI();
+          updateTotalPrice();
+
+        } catch (error) {
+          console.error('Error creating booking:', error);
+          loadingOverlay.classList.add('hidden');
+          alert(`Booking failed: ${error.message}`);
+            }
+          }
+
+      // Event Listeners
+
+      // Court selection change
+      courtSelect.addEventListener('change', async function () {
+        const courtId = parseInt(this.value);
+        const previouslySelectedDateStr = selectedDate.dataset.date;
+
+        if (courtId) {
+          selectedCourtId = courtId;
+
+          // Show loading animations for each section that will update
+          animateElementUpdate(document.getElementById('calendar-container'), true);
+          animateElementUpdate(document.getElementById('court-fee-info'), true);
+          animateElementUpdate(document.getElementById('availability-grid'), true);
+
+          // Wait for availability data to be fetched
+          await fetchAvailability(courtId, currentDate.getFullYear(), currentDate.getMonth());
+
+          // Update the UI components
+          generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+          updateCourtFeeInfo();
+
+          // Remove loading animations
+          animateElementUpdate(document.getElementById('calendar-container'), false);
+          animateElementUpdate(document.getElementById('court-fee-info'), false);
+          animateElementUpdate(document.getElementById('availability-grid'), false);
+
+          // If there was a previously selected date, try to select the same date for the new court
+          if (previouslySelectedDateStr) {
+            // Find the calendar cell with this date and click it
+            const dateCell = document.querySelector(`#calendar div[data-date="${previouslySelectedDateStr}"]`);
+            if (dateCell) {
+              dateCell.click();
+            }
+          }
+          
+          // Add completion animation
+          animateCompletion();
+
+        } else {
+          selectedCourtId = null;
+          allAvailabilities = {};
+
+          // Show loading animations
+          animateElementUpdate(document.getElementById('calendar-container'), true);
+          animateElementUpdate(document.getElementById('court-fee-info'), true);
+          animateElementUpdate(document.getElementById('availability-grid'), true);
+
+          // Update UI
+          generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+
+          // Clear availability grid
+          availabilityGrid.innerHTML = "";
+          selectedDate.textContent = "";
+          updateCourtFeeInfo();
+
+          // Remove loading animations
+          animateElementUpdate(document.getElementById('calendar-container'), false);
+          animateElementUpdate(document.getElementById('court-fee-info'), false);
+          animateElementUpdate(document.getElementById('availability-grid'), false);
+        }
+      });
+
+      // Animation helper functions
+      function animateElementUpdate(element, isLoading) {
+        if (!element) return;
+
+        if (isLoading) {
+          // Apply loading state
+          element.classList.add('animate-pulse', 'opacity-60');
+
+          // Optional: add a subtle background flash
+          element.classList.add('transition-colors', 'duration-500');
+          element.dataset.originalBg = element.style.backgroundColor || 'transparent';
+          element.style.backgroundColor = 'rgba(219, 234, 254, 0.4)'; // light blue background
+        } else {
+          // Remove loading state
+          element.classList.remove('animate-pulse', 'opacity-60');
+
+          // Restore original background
+          if (element.dataset.originalBg) {
+            element.style.backgroundColor = element.dataset.originalBg;
+          }
+        }
+      }
+
+      function animateCompletion() {
+        // Create a completion notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg transform translate-y-20 opacity-0 transition-all duration-500';
+        notification.innerHTML = `
+  <div class="z-50 flex items-center">
+    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    </svg>
+    <span>Court information updated</span>
+  </div>
+`;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+          notification.classList.remove('translate-y-20', 'opacity-0');
+        }, 100);
+
+        // Animate out and remove
+        setTimeout(() => {
+          notification.classList.add('translate-y-20', 'opacity-0');
+          setTimeout(() => {
+            notification.remove();
+          }, 500);
+        }, 3000);
+      }
+
+      // Previous month button
+      document.getElementById('prev-month').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        if (selectedCourtId) {
+          fetchAvailability(selectedCourtId, currentDate.getFullYear(), currentDate.getMonth());
+        } else {
+          generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+        }
+      });
+
+      // Next month button
+      document.getElementById('next-month').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        if (selectedCourtId) {
+          fetchAvailability(selectedCourtId, currentDate.getFullYear(), currentDate.getMonth());
+        } else {
+          generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+        }
+      });
+
+      // Schedule button
+      scheduleBtn.addEventListener('click', () => {
+        showModal(scheduleModal);
+        // Initialize calendar for the current month
+        generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+      });
+
+      // Continue to booking button
+      scheduleButton.addEventListener('click', () => {
+        if (selectedSlots.length === 0) {
+          alert('Please select at least one time slot to continue.');
+          return;
+        }
+
+        populateConfirmationModal();
+        showModal(confirmationModal);
+      });
+
+      // Cancel button
+      document.getElementById('cancel-button').addEventListener('click', () => {
+        hideAllModals();
+      });
+
+      // Confirm button
+      document.getElementById('confirm-button').addEventListener('click', () => {
+        if (isUserLoggedIn) {
+          // User is logged in, proceed with booking
+          submitBooking();
+        } else {
+          // User is not logged in, show guest info modal
+          showModal(guestInfoModal);
+        }
+      });
+
+      // Success modal done button
+      document.getElementById('success-done-btn').addEventListener('click', () => {
+        hideAllModals();
+      });
+
+      // Scroll animations
+      const scrollSections = document.querySelectorAll('.scroll-section');
+
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      scrollSections.forEach(section => {
+        observer.observe(section);
+      });
+
+      // Back to top button
+      const backToTopButton = document.getElementById('back-to-top');
+
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 500) {
+          backToTopButton.classList.remove('opacity-0', 'invisible');
+          backToTopButton.classList.add('opacity-100', 'visible');
+        } else {
+          backToTopButton.classList.add('opacity-0', 'invisible');
+          backToTopButton.classList.remove('opacity-100', 'visible');
+        }
+      });
+
+      backToTopButton.addEventListener('click', () => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+
+      // Initialize
+      fetchCoachData();
+    });
+  </script>
+  {% endblock %}

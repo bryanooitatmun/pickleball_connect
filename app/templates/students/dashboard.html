@@ -1,0 +1,2270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pickleball Connect - Student Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      scroll-behavior: smooth;
+    }
+    
+    .hero-gradient {
+      background: linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+    }
+    
+    .active-nav-link {
+      background: linear-gradient(90deg, rgba(65, 88, 208, 0.15) 0%, rgba(200, 80, 192, 0.15) 100%);
+      border-left: 4px solid #4158D0;
+      color: #4158D0;
+      font-weight: 600;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+
+    .loading {
+      position: relative;
+    }
+
+    .loading:after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .loading:before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50px;
+      height: 50px;
+      margin-top: -25px;
+      margin-left: -25px;
+      border-radius: 50%;
+      border: 5px solid rgba(65, 88, 208, 0.2);
+      border-top-color: #4158D0;
+      animation: spin 1s linear infinite;
+      z-index: 20;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Navbar -->
+  <nav class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-6 py-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <a href="index.html" class="flex items-center space-x-2">
+            <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+              <span class="text-white font-bold text-xl">P</span>
+            </div>
+            <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Pickleball Connect</span>
+          </a>
+          <span class="hidden md:inline-block text-gray-500">|</span>
+          <span class="hidden md:inline-block text-gray-700 font-medium">Student Dashboard</span>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+          <div class="relative" id="notification-dropdown">
+            <button id="notification-btn" class="p-2 text-gray-600 hover:text-blue-600 transition-colors focus:outline-none">
+              <i class="fas fa-bell"></i>
+              <span id="notification-badge" class="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center hidden">0</span>
+            </button>
+            <div id="notification-menu" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 z-20 hidden">
+              <div class="px-4 py-2 border-b border-gray-100">
+                <h4 class="font-semibold">Notifications</h4>
+              </div>
+              <div id="notification-list" class="max-h-64 overflow-y-auto">
+                <!-- Notifications will be dynamically inserted here -->
+                <div class="px-4 py-3 text-center text-gray-500 text-sm">
+                  No new notifications
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="relative" id="profile-dropdown">
+            <button id="profile-btn" class="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors focus:outline-none">
+              <div id="profile-initial" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">A</div>
+              <span id="profile-name" class="hidden md:inline-block">Alice Johnson</span>
+              <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div id="profile-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-20 hidden">
+              <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors" id="view-profile-link">
+                <i class="fas fa-user mr-2"></i> View Profile
+              </a>
+              <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors" id="account-settings-link">
+                <i class="fas fa-cog mr-2"></i> Account Settings
+              </a>
+              <div class="border-t border-gray-100 my-1"></div>
+              <a href="login.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors" id="logout-link">
+                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <div class="w-64 bg-white shadow-sm hidden md:block">
+      <div class="p-6 space-y-6">
+        <div>
+          <span class="text-xs text-gray-500 uppercase tracking-wider">Main</span>
+          <ul class="mt-3 space-y-1">
+            <li>
+              <a href="#dashboard" class="dashboard-tab tab-link active-nav-link flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors">
+                <i class="fas fa-tachometer-alt w-5"></i>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="#profile" class="profile-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-user w-5"></i>
+                <span>My Profile</span>
+              </a>
+            </li>
+            <li>
+              <a href="#coaches" class="coaches-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-user-tie w-5"></i>
+                <span>Find Coaches</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <span class="text-xs text-gray-500 uppercase tracking-wider">Bookings</span>
+          <ul class="mt-3 space-y-1">
+            <li>
+              <a href="#bookings" class="bookings-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-calendar-alt w-5"></i>
+                <span>My Bookings</span>
+              </a>
+            </li>
+            <li>
+              <a href="#packages" class="packages-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-cubes w-5"></i>
+                <span>My Packages</span>
+              </a>
+            </li>
+            <li>
+              <a href="#session-logs" class="session-logs-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-clipboard-list w-5"></i>
+                <span>Session Logs</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <span class="text-xs text-gray-500 uppercase tracking-wider">Support</span>
+          <ul class="mt-3 space-y-1">
+            <li>
+              <a href="#help" class="help-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-question-circle w-5"></i>
+                <span>Help Center</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 p-6">
+      <!-- Mobile Navigation -->
+      <div class="md:hidden mb-6">
+        <select id="mobile-nav" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="dashboard">Dashboard</option>
+          <option value="profile">My Profile</option>
+          <option value="coaches">Find Coaches</option>
+          <option value="bookings">My Bookings</option>
+          <option value="packages">My Packages</option>
+          <option value="session-logs">Session Logs</option>
+          <option value="help">Help Center</option>
+        </select>
+      </div>
+
+      <!-- Dashboard Tab -->
+      <div id="dashboard-tab" class="tab-content active">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+          <p class="text-gray-600">Welcome back, <span id="student-name">Alice</span>!</p>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-medium text-gray-500">Upcoming Sessions</h3>
+              <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <i class="fas fa-calendar-alt text-blue-600"></i>
+              </div>
+            </div>
+            <p id="upcoming-sessions-count" class="text-2xl font-bold">0</p>
+            <p class="text-sm text-gray-500">Next 30 days</p>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-medium text-gray-500">Sessions Completed</h3>
+              <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                <i class="fas fa-check-circle text-green-600"></i>
+              </div>
+            </div>
+            <p id="completed-sessions-count" class="text-2xl font-bold">0</p>
+            <p class="text-sm text-gray-500">All time</p>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-medium text-gray-500">Active Packages</h3>
+              <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                <i class="fas fa-cubes text-purple-600"></i>
+              </div>
+            </div>
+            <p id="active-packages-count" class="text-2xl font-bold">0</p>
+            <p class="text-sm text-gray-500">Available sessions: <span id="available-sessions-count">0</span></p>
+          </div>
+        </div>
+
+        <!-- Upcoming Bookings and Recent Activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <!-- Upcoming Bookings -->
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Upcoming Sessions</h3>
+              <a href="#bookings" class="text-sm text-blue-600 hover:underline">View All</a>
+            </div>
+            
+            <div id="upcoming-bookings-list" class="space-y-4">
+              <!-- Booking items will be dynamically inserted here -->
+              <div class="text-center py-6 text-gray-500">
+                <p>No upcoming bookings</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Session Logs -->
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Recent Session Logs</h3>
+              <a href="#session-logs" class="text-sm text-blue-600 hover:underline">View All</a>
+            </div>
+            
+            <div id="recent-logs-list" class="space-y-4">
+              <!-- Session log items will be dynamically inserted here -->
+              <div class="text-center py-6 text-gray-500">
+                <p>No recent session logs</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Find Coaches -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Quick Find Coaches</h3>
+            <a href="#coaches" class="text-sm text-blue-600 hover:underline">View All Coaches</a>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="featured-coaches">
+            <!-- Coach cards will be dynamically inserted here -->
+            <div class="text-center py-6 text-gray-500 col-span-3">
+              <p>Loading coaches...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Tab -->
+      <div id="profile-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">My Profile</h1>
+          <p class="text-gray-600">Manage your personal information and preferences</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <form id="profile-form">
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="first_name" class="block text-gray-700 font-medium mb-2">First Name*</label>
+                  <input type="text" id="first_name" name="first_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                  <label for="last_name" class="block text-gray-700 font-medium mb-2">Last Name*</label>
+                  <input type="text" id="last_name" name="last_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="email" class="block text-gray-700 font-medium mb-2">Email Address*</label>
+                  <input type="email" id="email" name="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                  <label for="birth_date" class="block text-gray-700 font-medium mb-2">Birth Date</label>
+                  <input type="date" id="birth_date" name="birth_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="gender" class="block text-gray-700 font-medium mb-2">Gender</label>
+                  <select id="gender" name="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="location" class="block text-gray-700 font-medium mb-2">Location*</label>
+                  <input type="text" id="location" name="location" placeholder="City, State" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">Pickleball Information</h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="dupr_rating" class="block text-gray-700 font-medium mb-2">DUPR Rating</label>
+                  <input type="number" id="dupr_rating" name="dupr_rating" min="2.0" max="7.0" step="0.1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <p class="text-sm text-gray-500 mt-1">Your current DUPR (Dynamic Universal Pickleball Rating)</p>
+                </div>
+                <div>
+                  <label for="experience_level" class="block text-gray-700 font-medium mb-2">Experience Level</label>
+                  <select id="experience_level" name="experience_level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Select Experience Level</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-6">
+                <label for="bio" class="block text-gray-700 font-medium mb-2">Bio</label>
+                <textarea id="bio" name="bio" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                <p class="text-sm text-gray-500 mt-1">Tell coaches a bit about yourself and your pickleball goals</p>
+              </div>
+            </div>
+
+            <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Save Changes
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Change Password</h3>
+          
+          <form id="password-form">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div>
+                <label for="current_password" class="block text-gray-700 font-medium mb-2">Current Password*</label>
+                <input type="password" id="current_password" name="current_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+              <div>
+                <label for="new_password" class="block text-gray-700 font-medium mb-2">New Password*</label>
+                <input type="password" id="new_password" name="new_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+              <div>
+                <label for="confirm_password" class="block text-gray-700 font-medium mb-2">Confirm New Password*</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+            </div>
+
+            <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Change Password
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Find Coaches Tab -->
+      <div id="coaches-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Find Coaches</h1>
+          <p class="text-gray-600">Browse and book sessions with our expert pickleball coaches</p>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label for="coach-search" class="block text-gray-700 font-medium mb-2">Search Coaches</label>
+              <input type="text" id="coach-search" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search by name or specialty">
+            </div>
+            <div>
+              <label for="court-filter" class="block text-gray-700 font-medium mb-2">Filter by Court</label>
+              <select id="court-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Courts</option>
+                <!-- Courts will be dynamically inserted here -->
+              </select>
+            </div>
+            <div>
+              <label for="rating-filter" class="block text-gray-700 font-medium mb-2">Filter by Rating</label>
+              <select id="rating-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Ratings</option>
+                <option value="5">5+ ★</option>
+                <option value="4.5">4.5+ ★</option>
+                <option value="4">4+ ★</option>
+                <option value="3.5">3.5+ ★</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coaches List -->
+        <div id="coaches-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Coach cards will be dynamically inserted here -->
+          <div class="text-center py-12 text-gray-500 col-span-3">
+            <p>Loading coaches...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bookings Tab -->
+      <div id="bookings-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">My Bookings</h1>
+          <p class="text-gray-600">Manage your upcoming and past coaching sessions</p>
+        </div>
+
+        <!-- Bookings Tabs -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="border-b border-gray-200 mb-6">
+            <ul class="flex flex-wrap -mb-px">
+              <li class="mr-2">
+                <button id="upcoming-tab-btn" class="inline-block py-2 px-4 text-blue-600 font-medium border-b-2 border-blue-600">Upcoming</button>
+              </li>
+              <li class="mr-2">
+                <button id="completed-tab-btn" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium border-b-2 border-transparent hover:border-gray-300">Completed</button>
+              </li>
+              <li class="mr-2">
+                <button id="cancelled-tab-btn" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium border-b-2 border-transparent hover:border-gray-300">Cancelled</button>
+              </li>
+            </ul>
+          </div>
+          
+          <div id="upcoming-bookings-tab" class="booking-content-tab active">
+            <div class="mb-4 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <input type="text" id="upcoming-search" placeholder="Search by coach or court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="upcoming-filter-coach" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">All Coaches</option>
+                  <!-- Coach options will be dynamically inserted here -->
+                </select>
+              </div>
+              
+              <div>
+                <select id="upcoming-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="date-asc">Date: Oldest First</option>
+                  <option value="date-desc" selected>Date: Newest First</option>
+                </select>
+              </div>
+            </div>
+            
+            <div id="upcoming-bookings-container">
+              <!-- Upcoming bookings will be dynamically inserted here -->
+              <div class="text-center py-12 text-gray-500">
+                <p>No upcoming bookings found</p>
+              </div>
+            </div>
+          </div>
+          
+          <div id="completed-bookings-tab" class="booking-content-tab hidden">
+            <div class="mb-4 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <input type="text" id="completed-search" placeholder="Search by coach or court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="completed-filter-coach" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">All Coaches</option>
+                  <!-- Coach options will be dynamically inserted here -->
+                </select>
+              </div>
+              
+              <div>
+                <select id="completed-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="date-asc">Date: Oldest First</option>
+                  <option value="date-desc" selected>Date: Newest First</option>
+                </select>
+              </div>
+            </div>
+            
+            <div id="completed-bookings-container">
+                <!-- Completed bookings will be dynamically inserted here -->
+                <div class="text-center py-12 text-gray-500">
+                  <p>No completed bookings found</p>
+                </div>
+              </div>
+            </div>
+            
+            <div id="cancelled-bookings-tab" class="booking-content-tab hidden">
+              <div class="mb-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <input type="text" id="cancelled-search" placeholder="Search by coach or court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select id="cancelled-filter-coach" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Coaches</option>
+                    <!-- Coach options will be dynamically inserted here -->
+                  </select>
+                </div>
+                
+                <div>
+                  <select id="cancelled-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="date-asc">Date: Oldest First</option>
+                    <option value="date-desc" selected>Date: Newest First</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div id="cancelled-bookings-container">
+                <!-- Cancelled bookings will be dynamically inserted here -->
+                <div class="text-center py-12 text-gray-500">
+                  <p>No cancelled bookings found</p>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Cancel Booking Modal -->
+          <div id="cancel-booking-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+            <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Cancel Booking</h3>
+                <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-cancel-booking-modal">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <p class="mb-6">Are you sure you want to cancel this session? This action cannot be undone, and cancellation policies may apply.</p>
+              
+              <input type="hidden" id="cancel-booking-id" value="">
+              
+              <div class="flex justify-end space-x-3">
+                <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-cancel-booking-modal">
+                  Back
+                </button>
+                <button id="confirm-cancel-booking-btn" type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
+                  Cancel Session
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Packages Tab -->
+        <div id="packages-tab" class="tab-content">
+          <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">My Packages</h1>
+            <p class="text-gray-600">View and manage your purchased lesson packages</p>
+          </div>
+  
+          <!-- Active Packages -->
+          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h3 class="font-semibold mb-4">Active Packages</h3>
+            
+            <div id="active-packages-container">
+              <!-- Active packages will be dynamically inserted here -->
+              <div class="text-center py-12 text-gray-500">
+                <p>No active packages found</p>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Expired Packages -->
+          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h3 class="font-semibold mb-4">Expired Packages</h3>
+            
+            <div id="expired-packages-container">
+              <!-- Expired packages will be dynamically inserted here -->
+              <div class="text-center py-12 text-gray-500">
+                <p>No expired packages found</p>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Session Logs Tab -->
+        <div id="session-logs-tab" class="tab-content">
+          <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Session Logs</h1>
+            <p class="text-gray-600">View notes and progress from your coaching sessions</p>
+          </div>
+  
+          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div class="mb-4 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <input type="text" id="session-logs-search" placeholder="Search by coach or title" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="session-logs-filter-coach" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">All Coaches</option>
+                  <!-- Coach options will be dynamically inserted here -->
+                </select>
+              </div>
+              
+              <div>
+                <select id="session-logs-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="date-asc">Date: Oldest First</option>
+                  <option value="date-desc" selected>Date: Newest First</option>
+                </select>
+              </div>
+            </div>
+            
+            <div id="session-logs-container">
+              <!-- Session logs will be dynamically inserted here -->
+              <div class="text-center py-12 text-gray-500">
+                <p>No session logs found</p>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Session Log Modal -->
+          <div id="session-log-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+            <div class="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4">
+              <div class="flex justify-between items-center mb-4">
+                <h3 id="session-log-modal-title" class="text-lg font-semibold">Session Log Details</h3>
+                <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-session-log-modal">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <div class="mb-6">
+                <div class="flex justify-between mb-4">
+                  <div>
+                    <h4 class="font-medium" id="log-coach-name">Coach Name</h4>
+                    <p class="text-gray-500 text-sm" id="log-date">Date</p>
+                  </div>
+                  <div>
+                    <p class="text-gray-600" id="log-court">Court Name</p>
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <h4 class="text-sm font-medium text-gray-700 mb-2">Session Notes</h4>
+                  <div id="log-notes" class="p-4 bg-gray-50 rounded-lg">
+                    Notes will appear here
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <h4 class="text-sm font-medium text-gray-700 mb-2">My Notes</h4>
+                  <textarea id="student-notes" name="student_notes" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Add your personal notes about this session..."></textarea>
+                  <p class="text-sm text-gray-500 mt-1">These notes are only visible to you</p>
+                </div>
+              </div>
+              
+              <div class="flex justify-end space-x-3">
+                <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-session-log-modal">
+                  Close
+                </button>
+                <button id="save-student-notes-btn" type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+                  Save Notes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Help Center Tab -->
+        <div id="help-tab" class="tab-content">
+          <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Help Center</h1>
+            <p class="text-gray-600">Find answers to common questions and get support</p>
+          </div>
+  
+          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h3 class="font-semibold mb-6">Frequently Asked Questions</h3>
+            
+            <div class="space-y-4">
+              <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                  <span>How do I book a session with a coach?</span>
+                  <i class="fas fa-chevron-down transform transition-transform"></i>
+                </button>
+                <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  <p>To book a coaching session:</p>
+                  <ol class="list-decimal ml-5 mt-2 space-y-2">
+                    <li>Go to the "Find Coaches" tab in your dashboard</li>
+                    <li>Browse the available coaches and click on one to view their profile</li>
+                    <li>Click the "Book Session" button on the coach's profile</li>
+                    <li>Select an available date, time slot, and court</li>
+                    <li>Review any available pricing plans or discounts</li>
+                    <li>Confirm your booking</li>
+                  </ol>
+                  <p class="mt-2">You'll receive a confirmation email with the details of your booking.</p>
+                </div>
+              </div>
+              
+              <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                  <span>How do I cancel a booking?</span>
+                  <i class="fas fa-chevron-down transform transition-transform"></i>
+                </button>
+                <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  <p>To cancel a booking:</p>
+                  <ol class="list-decimal ml-5 mt-2 space-y-2">
+                    <li>Go to the "My Bookings" tab in your dashboard</li>
+                    <li>Find the booking you wish to cancel in the "Upcoming" tab</li>
+                    <li>Click the "Cancel" button on the booking card</li>
+                    <li>Confirm your cancellation in the dialog that appears</li>
+                  </ol>
+                  <p class="mt-2">Please note that cancellation policies may apply. Typically, cancellations made less than 24 hours before the session start time may still be charged.</p>
+                </div>
+              </div>
+              
+              <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                  <span>What are session packages?</span>
+                  <i class="fas fa-chevron-down transform transition-transform"></i>
+                </button>
+                <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  <p>Session packages are bundles of multiple coaching sessions purchased at a discounted rate.</p>
+                  <ul class="list-disc ml-5 mt-2 space-y-2">
+                    <li>Packages typically offer a 10-15% discount compared to booking individual sessions</li>
+                    <li>When you book a session, you'll see available package options from the coach</li>
+                    <li>Packages usually have an expiration date (typically 3 months from purchase)</li>
+                    <li>You can view your active packages in the "My Packages" tab</li>
+                    <li>When booking a session with a coach where you have an active package, you'll have the option to use a session from your package</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                  <span>What are session logs?</span>
+                  <i class="fas fa-chevron-down transform transition-transform"></i>
+                </button>
+                <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  <p>Session logs are records of your completed coaching sessions:</p>
+                  <ul class="list-disc ml-5 mt-2 space-y-2">
+                    <li>After a session is completed, your coach will create a session log</li>
+                    <li>The log includes notes from your coach about what you worked on and your progress</li>
+                    <li>You can view all your session logs in the "Session Logs" tab</li>
+                    <li>You can add your own private notes to each session log to track your progress</li>
+                    <li>Session logs are a great way to track your improvement over time</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h3 class="font-semibold mb-6">Contact Support</h3>
+            
+            <form id="support-form">
+              <div class="mb-4">
+                <label for="support-subject" class="block text-gray-700 font-medium mb-2">Subject*</label>
+                <input type="text" id="support-subject" name="subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+              
+              <div class="mb-4">
+                <label for="support-message" class="block text-gray-700 font-medium mb-2">Message*</label>
+                <textarea id="support-message" name="message" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+              </div>
+              
+              <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
+                Submit
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Notification Toast -->
+    <div id="notification-toast" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-y-24 opacity-0 transition-all duration-300 hidden">
+      <div class="flex items-start space-x-3">
+        <div id="toast-icon" class="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded-full text-white"></div>
+        <div>
+          <h4 id="toast-title" class="font-semibold"></h4>
+          <p id="toast-message" class="text-sm text-gray-600"></p>
+        </div>
+        <button id="toast-close" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+  
+    <script>
+      // Helper functions
+      function formatDate(dateString) {
+        const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+        return new Date(dateString).toLocaleDateString('en-US', options);
+      }
+  
+      function formatTime(timeString) {
+        return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      }
+  
+      function formatCurrency(amount) {
+        return `${Number(amount).toFixed(2)}`;
+      }
+  
+      function showLoading(element) {
+        element.classList.add('loading');
+      }
+  
+      function hideLoading(element) {
+        element.classList.remove('loading');
+      }
+  
+      function showToast(title, message, type = 'success') {
+        const toast = document.getElementById('notification-toast');
+        const toastTitle = document.getElementById('toast-title');
+        const toastMessage = document.getElementById('toast-message');
+        const toastIcon = document.getElementById('toast-icon');
+        
+        toastTitle.textContent = title;
+        toastMessage.textContent = message;
+        
+        // Set icon and color based on type
+        if (type === 'success') {
+          toastIcon.innerHTML = '<i class="fas fa-check"></i>';
+          toastIcon.classList.add('bg-green-500');
+          toastIcon.classList.remove('bg-red-500', 'bg-blue-500');
+        } else if (type === 'error') {
+          toastIcon.innerHTML = '<i class="fas fa-exclamation"></i>';
+          toastIcon.classList.add('bg-red-500');
+          toastIcon.classList.remove('bg-green-500', 'bg-blue-500');
+        } else if (type === 'info') {
+          toastIcon.innerHTML = '<i class="fas fa-info"></i>';
+          toastIcon.classList.add('bg-blue-500');
+          toastIcon.classList.remove('bg-green-500', 'bg-red-500');
+        }
+        
+        // Show toast
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+          toast.classList.remove('translate-y-24', 'opacity-0');
+        }, 10);
+        
+        // Hide toast after 5 seconds
+        setTimeout(() => {
+          toast.classList.add('translate-y-24', 'opacity-0');
+          setTimeout(() => {
+            toast.classList.add('hidden');
+          }, 300);
+        }, 5000);
+      }
+  
+      // API call functions
+      const API_BASE_URL = '/student/api';
+  
+      async function fetchAPI(endpoint, options = {}) {
+        try {
+          const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            ...options,
+            headers: {
+              'Content-Type': 'application/json',
+              ...options.headers
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`API Error: ${response.statusText}`);
+          }
+          
+          return await response.json();
+        } catch (error) {
+          console.error('API Error:', error);
+          throw error;
+        }
+      }
+  
+      async function getStudentProfile() {
+        return fetchAPI('/profile');
+      }
+  
+      async function updateStudentProfile(profileData) {
+        return fetchAPI('/profile', {
+          method: 'PUT',
+          body: JSON.stringify(profileData)
+        });
+      }
+  
+      async function changePassword(passwordData) {
+        return fetchAPI('/change-password', {
+          method: 'POST',
+          body: JSON.stringify(passwordData)
+        });
+      }
+  
+      async function getCoaches() {
+        return fetchAPI('/coaches');
+      }
+  
+      async function getCoachDetails(coachId) {
+        return fetchAPI(`/coaches/${coachId}`);
+      }
+  
+      async function getBookings(status = 'upcoming') {
+        return fetchAPI(`/bookings/${status}`);
+      }
+  
+      async function cancelBooking(bookingId) {
+        return fetchAPI('/bookings/cancel', {
+          method: 'POST',
+          body: JSON.stringify({ booking_id: bookingId })
+        });
+      }
+  
+      async function getPackages() {
+        return fetchAPI('/packages');
+      }
+  
+      async function getSessionLogs() {
+        return fetchAPI('/session-logs');
+      }
+  
+      async function getSessionLog(logId) {
+        return fetchAPI(`/session-logs/${logId}`);
+      }
+  
+      async function updateStudentNotes(logId, notes) {
+        return fetchAPI('/session-logs/update-notes', {
+          method: 'POST',
+          body: JSON.stringify({ log_id: logId, student_notes: notes })
+        });
+      }
+  
+      async function getCourts() {
+        return fetchAPI('/courts');
+      }
+  
+      async function submitSupportRequest(requestData) {
+        return fetchAPI('/support/request', {
+          method: 'POST',
+          body: JSON.stringify(requestData)
+        });
+      }
+  
+      // DOM manipulation and event handling
+      document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tabs
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const mobileNav = document.getElementById('mobile-nav');
+  
+        function activateTab(tabId) {
+          // Hide all tab contents
+          tabContents.forEach(content => {
+            content.classList.remove('active');
+          });
+          
+          // Remove active class from all tab links
+          tabLinks.forEach(link => {
+            link.classList.remove('active-nav-link');
+          });
+          
+          // Show the selected tab content
+          document.getElementById(`${tabId}-tab`).classList.add('active');
+          
+          // Add active class to the clicked tab link
+          document.querySelector(`.${tabId}-tab`).classList.add('active-nav-link');
+          
+          // Update mobile nav
+          mobileNav.value = tabId;
+        }
+  
+        tabLinks.forEach(link => {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tabId = this.getAttribute('href').substring(1);
+            activateTab(tabId);
+          });
+        });
+  
+        mobileNav.addEventListener('change', function() {
+          activateTab(this.value);
+        });
+  
+        // Initialize dropdowns
+        const profileBtn = document.getElementById('profile-btn');
+        const profileMenu = document.getElementById('profile-menu');
+        const notificationBtn = document.getElementById('notification-btn');
+        const notificationMenu = document.getElementById('notification-menu');
+  
+        profileBtn.addEventListener('click', function() {
+          profileMenu.classList.toggle('hidden');
+          notificationMenu.classList.add('hidden');
+        });
+  
+        notificationBtn.addEventListener('click', function() {
+          notificationMenu.classList.toggle('hidden');
+          profileMenu.classList.add('hidden');
+        });
+  
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+          if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+            profileMenu.classList.add('hidden');
+          }
+          
+          if (!notificationBtn.contains(e.target) && !notificationMenu.contains(e.target)) {
+            notificationMenu.classList.add('hidden');
+          }
+        });
+  
+        // Initialize FAQ accordions
+        const faqToggles = document.querySelectorAll('.faq-toggle');
+        
+        faqToggles.forEach(toggle => {
+          toggle.addEventListener('click', function() {
+            const content = this.nextElementSibling;
+            const icon = this.querySelector('i');
+            
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+          });
+        });
+  
+        // Initialize toast close button
+        document.getElementById('toast-close').addEventListener('click', function() {
+          const toast = document.getElementById('notification-toast');
+          toast.classList.add('translate-y-24', 'opacity-0');
+          setTimeout(() => {
+            toast.classList.add('hidden');
+          }, 300);
+        });
+        
+        // Setup account links
+        document.getElementById('view-profile-link').addEventListener('click', function(e) {
+          e.preventDefault();
+          activateTab('profile');
+        });
+        
+        document.getElementById('account-settings-link').addEventListener('click', function(e) {
+          e.preventDefault();
+          activateTab('profile');
+        });
+  
+        // Load initial data
+        loadDashboardData();
+        
+        // Setup form submit event listeners
+        setupForms();
+        
+        // Setup modal event listeners
+        setupModals();
+        
+        // Initialize booking tabs
+        setupBookingTabs();
+      });
+  
+      // Load dashboard data
+      async function loadDashboardData() {
+        try {
+          const studentProfile = await getStudentProfile();
+          
+          // Update profile display
+          document.getElementById('student-name').textContent = studentProfile.first_name;
+          document.getElementById('profile-name').textContent = `${studentProfile.first_name} ${studentProfile.last_name}`;
+          document.getElementById('profile-initial').textContent = studentProfile.first_name.charAt(0);
+          
+          // Populate profile form
+          populateProfileForm(studentProfile);
+          
+          // Load coaches
+          loadCoaches();
+          
+          // Load bookings
+          loadBookings();
+          
+          // Load packages
+          loadPackages();
+          
+          // Load session logs
+          loadSessionLogs();
+          
+          // Update dashboard stats
+          updateDashboardStats();
+          
+        } catch (error) {
+          console.error('Error loading dashboard data:', error);
+          showToast('Error', 'Failed to load dashboard data. Please refresh the page.', 'error');
+        }
+      }
+  
+      // Setup form submit handlers
+      function setupForms() {
+        // Profile form
+        document.getElementById('profile-form').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const formData = new FormData(this);
+          const profileData = {
+            first_name: formData.get('first_name'),
+            last_name: formData.get('last_name'),
+            email: formData.get('email'),
+            birth_date: formData.get('birth_date'),
+            gender: formData.get('gender'),
+            location: formData.get('location'),
+            dupr_rating: formData.get('dupr_rating') ? parseFloat(formData.get('dupr_rating')) : null,
+            experience_level: formData.get('experience_level'),
+            bio: formData.get('bio')
+          };
+          
+          try {
+            showLoading(this);
+            await updateStudentProfile(profileData);
+            hideLoading(this);
+            showToast('Success', 'Your profile has been updated successfully.', 'success');
+            
+            // Update displayed name
+            document.getElementById('student-name').textContent = profileData.first_name;
+            document.getElementById('profile-name').textContent = `${profileData.first_name} ${profileData.last_name}`;
+            document.getElementById('profile-initial').textContent = profileData.first_name.charAt(0);
+          } catch (error) {
+            hideLoading(this);
+            showToast('Error', 'Failed to update profile. Please try again.', 'error');
+          }
+        });
+        
+        // Password form
+        document.getElementById('password-form').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const formData = new FormData(this);
+          const currentPassword = formData.get('current_password');
+          const newPassword = formData.get('new_password');
+          const confirmPassword = formData.get('confirm_password');
+          
+          if (newPassword !== confirmPassword) {
+            showToast('Error', 'New passwords do not match.', 'error');
+            return;
+          }
+          
+          try {
+            showLoading(this);
+            await changePassword({
+              current_password: currentPassword,
+              new_password: newPassword
+            });
+            hideLoading(this);
+            showToast('Success', 'Your password has been changed successfully.', 'success');
+            this.reset();
+          } catch (error) {
+            hideLoading(this);
+            showToast('Error', 'Failed to change password. Please check your current password and try again.', 'error');
+          }
+        });
+        
+        // Support form
+        document.getElementById('support-form').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const formData = new FormData(this);
+          const requestData = {
+            subject: formData.get('subject'),
+            message: formData.get('message')
+          };
+          
+          try {
+            showLoading(this);
+            await submitSupportRequest(requestData);
+            hideLoading(this);
+            showToast('Success', 'Your support request has been submitted.', 'success');
+            this.reset();
+          } catch (error) {
+            hideLoading(this);
+            showToast('Error', 'Failed to submit support request. Please try again.', 'error');
+          }
+        });
+      }
+  
+      // Setup modal event handlers
+      function setupModals() {
+        // Cancel Booking Modal
+        document.querySelectorAll('.close-cancel-booking-modal').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.getElementById('cancel-booking-modal').classList.add('hidden');
+          });
+        });
+        
+        document.getElementById('confirm-cancel-booking-btn').addEventListener('click', async function() {
+          const bookingId = document.getElementById('cancel-booking-id').value;
+          
+          try {
+            document.getElementById('cancel-booking-modal').classList.add('hidden');
+            await cancelBooking(bookingId);
+            showToast('Success', 'Booking cancelled successfully.', 'success');
+            loadBookings();
+            updateDashboardStats();
+          } catch (error) {
+            showToast('Error', 'Failed to cancel booking. Please try again.', 'error');
+          }
+        });
+        
+        // Session Log Modal
+        document.querySelectorAll('.close-session-log-modal').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.getElementById('session-log-modal').classList.add('hidden');
+          });
+        });
+        
+        document.getElementById('save-student-notes-btn').addEventListener('click', async function() {
+          const logId = document.getElementById('session-log-modal').getAttribute('data-log-id');
+          const studentNotes = document.getElementById('student-notes').value;
+        
+        try {
+          await updateStudentNotes(logId, studentNotes);
+          showToast('Success', 'Your notes have been saved successfully.', 'success');
+          loadSessionLogs();
+        } catch (error) {
+          showToast('Error', 'Failed to save notes. Please try again.', 'error');
+        }
+      });
+    }
+
+    // Setup booking tab navigation
+    function setupBookingTabs() {
+      const upcomingBtn = document.getElementById('upcoming-tab-btn');
+      const completedBtn = document.getElementById('completed-tab-btn');
+      const cancelledBtn = document.getElementById('cancelled-tab-btn');
+      
+      const upcomingTab = document.getElementById('upcoming-bookings-tab');
+      const completedTab = document.getElementById('completed-bookings-tab');
+      const cancelledTab = document.getElementById('cancelled-bookings-tab');
+      
+      upcomingBtn.addEventListener('click', function() {
+        // Update button styles
+        upcomingBtn.classList.add('text-blue-600', 'border-blue-600');
+        upcomingBtn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        completedBtn.classList.remove('text-blue-600', 'border-blue-600');
+        completedBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        cancelledBtn.classList.remove('text-blue-600', 'border-blue-600');
+        cancelledBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        // Show/hide tabs
+        upcomingTab.classList.remove('hidden');
+        upcomingTab.classList.add('active');
+        
+        completedTab.classList.add('hidden');
+        completedTab.classList.remove('active');
+        
+        cancelledTab.classList.add('hidden');
+        cancelledTab.classList.remove('active');
+      });
+      
+      completedBtn.addEventListener('click', function() {
+        // Update button styles
+        completedBtn.classList.add('text-blue-600', 'border-blue-600');
+        completedBtn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        upcomingBtn.classList.remove('text-blue-600', 'border-blue-600');
+        upcomingBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        cancelledBtn.classList.remove('text-blue-600', 'border-blue-600');
+        cancelledBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        // Show/hide tabs
+        completedTab.classList.remove('hidden');
+        completedTab.classList.add('active');
+        
+        upcomingTab.classList.add('hidden');
+        upcomingTab.classList.remove('active');
+        
+        cancelledTab.classList.add('hidden');
+        cancelledTab.classList.remove('active');
+      });
+      
+      cancelledBtn.addEventListener('click', function() {
+        // Update button styles
+        cancelledBtn.classList.add('text-blue-600', 'border-blue-600');
+        cancelledBtn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        upcomingBtn.classList.remove('text-blue-600', 'border-blue-600');
+        upcomingBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        completedBtn.classList.remove('text-blue-600', 'border-blue-600');
+        completedBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        // Show/hide tabs
+        cancelledTab.classList.remove('hidden');
+        cancelledTab.classList.add('active');
+        
+        upcomingTab.classList.add('hidden');
+        upcomingTab.classList.remove('active');
+        
+        completedTab.classList.add('hidden');
+        completedTab.classList.remove('active');
+      });
+      
+      // Add search and filter functionality
+      document.getElementById('upcoming-search').addEventListener('input', function() {
+        filterBookings('upcoming');
+      });
+      
+      document.getElementById('completed-search').addEventListener('input', function() {
+        filterBookings('completed');
+      });
+      
+      document.getElementById('cancelled-search').addEventListener('input', function() {
+        filterBookings('cancelled');
+      });
+      
+      document.getElementById('upcoming-filter-coach').addEventListener('change', function() {
+        filterBookings('upcoming');
+      });
+      
+      document.getElementById('completed-filter-coach').addEventListener('change', function() {
+        filterBookings('completed');
+      });
+      
+      document.getElementById('cancelled-filter-coach').addEventListener('change', function() {
+        filterBookings('cancelled');
+      });
+      
+      document.getElementById('upcoming-sort').addEventListener('change', function() {
+        filterBookings('upcoming');
+      });
+      
+      document.getElementById('completed-sort').addEventListener('change', function() {
+        filterBookings('completed');
+      });
+      
+      document.getElementById('cancelled-sort').addEventListener('change', function() {
+        filterBookings('cancelled');
+      });
+      
+      // Session logs search and filter
+      document.getElementById('session-logs-search').addEventListener('input', function() {
+        filterSessionLogs();
+      });
+      
+      document.getElementById('session-logs-filter-coach').addEventListener('change', function() {
+        filterSessionLogs();
+      });
+      
+      document.getElementById('session-logs-sort').addEventListener('change', function() {
+        filterSessionLogs();
+      });
+      
+      // Coaches search and filter
+      document.getElementById('coach-search').addEventListener('input', function() {
+        filterCoaches();
+      });
+      
+      document.getElementById('court-filter').addEventListener('change', function() {
+        filterCoaches();
+      });
+      
+      document.getElementById('rating-filter').addEventListener('change', function() {
+        filterCoaches();
+      });
+    }
+
+    // Populate profile form with student data
+    function populateProfileForm(studentData) {
+      document.getElementById('first_name').value = studentData.first_name;
+      document.getElementById('last_name').value = studentData.last_name;
+      document.getElementById('email').value = studentData.email;
+      document.getElementById('birth_date').value = studentData.birth_date || '';
+      document.getElementById('gender').value = studentData.gender || '';
+      document.getElementById('location').value = studentData.location || '';
+      document.getElementById('dupr_rating').value = studentData.dupr_rating || '';
+      document.getElementById('experience_level').value = studentData.experience_level || '';
+      document.getElementById('bio').value = studentData.bio || '';
+    }
+
+    // Load coaches
+    async function loadCoaches() {
+      try {
+        const coaches = await getCoaches();
+        
+        // Populate coaches filter dropdowns
+        populateCoachFilters(coaches);
+        
+        // Populate featured coaches on dashboard
+        populateFeaturedCoaches(coaches);
+        
+        // Populate coaches list on Find Coaches tab
+        populateCoachesList(coaches);
+        
+      } catch (error) {
+        console.error('Error loading coaches:', error);
+        showToast('Error', 'Failed to load coaches data.', 'error');
+      }
+    }
+
+    // Populate coach filters in various forms
+    function populateCoachFilters(coaches) {
+      // Booking filters
+      const upcomingFilter = document.getElementById('upcoming-filter-coach');
+      const completedFilter = document.getElementById('completed-filter-coach');
+      const cancelledFilter = document.getElementById('cancelled-filter-coach');
+      
+      [upcomingFilter, completedFilter, cancelledFilter].forEach(filter => {
+        filter.innerHTML = '<option value="">All Coaches</option>';
+        
+        coaches.forEach(coach => {
+          const option = document.createElement('option');
+          option.value = coach.id;
+          option.textContent = `${coach.user.first_name} ${coach.user.last_name}`;
+          filter.appendChild(option);
+        });
+      });
+      
+      // Session logs filter
+      const sessionLogsFilter = document.getElementById('session-logs-filter-coach');
+      sessionLogsFilter.innerHTML = '<option value="">All Coaches</option>';
+      
+      coaches.forEach(coach => {
+        const option = document.createElement('option');
+        option.value = coach.id;
+        option.textContent = `${coach.user.first_name} ${coach.user.last_name}`;
+        sessionLogsFilter.appendChild(option);
+      });
+    }
+
+    // Populate featured coaches on dashboard
+    function populateFeaturedCoaches(coaches) {
+      const container = document.getElementById('featured-coaches');
+      
+      if (coaches.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-gray-500 col-span-3">
+            <p>No coaches available</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Display up to 3 coaches
+      container.innerHTML = '';
+      
+      const featuredCoaches = coaches.slice(0, 3);
+      
+      featuredCoaches.forEach(coach => {
+        const coachCard = document.createElement('div');
+        coachCard.className = 'bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow';
+        
+        // Compute average rating
+        const ratings = coach.ratings || [];
+        const avgRating = ratings.length > 0 
+          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length 
+          : 0;
+        
+        // Generate stars
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+          if (i <= Math.floor(avgRating)) {
+            starsHtml += '<i class="fas fa-star text-yellow-400"></i>';
+          } else if (i === Math.ceil(avgRating) && avgRating % 1 > 0) {
+            starsHtml += '<i class="fas fa-star-half-alt text-yellow-400"></i>';
+          } else {
+            starsHtml += '<i class="far fa-star text-yellow-400"></i>';
+          }
+        }
+        
+        coachCard.innerHTML = `
+          <div class="flex items-center mb-3">
+            <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+              <span class="text-blue-600 font-semibold">${coach.user.first_name.charAt(0)}</span>
+            </div>
+            <div>
+              <h3 class="font-semibold">${coach.user.first_name} ${coach.user.last_name}</h3>
+              <div class="flex items-center">
+                <div class="flex mr-1">${starsHtml}</div>
+                <span class="text-sm text-gray-500">(${ratings.length})</span>
+              </div>
+            </div>
+          </div>
+          <p class="text-gray-600 text-sm mb-3">${coach.biography.substring(0, 100)}...</p>
+          <div class="flex justify-between items-center">
+            <span class="font-medium">${formatCurrency(coach.hourly_rate)}/hr</span>
+            <a href="#coach-${coach.id}" class="text-blue-600 hover:underline view-coach-btn" data-coach-id="${coach.id}">View Profile</a>
+          </div>
+        `;
+        
+        container.appendChild(coachCard);
+      });
+      
+      // Add event listeners to view coach buttons
+      document.querySelectorAll('.view-coach-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const coachId = this.getAttribute('data-coach-id');
+          
+          // Activate coaches tab
+          document.querySelector('.coaches-tab').click();
+          
+          // Highlight the coach in the list
+          setTimeout(() => {
+            const coachElement = document.getElementById(`coach-${coachId}`);
+            if (coachElement) {
+              coachElement.scrollIntoView({ behavior: 'smooth' });
+              coachElement.classList.add('ring-2', 'ring-blue-500');
+              
+              setTimeout(() => {
+                coachElement.classList.remove('ring-2', 'ring-blue-500');
+              }, 2000);
+            }
+          }, 500);
+        });
+      });
+    }
+
+    // Populate coaches list on Find Coaches tab
+    function populateCoachesList(coaches) {
+      const container = document.getElementById('coaches-list');
+      
+      if (coaches.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500 col-span-3">
+            <p>No coaches available</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      coaches.forEach(coach => {
+        const coachCard = document.createElement('div');
+        coachCard.className = 'bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow';
+        coachCard.id = `coach-${coach.id}`;
+        
+        // Compute average rating
+        const ratings = coach.ratings || [];
+        const avgRating = ratings.length > 0 
+          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length 
+          : 0;
+        
+        // Generate stars
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+          if (i <= Math.floor(avgRating)) {
+            starsHtml += '<i class="fas fa-star text-yellow-400"></i>';
+          } else if (i === Math.ceil(avgRating) && avgRating % 1 > 0) {
+            starsHtml += '<i class="fas fa-star-half-alt text-yellow-400"></i>';
+          } else {
+            starsHtml += '<i class="far fa-star text-yellow-400"></i>';
+          }
+        }
+        
+        // Get coach courts
+        const courtNames = coach.courts.map(c => c.name).join(', ');
+        
+        coachCard.innerHTML = `
+          <div class="flex items-center mb-4">
+            <div class="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+              <span class="text-blue-600 font-semibold text-xl">${coach.user.first_name.charAt(0)}</span>
+            </div>
+            <div>
+              <h3 class="text-xl font-semibold">${coach.user.first_name} ${coach.user.last_name}</h3>
+              <div class="flex items-center">
+                <div class="flex mr-1">${starsHtml}</div>
+                <span class="text-sm text-gray-500">(${ratings.length} reviews)</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <div class="flex items-center mb-1 text-gray-600">
+              <i class="fas fa-dollar-sign mr-2 w-5 text-center"></i>
+              <span>${formatCurrency(coach.hourly_rate)} per hour</span>
+            </div>
+            <div class="flex items-center mb-1 text-gray-600">
+              <i class="fas fa-map-marker-alt mr-2 w-5 text-center"></i>
+              <span>${courtNames}</span>
+            </div>
+            <div class="flex items-center mb-1 text-gray-600">
+              <i class="fas fa-medal mr-2 w-5 text-center"></i>
+              <span>DUPR Rating: ${coach.user.dupr_rating}</span>
+            </div>
+            <div class="flex items-center text-gray-600">
+              <i class="fas fa-award mr-2 w-5 text-center"></i>
+              <span>${coach.years_experience} years of coaching experience</span>
+            </div>
+          </div>
+          
+          <p class="text-gray-600 mb-4">${coach.biography.substring(0, 150)}...</p>
+          
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-sm font-medium">Specialties:</span>
+              <span class="text-sm text-gray-600">${coach.specialties}</span>
+            </div>
+            <a href="/coaches/${coach.id}" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Book Session
+            </a>
+          </div>
+        `;
+        
+        container.appendChild(coachCard);
+      });
+      
+      // Load courts for court filter
+      loadCourtsFilter();
+    }
+
+    // Load courts filter
+    async function loadCourtsFilter() {
+      try {
+        const courts = await getCourts();
+        
+        const courtFilter = document.getElementById('court-filter');
+        courtFilter.innerHTML = '<option value="">All Courts</option>';
+        
+        courts.forEach(court => {
+          const option = document.createElement('option');
+          option.value = court.id;
+          option.textContent = court.name;
+          courtFilter.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error loading courts:', error);
+      }
+    }
+
+    // Filter coaches based on search and filters
+    function filterCoaches() {
+      const search = document.getElementById('coach-search').value.toLowerCase();
+      const courtId = document.getElementById('court-filter').value;
+      const ratingFilter = document.getElementById('rating-filter').value;
+      
+      const coachCards = document.querySelectorAll('#coaches-list > div');
+      
+      coachCards.forEach(card => {
+        const coachName = card.querySelector('h3').textContent.toLowerCase();
+        const specialties = card.querySelector('div > span.text-gray-600').textContent.toLowerCase();
+        const courts = card.querySelector('div:nth-child(2) > div:nth-child(2) > span').textContent;
+        const ratingStars = card.querySelectorAll('.fa-star, .fa-star-half-alt').length;
+        
+        // Search filter
+        const matchesSearch = coachName.includes(search) || specialties.includes(search);
+        
+        // Court filter
+        const matchesCourt = !courtId || courts.includes(document.getElementById('court-filter').options[document.getElementById('court-filter').selectedIndex].text);
+        
+        // Rating filter
+        const matchesRating = !ratingFilter || ratingStars >= parseFloat(ratingFilter);
+        
+        if (matchesSearch && matchesCourt && matchesRating) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+      
+      // Check if any cards are visible
+      const visibleCards = document.querySelectorAll('#coaches-list > div:not(.hidden)');
+      
+      if (visibleCards.length === 0) {
+        const noResults = document.createElement('div');
+        noResults.className = 'text-center py-12 text-gray-500 col-span-3';
+        noResults.id = 'no-coaches-results';
+        noResults.innerHTML = '<p>No coaches found matching your filters</p>';
+        
+        const existingNoResults = document.getElementById('no-coaches-results');
+        if (!existingNoResults) {
+          document.getElementById('coaches-list').appendChild(noResults);
+        }
+      } else {
+        const existingNoResults = document.getElementById('no-coaches-results');
+        if (existingNoResults) {
+          existingNoResults.remove();
+        }
+      }
+    }
+
+    // Load bookings data
+    async function loadBookings() {
+      try {
+        // Load upcoming bookings
+        const upcomingBookings = await getBookings('upcoming');
+        displayBookings(upcomingBookings, 'upcoming');
+        
+        // Load completed bookings
+        const completedBookings = await getBookings('completed');
+        displayBookings(completedBookings, 'completed');
+        
+        // Load cancelled bookings
+        const cancelledBookings = await getBookings('cancelled');
+        displayBookings(cancelledBookings, 'cancelled');
+        
+        // Update upcoming bookings on dashboard
+        updateUpcomingBookingsList(upcomingBookings.slice(0, 3));
+        
+      } catch (error) {
+        console.error('Error loading bookings:', error);
+        showToast('Error', 'Failed to load bookings data.', 'error');
+      }
+    }
+
+    // Display bookings in the respective containers
+    function displayBookings(bookings, status) {
+      const container = document.getElementById(`${status}-bookings-container`);
+      
+      if (bookings.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <p>No ${status} bookings found</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      bookings.forEach(booking => {
+        const bookingCard = document.createElement('div');
+        bookingCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+        bookingCard.dataset.coachId = booking.coach_id;
+        bookingCard.dataset.courtId = booking.court_id;
+        bookingCard.dataset.date = booking.date;
+        
+        // Format date and time
+        const bookingDate = formatDate(booking.date);
+        const startTime = formatTime(booking.start_time);
+        const endTime = formatTime(booking.end_time);
+        
+        let actionsHtml = '';
+        
+        if (status === 'upcoming') {
+          actionsHtml = `
+            <div class="flex space-x-2 mt-4">
+              <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-booking-btn" data-booking-id="${booking.id}">
+                Cancel
+              </button>
+            </div>
+          `;
+        } else if (status === 'completed' && booking.session_log) {
+          actionsHtml = `
+            <div class="flex space-x-2 mt-4">
+              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 view-log-btn" data-log-id="${booking.session_log.id}">
+                View Session Log
+              </button>
+            </div>
+          `;
+        }
+        
+        // Add package info if from a package
+        let packageInfo = '';
+        if (booking.package) {
+          packageInfo = `
+            <div class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium mt-2">
+              Package Session: ${booking.package.name}
+            </div>
+          `;
+        }
+        
+        // Add discount info if discounted
+        let discountInfo = '';
+        if (booking.discount_amount || booking.discount_percentage) {
+          const discountText = booking.discount_percentage 
+            ? `${booking.discount_percentage}% discount` 
+            : `${booking.discount_amount} discount`;
+            
+          discountInfo = `
+            <div class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium mt-1">
+              ${discountText}
+            </div>
+          `;
+        }
+        
+        bookingCard.innerHTML = `
+          <div class="flex justify-between">
+            <div>
+              <h3 class="font-semibold">${booking.coach.user.first_name} ${booking.coach.user.last_name}</h3>
+              <p class="text-gray-500 text-sm">Coach</p>
+            </div>
+            <div class="text-right">
+              <span class="font-semibold">${formatCurrency(booking.price)}</span>
+              <p class="text-gray-500 text-sm">${packageInfo ? 'Package' : 'Regular Rate'}</p>
+              ${discountInfo}
+              ${packageInfo}
+            </div>
+          </div>
+          
+          <div class="flex items-center mt-3 text-gray-600">
+            <i class="fas fa-calendar-day mr-2"></i>
+            <span>${bookingDate}</span>
+          </div>
+          
+          <div class="flex items-center mt-1 text-gray-600">
+            <i class="fas fa-clock mr-2"></i>
+            <span>${startTime} - ${endTime}</span>
+          </div>
+          
+          <div class="flex items-center mt-1 text-gray-600">
+            <i class="fas fa-map-marker-alt mr-2"></i>
+            <span>${booking.court.name}</span>
+          </div>
+          
+          ${actionsHtml}
+        `;
+        
+        container.appendChild(bookingCard);
+      });
+      
+      // Add event listeners for action buttons
+      if (status === 'upcoming') {
+        // Cancel booking buttons
+        document.querySelectorAll('.cancel-booking-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const bookingId = this.getAttribute('data-booking-id');
+            document.getElementById('cancel-booking-id').value = bookingId;
+            document.getElementById('cancel-booking-modal').classList.remove('hidden');
+          });
+        });
+      } else if (status === 'completed') {
+        // View log buttons
+        document.querySelectorAll('.view-log-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const logId = this.getAttribute('data-log-id');
+            openSessionLogModal(logId);
+          });
+        });
+      }
+    }
+
+    // Filter bookings based on search and filters
+    function filterBookings(status) {
+      const search = document.getElementById(`${status}-search`).value.toLowerCase();
+      const coachId = document.getElementById(`${status}-filter-coach`).value;
+      const sortBy = document.getElementById(`${status}-sort`).value;
+      
+      const bookingCards = Array.from(document.querySelectorAll(`#${status}-bookings-container > div`));
+      
+      // Filter based on search and coach
+      const filteredCards = bookingCards.filter(card => {
+        // Skip if it's the "no bookings" message
+        if (card.classList.contains('text-center')) return false;
+        
+        const coachName = card.querySelector('h3').textContent.toLowerCase();
+        const courtName = card.querySelector('div:nth-child(4) > span').textContent.toLowerCase();
+        
+        // Search filter
+        const matchesSearch = coachName.includes(search) || courtName.includes(search);
+        
+        // Coach filter
+        const matchesCoach = !coachId || card.dataset.coachId === coachId;
+        
+        return matchesSearch && matchesCoach;
+      });
+      
+      // Sort the filtered cards
+      filteredCards.sort((a, b) => {
+        const dateA = new Date(a.dataset.date);
+        const dateB = new Date(b.dataset.date);
+        
+        if (sortBy === 'date-asc') {
+          return dateA - dateB;
+        } else {
+          return dateB - dateA;
+        }
+      });
+      
+      // Clear container
+      const container = document.getElementById(`${status}-bookings-container`);
+      container.innerHTML = '';
+      
+      // Add filtered and sorted cards back to container
+      if (filteredCards.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <p>No ${status} bookings found matching your filters</p>
+          </div>
+        `;
+      } else {
+        filteredCards.forEach(card => {
+          container.appendChild(card);
+        });
+      }
+    }
+
+    // Update upcoming bookings list on dashboard
+    function updateUpcomingBookingsList(bookings) {
+      const container = document.getElementById('upcoming-bookings-list');
+      
+      if (bookings.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-gray-500">
+            <p>No upcoming bookings</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      bookings.forEach(booking => {
+        const bookingItem = document.createElement('div');
+        bookingItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+        
+        // Format date and time
+        const bookingDate = formatDate(booking.date);
+        const startTime = formatTime(booking.start_time);
+        
+        bookingItem.innerHTML = `
+          <div>
+            <h4 class="font-medium">${booking.coach.user.first_name} ${booking.coach.user.last_name}</h4>
+            <p class="text-gray-500 text-sm">${bookingDate} at ${startTime}</p>
+          </div>
+          <div class="text-right">
+            <p class="font-medium">${formatCurrency(booking.price)}</p>
+            <p class="text-gray-500 text-sm">${booking.court.name}</p>
+          </div>
+        `;
+        
+        container.appendChild(bookingItem);
+      });
+    }
+
+    // Load packages
+    async function loadPackages() {
+      try {
+        const packages = await getPackages();
+        
+        // Split packages into active and expired
+        const activePackages = packages.filter(p => {
+          const expiresAt = new Date(p.expires_at);
+          const now = new Date();
+          return expiresAt > now && p.sessions_booked < p.total_sessions;
+        });
+        
+        const expiredPackages = packages.filter(p => {
+          const expiresAt = new Date(p.expires_at);
+          const now = new Date();
+          return expiresAt <= now || p.sessions_booked >= p.total_sessions;
+        });
+        
+        displayPackages(activePackages, 'active');
+        displayPackages(expiredPackages, 'expired');
+        
+        // Update dashboard stats
+        document.getElementById('active-packages-count').textContent = activePackages.length;
+        
+        // Calculate available sessions
+        const availableSessions = activePackages.reduce((total, p) => {
+          return total + (p.total_sessions - p.sessions_booked);
+        }, 0);
+        
+        document.getElementById('available-sessions-count').textContent = availableSessions;
+        
+      } catch (error) {
+        console.error('Error loading packages:', error);
+        showToast('Error', 'Failed to load packages data.', 'error');
+      }
+    }
+
+    // Display packages in the respective containers
+    function displayPackages(packages, status) {
+      const container = document.getElementById(`${status}-packages-container`);
+      
+      if (packages.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <p>No ${status} packages found</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      packages.forEach(pkg => {
+        const packageCard = document.createElement('div');
+        packageCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+        
+        // Format dates
+        const purchaseDate = formatDate(pkg.purchase_date);
+        const expiresAt = formatDate(pkg.expires_at);
+        
+        // Calculate remaining sessions
+        const remainingSessions = pkg.total_sessions - pkg.sessions_booked;
+        
+        // Calculate progress percentage
+        const progressPercentage = (pkg.sessions_booked / pkg.total_sessions) * 100;
+        
+        packageCard.innerHTML = `
+          <div class="flex justify-between">
+            <div>
+              <h3 class="font-semibold">${pkg.pricing_plan.name}</h3>
+              <p class="text-gray-500 text-sm">Coach: ${pkg.coach.user.first_name} ${pkg.coach.user.last_name}</p>
+            </div>
+            <div class="text-right">
+              <span class="font-semibold">${formatCurrency(pkg.total_price)}</span>
+              <p class="text-gray-500 text-sm">Original: ${formatCurrency(pkg.original_price)}</p>
+            </div>
+          </div>
+          
+          <div class="bg-gray-100 h-2 rounded-full mt-4 mb-2">
+            <div class="bg-blue-600 h-2 rounded-full" style="width: ${progressPercentage}%"></div>
+          </div>
+          
+          <div class="flex justify-between text-sm mb-4">
+            <span>${pkg.sessions_booked}/${pkg.total_sessions} sessions used</span>
+            <span>${remainingSessions} remaining</span>
+          </div>
+          
+          <div class="flex items-center mt-3 text-gray-600">
+            <i class="fas fa-calendar-day mr-2"></i>
+            <span>Purchased: ${purchaseDate}</span>
+          </div>
+          
+          <div class="flex items-center mt-1 text-gray-600">
+            <i class="fas fa-hourglass-end mr-2"></i>
+            <span>Expires: ${expiresAt}</span>
+          </div>
+        `;
+        
+        container.appendChild(packageCard);
+      });
+    }
+
+    // Load session logs
+    async function loadSessionLogs() {
+      try {
+        const sessionLogs = await getSessionLogs();
+        
+        const container = document.getElementById('session-logs-container');
+        
+        if (sessionLogs.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 text-gray-500">
+              <p>No session logs found</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = '';
+        
+        sessionLogs.forEach(log => {
+          const logCard = document.createElement('div');
+          logCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+          logCard.dataset.logId = log.id;
+          logCard.dataset.coachId = log.coach_id;
+          
+          // Format date
+          const logDate = formatDate(log.booking.date);
+          
+          logCard.innerHTML = `
+            <div class="flex justify-between">
+              <div>
+                <h3 class="font-semibold">${log.title}</h3>
+                <p class="text-gray-500 text-sm">Coach: ${log.coach.user.first_name} ${log.coach.user.last_name}</p>
+              </div>
+              <div class="text-right">
+                <span class="text-gray-600">${logDate}</span>
+              </div>
+            </div>
+            
+            <div class="mt-3">
+              <h4 class="text-sm font-medium text-gray-700">Session Notes</h4>
+              <p class="text-gray-600 mt-1">${log.notes || 'No notes added'}</p>
+            </div>
+            
+            ${log.student_notes ? `
+              <div class="mt-3">
+                <h4 class="text-sm font-medium text-gray-700">My Notes</h4>
+                <p class="text-gray-600 mt-1">${log.student_notes}</p>
+              </div>
+            ` : ''}
+            
+            <div class="flex justify-end mt-4">
+              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 view-log-btn" data-log-id="${log.id}">
+                View Details
+              </button>
+            </div>
+          `;
+          
+          container.appendChild(logCard);
+        });
+        
+        // Add event listeners for view buttons
+        document.querySelectorAll('.view-log-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const logId = this.getAttribute('data-log-id');
+            openSessionLogModal(logId);
+          });
+        });
+        
+        // Update recent logs on dashboard
+        updateRecentLogsList(sessionLogs.slice(0, 3));
+        
+      } catch (error) {
+        console.error('Error loading session logs:', error);
+        showToast('Error', 'Failed to load session logs.', 'error');
+      }
+    }
+
+    // Filter session logs based on search and filters
+    function filterSessionLogs() {
+      const search = document.getElementById('session-logs-search').value.toLowerCase();
+      const coachId = document.getElementById('session-logs-filter-coach').value;
+      const sortBy = document.getElementById('session-logs-sort').value;
+      
+      const logCards = Array.from(document.querySelectorAll('#session-logs-container > div'));
+      
+      // Filter based on search and coach
+      const filteredCards = logCards.filter(card => {
+        // Skip if it's the "no logs" message
+        if (card.classList.contains('text-center')) return false;
+        
+        const title = card.querySelector('h3').textContent.toLowerCase();
+        const coachName = card.querySelector('p').textContent.toLowerCase();
+        
+        // Search filter
+        const matchesSearch = title.includes(search) || coachName.includes(search);
+        
+        // Coach filter
+        const matchesCoach = !coachId || card.dataset.coachId === coachId;
+        
+        return matchesSearch && matchesCoach;
+      });
+      
+      // Sort the filtered cards
+      filteredCards.sort((a, b) => {
+        const dateA = new Date(a.querySelector('.text-right > span').textContent);
+        const dateB = new Date(b.querySelector('.text-right > span').textContent);
+        
+        if (sortBy === 'date-asc') {
+          return dateA - dateB;
+        } else {
+          return dateB - dateA;
+        }
+      });
+      
+      // Clear container
+      const container = document.getElementById('session-logs-container');
+      container.innerHTML = '';
+      
+      // Add filtered and sorted cards back to container
+      if (filteredCards.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <p>No session logs found matching your filters</p>
+          </div>
+        `;
+      } else {
+        filteredCards.forEach(card => {
+          container.appendChild(card);
+        });
+      }
+    }
+
+    // Update recent logs list on dashboard
+    function updateRecentLogsList(logs) {
+      const container = document.getElementById('recent-logs-list');
+      
+      if (logs.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-gray-500">
+            <p>No recent session logs</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      logs.forEach(log => {
+        const logItem = document.createElement('div');
+        logItem.className = 'p-3 bg-gray-50 rounded-lg';
+        
+        // Format date
+        const logDate = formatDate(log.booking.date);
+        
+        logItem.innerHTML = `
+          <div class="flex justify-between mb-1">
+            <h4 class="font-medium">${log.title}</h4>
+            <span class="text-sm text-gray-500">${logDate}</span>
+          </div>
+          <p class="text-gray-600 text-sm line-clamp-2">${log.notes || 'No notes added'}</p>
+        `;
+        
+        container.appendChild(logItem);
+      });
+    }
+
+    // Open session log modal
+    async function openSessionLogModal(logId) {
+      const modal = document.getElementById('session-log-modal');
+      
+      try {
+        // Get session log data
+        const logData = await getSessionLog(logId);
+        
+        // Set log ID in modal
+        modal.setAttribute('data-log-id', logId);
+        
+        // Format date
+        const logDate = formatDate(logData.booking.date);
+        const startTime = formatTime(logData.booking.start_time);
+        const endTime = formatTime(logData.booking.end_time);
+        
+        // Populate modal
+        document.getElementById('log-coach-name').textContent = `${logData.coach.user.first_name} ${logData.coach.user.last_name}`;
+        document.getElementById('log-date').textContent = `${logDate}, ${startTime} - ${endTime}`;
+        document.getElementById('log-court').textContent = logData.booking.court.name;
+        document.getElementById('log-notes').textContent = logData.notes || 'No coach notes for this session.';
+        document.getElementById('student-notes').value = logData.student_notes || '';
+        
+        // Show modal
+        modal.classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading session log:', error);
+        showToast('Error', 'Failed to load session log details.', 'error');
+      }
+    }
+
+    // Update dashboard stats
+    async function updateDashboardStats() {
+      try {
+        // Count upcoming bookings
+        const upcomingBookings = await getBookings('upcoming');
+        document.getElementById('upcoming-sessions-count').textContent = upcomingBookings.length;
+        
+        // Count completed bookings
+        const completedBookings = await getBookings('completed');
+        document.getElementById('completed-sessions-count').textContent = completedBookings.length;
+        
+        // Active packages count is updated in loadPackages function
+        
+      } catch (error) {
+        console.error('Error updating dashboard stats:', error);
+      }
+    }
+  </script>
+</body>
+</html>

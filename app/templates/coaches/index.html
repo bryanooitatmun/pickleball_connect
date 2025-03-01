@@ -1,0 +1,674 @@
+{% extends 'base.html' %}
+
+{% block extra_styles %}
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+      100% { transform: translateY(0px); }
+    }
+    
+    .scroll-section {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: all 1s ease;
+    }
+    
+    .scroll-section.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .coach-card {
+      transition: all 0.3s ease;
+    }
+    
+    .coach-card:hover {
+      transform: translateY(-10px);
+    }
+
+    /* Modal styling */
+    .custom-modal {
+      z-index: 100;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    /* Filter dropdown styling */
+    .filter-dropdown {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    
+    .filter-dropdown.open {
+      max-height: 800px;
+    }
+    
+    /* Range slider styling */
+    .range-container {
+      position: relative;
+    }
+    
+    .range-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #e0e0e0;
+      outline: none;
+    }
+    
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4158D0, #C850C0);
+      cursor: pointer;
+    }
+    
+    .range-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4158D0, #C850C0);
+      cursor: pointer;
+    }
+
+    /* Loading spinner */
+    .loader {
+      border-top-color: #4158D0;
+      -webkit-animation: spinner 1.5s linear infinite;
+      animation: spinner 1.5s linear infinite;
+    }
+    
+    @-webkit-keyframes spinner {
+      0% { -webkit-transform: rotate(0deg); }
+      100% { -webkit-transform: rotate(360deg); }
+    }
+    
+    @keyframes spinner {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+{% endblock %}
+
+{% block head_scripts %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/ScrollTrigger.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+  <!-- Hero Banner with Gradient -->
+  <div class="pt-32 pb-12 relative overflow-hidden">
+    <div class="hero-gradient absolute inset-0 opacity-10"></div>
+    <div class="container mx-auto px-6 relative z-10">
+      <div class="text-center max-w-3xl mx-auto mb-12 scroll-section">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Meet Our Expert</span>
+          <br />Pickleball Coaches
+        </h1>
+        <p class="text-lg text-gray-600 mb-8">Connect with our handpicked coaches and take your pickleball game to the next level.</p>
+      </div>
+    </div>
+    
+    <!-- Curved Wave Separator -->
+    <div class="absolute bottom-0 left-0 right-0">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120">
+        <path fill="#ffffff" fill-opacity="1" d="M0,32L60,53.3C120,75,240,117,360,117.3C480,117,600,75,720,64C840,53,960,75,1080,80C1200,85,1320,75,1380,69.3L1440,64L1440,120L1380,120C1320,120,1200,120,1080,120C960,120,840,120,720,120C600,120,480,120,360,120C240,120,120,120,60,120L0,120Z"></path>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="bg-white py-8 border-b">
+    <div class="container mx-auto px-6">
+      <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6">
+        <!-- Search Box -->
+        <div class="flex-grow">
+          <div class="relative">
+            <input 
+              id="search-input" 
+              type="text" 
+              placeholder="Search coaches by name..." 
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Filter Button -->
+        <div>
+          <button id="filter-toggle" class="w-full md:w-auto px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg flex items-center justify-center transition-colors">
+            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+            </svg>
+            Filters
+          </button>
+        </div>
+        
+        <!-- Sort Dropdown -->
+        <div class="relative">
+          <select id="sort-dropdown" class="appearance-none px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="name:asc">Name (A-Z)</option>
+            <option value="name:desc">Name (Z-A)</option>
+            <option value="price:asc">Price (Low to High)</option>
+            <option value="price:desc">Price (High to Low)</option>
+            <option value="dupr:desc">DUPR Rating (High to Low)</option>
+            <option value="dupr:asc">DUPR Rating (Low to High)</option>
+            <option value="rating:desc">Coach Rating (High to Low)</option>
+            <option value="rating:asc">Coach Rating (Low to High)</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Filter Options Panel -->
+      <div id="filter-options" class="filter-dropdown bg-gray-50 rounded-lg p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Price Range -->
+          <div class="bg-white p-4 rounded-lg shadow-sm">
+            <h4 class="font-semibold text-gray-700 mb-3">Price Range ($/hour)</h4>
+            <div class="flex items-center justify-between mb-2">
+              <span id="min-price-display">$0</span>
+              <span id="max-price-display">$200</span>
+            </div>
+            <div class="range-container mb-4">
+              <input 
+                type="range" 
+                id="min-price" 
+                min="0" 
+                max="200" 
+                step="5" 
+                value="0" 
+                class="range-slider mb-3"
+              >
+              <input 
+                type="range" 
+                id="max-price" 
+                min="0" 
+                max="200" 
+                step="5" 
+                value="200" 
+                class="range-slider"
+              >
+            </div>
+          </div>
+          
+          <!-- DUPR Rating -->
+          <div class="bg-white p-4 rounded-lg shadow-sm">
+            <h4 class="font-semibold text-gray-700 mb-3">DUPR Rating</h4>
+            <div class="flex items-center justify-between mb-2">
+              <span id="min-dupr-display">2.0</span>
+              <span id="max-dupr-display">7.0</span>
+            </div>
+            <div class="range-container mb-4">
+              <input 
+                type="range" 
+                id="min-dupr" 
+                min="2.0" 
+                max="7.0" 
+                step="0.1" 
+                value="2.0" 
+                class="range-slider mb-3"
+              >
+              <input 
+                type="range" 
+                id="max-dupr" 
+                min="2.0" 
+                max="7.0" 
+                step="0.1" 
+                value="7.0" 
+                class="range-slider"
+              >
+            </div>
+          </div>
+          
+          <!-- Coach Rating -->
+          <div class="bg-white p-4 rounded-lg shadow-sm">
+            <h4 class="font-semibold text-gray-700 mb-3">Coach Rating</h4>
+            <div class="flex items-center mb-3 space-x-2">
+              <select id="min-rating" class="bg-gray-100 border-none rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">Any Rating</option>
+                <option value="3">3+ Stars</option>
+                <option value="3.5">3.5+ Stars</option>
+                <option value="4">4+ Stars</option>
+                <option value="4.5">4.5+ Stars</option>
+                <option value="5">5 Stars Only</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Court Location -->
+          <div class="bg-white p-4 rounded-lg shadow-sm">
+            <h4 class="font-semibold text-gray-700 mb-3">Court Location</h4>
+            <div class="mb-3">
+              <select id="court-filter" class="bg-gray-100 border-none rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Locations</option>
+                <!-- Courts will be populated via JavaScript -->
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Filter Actions -->
+        <div class="flex justify-end mt-4 space-x-4">
+          <button id="reset-filters" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+            Reset Filters
+          </button>
+          <button id="apply-filters" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-md transition-all">
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content - Coaches List -->
+  <div class="bg-white py-12">
+    <div class="container mx-auto px-6">
+      <!-- Loading Indicator -->
+      <div id="loading-indicator" class="flex justify-center py-12 hidden">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div>
+      </div>
+      
+      <!-- No Results Message -->
+      <div id="no-results" class="text-center py-12 hidden">
+        <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <h3 class="mt-4 text-xl font-medium text-gray-700">No coaches found</h3>
+        <p class="mt-2 text-gray-500">Try adjusting your filters or search terms.</p>
+      </div>
+      
+      <!-- Coaches Grid -->
+      <div id="coaches-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 scroll-section">
+        <!-- Coaches will be populated via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  {% if not current_user.is_authenticated %}
+  <!-- CTA Section with Gradient Background -->
+  <div class="py-20 hero-gradient text-white">
+    <div class="container mx-auto px-6 text-center">
+      <div class="scroll-section">
+        <h2 class="text-4xl font-bold mb-6">Ready to Improve Your Game?</h2>
+        <p class="text-xl mb-8 max-w-2xl mx-auto">Connect with a coach today and take your pickleball skills to the next level.</p>
+        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+          <a href="#" class="login-btn bg-white text-blue-600 px-8 py-4 rounded-full font-medium hover:shadow-xl transform hover:scale-105 transition-all">
+            Login Now
+          </a>
+          <a href="#" class="register-btn bg-transparent border-2 border-white text-white px-8 py-4 rounded-full font-medium hover:bg-white hover:text-blue-600 transition-all">
+            Register
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  <!-- Coach Card Template -->
+  <template id="coach-card-template">
+    <div class="coach-card bg-white rounded-xl shadow-lg overflow-hidden transform transition-all">
+      <div class="relative">
+        <img src="/api/placeholder/400/250" alt="Coach" class="w-full h-64 object-cover coach-image">
+        <div class="absolute top-4 right-4 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full coach-dupr">
+          DUPR 5.2
+        </div>
+      </div>
+      <div class="p-6">
+        <h2 class="text-xl font-bold mb-3 coach-name">Coach Name</h2>
+        <div class="flex items-center mb-3">
+          <div class="flex text-yellow-400 mr-2 coach-stars">
+            <!-- Stars will be populated via JavaScript -->
+          </div>
+          <span class="text-gray-600 text-sm coach-rating">4.8/5</span>
+        </div>
+        <p class="text-gray-700 mb-2"><span class="font-semibold">Coaching Rate:</span> <span class="coach-rate">$50/hour</span></p>
+        <p class="text-gray-700 mb-2"><span class="font-semibold">Sessions Coached:</span> <span class="coach-sessions">120</span></p>
+        <p class="text-gray-700 mb-4"><span class="font-semibold">Courts:</span> <span class="coach-courts">City Park, Downtown Club</span></p>
+        <a href="#" class="coach-profile-link w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all inline-block text-center">
+          View Profile
+        </a>
+      </div>
+    </div>
+  </template>
+{% endblock %}
+
+{% block scripts %}
+ <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // DOM Elements
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+      const loginModal = document.getElementById('login-modal');
+      const registerModal = document.getElementById('register-modal');
+      const passwordModal = document.getElementById('password-modal');
+      const filterToggle = document.getElementById('filter-toggle');
+      const filterOptions = document.getElementById('filter-options');
+      const searchInput = document.getElementById('search-input');
+      const sortDropdown = document.getElementById('sort-dropdown');
+      const minPrice = document.getElementById('min-price');
+      const maxPrice = document.getElementById('max-price');
+      const minPriceDisplay = document.getElementById('min-price-display');
+      const maxPriceDisplay = document.getElementById('max-price-display');
+      const minDupr = document.getElementById('min-dupr');
+      const maxDupr = document.getElementById('max-dupr');
+      const minDuprDisplay = document.getElementById('min-dupr-display');
+      const maxDuprDisplay = document.getElementById('max-dupr-display');
+      const minRating = document.getElementById('min-rating');
+      const courtFilter = document.getElementById('court-filter');
+      const resetFiltersBtn = document.getElementById('reset-filters');
+      const applyFiltersBtn = document.getElementById('apply-filters');
+      const coachesGrid = document.getElementById('coaches-grid');
+      const loadingIndicator = document.getElementById('loading-indicator');
+      const noResults = document.getElementById('no-results');
+
+      // Filter state
+      let filters = {
+        query: '',
+        minPrice: 0,
+        maxPrice: 200,
+        minDupr: 2.0,
+        maxDupr: 7.0,
+        minRating: -1,
+        courtId: '',
+        sortBy: 'name',
+        sortDirection: 'asc'
+      };
+      
+      // Mobile menu toggle
+      mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+    
+      // Filter toggle
+      filterToggle.addEventListener('click', () => {
+        filterOptions.classList.toggle('open');
+      });
+      
+      // Range slider updates
+      minPrice.addEventListener('input', () => {
+        minPriceDisplay.textContent = minPrice.value;
+        // Ensure min doesn't exceed max
+        if (parseInt(minPrice.value) > parseInt(maxPrice.value)) {
+          maxPrice.value = minPrice.value;
+          maxPriceDisplay.textContent = maxPrice.value;
+        }
+      });
+      
+      maxPrice.addEventListener('input', () => {
+        maxPriceDisplay.textContent =  maxPrice.value;
+        // Ensure max doesn't go below min
+        if (parseInt(maxPrice.value) < parseInt(minPrice.value)) {
+          minPrice.value = maxPrice.value;
+          minPriceDisplay.textContent = minPrice.value;
+        }
+      });
+      
+      minDupr.addEventListener('input', () => {
+        minDuprDisplay.textContent = minDupr.value;
+        // Ensure min doesn't exceed max
+        if (parseFloat(minDupr.value) > parseFloat(maxDupr.value)) {
+          maxDupr.value = minDupr.value;
+          maxDuprDisplay.textContent = maxDupr.value;
+        }
+      });
+      
+      maxDupr.addEventListener('input', () => {
+        maxDuprDisplay.textContent = maxDupr.value;
+        // Ensure max doesn't go below min
+        if (parseFloat(maxDupr.value) < parseFloat(minDupr.value)) {
+          minDupr.value = maxDupr.value;
+          minDuprDisplay.textContent = minDupr.value;
+        }
+      });
+      
+      // Scroll animations
+      const scrollSections = document.querySelectorAll('.scroll-section');
+      
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+          }
+        });
+      }, { threshold: 0.1 });
+      
+      scrollSections.forEach(section => {
+        observer.observe(section);
+      });
+
+      
+      // Initialize GSAP ScrollTrigger for coach cards if available
+      if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+        gsap.registerPlugin(ScrollTrigger);
+        
+        function initScrollAnimations() {
+          gsap.utils.toArray('.coach-card').forEach((card, i) => {
+            gsap.from(card, {
+              y: 50,
+              opacity: 0,
+              duration: 0.8,
+              delay: i * 0.1,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: card,
+                start: "top 85%",
+                toggleActions: "play none none none"
+              }
+            });
+          });
+        }
+      }
+      
+      // Load courts for filter dropdown
+      async function loadCourts() {
+        try {
+          const response = await fetch('/coach/api/courts');
+          const courts = await response.json();
+          
+          // Populate court filter dropdown
+          courtFilter.innerHTML = '<option value="">All Locations</option>';
+          courts.forEach(court => {
+            const option = document.createElement('option');
+            option.value = court.id;
+            option.textContent = court.name;
+            courtFilter.appendChild(option);
+          });
+        } catch (error) {
+          console.error('Error loading courts:', error);
+        }
+      }
+      
+      // Generate star rating HTML
+      function generateStars(rating) {
+        let starsHtml = '';
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        
+        // Add full stars
+        for (let i = 0; i < fullStars; i++) {
+          starsHtml += '<i class="fas fa-star"></i>';
+        }
+        
+        // Add half star if needed
+        if (hasHalfStar) {
+          starsHtml += '<i class="fas fa-star-half-alt"></i>';
+        }
+        
+        // Add empty stars to make 5 total
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+        for (let i = 0; i < emptyStars; i++) {
+          starsHtml += '<i class="far fa-star"></i>';
+        }
+        
+        return starsHtml;
+      }
+      
+      // Render coach cards
+      function renderCoaches(coaches) {
+        coachesGrid.innerHTML = '';
+        
+        if (coaches.length === 0) {
+          noResults.classList.remove('hidden');
+          return;
+        }
+        
+        noResults.classList.add('hidden');
+        
+        const template = document.getElementById('coach-card-template');
+        
+        coaches.forEach(coach => {
+          const clone = template.content.cloneNode(true);
+          
+          // Update coach data
+          clone.querySelector('.coach-name').textContent = `${coach.first_name} ${coach.last_name}`;
+          clone.querySelector('.coach-dupr').textContent = `DUPR ${coach.dupr_rating.toFixed(1)}`;
+          clone.querySelector('.coach-rate').textContent = `${coach.hourly_rate}/hour`;
+          clone.querySelector('.coach-sessions').textContent = coach.sessions_completed;
+          clone.querySelector('.coach-courts').textContent = coach.courts.join(', ');
+          
+          // Generate star rating
+          clone.querySelector('.coach-stars').innerHTML = generateStars(coach.avg_rating);
+          clone.querySelector('.coach-rating').textContent = `${coach.avg_rating.toFixed(1)}/5`;
+          
+          // Set profile link
+          clone.querySelector('.coach-profile-link').href = `/coach/coaches/${coach.id}`;
+          
+          coachesGrid.appendChild(clone);
+        });
+        
+        // Initialize animation for new cards
+        if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+          initScrollAnimations();
+        }
+      }
+      
+      // Load coaches with current filters
+      async function loadCoaches() {
+        loadingIndicator.classList.remove('hidden');
+        coachesGrid.classList.add('hidden');
+        noResults.classList.add('hidden');
+        
+        // Get sorting values
+        const [sortBy, sortDirection] = sortDropdown.value.split(':');
+        
+        try {
+          // Build query string from filters
+          const params = new URLSearchParams({
+            query: filters.query,
+            min_price: filters.minPrice,
+            max_price: filters.maxPrice,
+            min_dupr: filters.minDupr,
+            max_dupr: filters.maxDupr,
+            min_rating: filters.minRating,
+            sort_by: sortBy,
+            sort_direction: sortDirection
+          });
+          
+          if (filters.courtId) {
+            params.append('court_id', filters.courtId);
+          }
+          
+          const response = await fetch(`/coach/api/coaches?${params.toString()}`);
+          const coaches = await response.json();
+          
+          renderCoaches(coaches);
+          
+          loadingIndicator.classList.add('hidden');
+          coachesGrid.classList.remove('hidden');
+          
+        } catch (error) {
+          console.error('Error loading coaches:', error);
+          loadingIndicator.classList.add('hidden');
+          alert('Error loading coaches. Please try again later.');
+        }
+      }
+      
+      // Apply filters
+      applyFiltersBtn.addEventListener('click', () => {
+        filters.minPrice = parseInt(minPrice.value);
+        filters.maxPrice = parseInt(maxPrice.value);
+        filters.minDupr = parseFloat(minDupr.value);
+        filters.maxDupr = parseFloat(maxDupr.value);
+        filters.minRating = parseFloat(minRating.value);
+        filters.courtId = courtFilter.value;
+        
+        loadCoaches();
+        filterOptions.classList.remove('open');
+      });
+      
+      // Reset filters
+      resetFiltersBtn.addEventListener('click', () => {
+        // Reset filter inputs
+        minPrice.value = 0;
+        maxPrice.value = 200;
+        minPriceDisplay.textContent = '$0';
+        maxPriceDisplay.textContent = '$200';
+        
+        minDupr.value = 2.0;
+        maxDupr.value = 7.0;
+        minDuprDisplay.textContent = '2.0';
+        maxDuprDisplay.textContent = '7.0';
+        
+        minRating.value = -1;
+        courtFilter.value = '';
+        
+        // Reset filter state
+        filters = {
+          query: searchInput.value,
+          minPrice: 0,
+          maxPrice: 200,
+          minDupr: 2.0,
+          maxDupr: 7.0,
+          minRating: -1,
+          courtId: '',
+          sortBy: 'name',
+          sortDirection: 'asc'
+        };
+        
+        // Reset sort dropdown
+        sortDropdown.value = 'name:asc';
+        
+        loadCoaches();
+      });
+      
+      // Handle search input
+      let searchTimeout;
+      searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        
+        searchTimeout = setTimeout(() => {
+          filters.query = e.target.value;
+          loadCoaches();
+        }, 500); // Debounce search input
+      });
+      
+      // Handle sort change
+      sortDropdown.addEventListener('change', () => {
+        loadCoaches();
+      });
+      
+      // Initialize
+      loadCourts();
+      loadCoaches();
+    });
+  </script>
+
+{% endblock %}
+
+ 

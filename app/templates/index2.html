@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pickleball Connect - Find Your Perfect Coach</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/ScrollTrigger.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      scroll-behavior: smooth;
+    }
+    
+    .hero-gradient {
+      background: linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+    }
+    
+    .bg-gradient-card {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7));
+      backdrop-filter: blur(10px);
+    }
+    
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+      100% { transform: translateY(0px); }
+    }
+    
+    .scroll-section {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: all 1s ease;
+    }
+    
+    .scroll-section.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .coach-card {
+      transition: all 0.3s ease;
+    }
+    
+    .coach-card:hover {
+      transform: translateY(-10px);
+    }
+    
+    .testimonial-bubble {
+      position: relative;
+    }
+    
+    .testimonial-bubble:after {
+      content: '';
+      position: absolute;
+      bottom: -15px;
+      left: 50px;
+      border-width: 15px 15px 0;
+      border-style: solid;
+      border-color: white transparent;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 overflow-x-hidden">
+  <!-- Navbar - Fixed, Transparent with Blur effect -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-80 backdrop-blur-md shadow-sm transition-all duration-300">
+    <div class="container mx-auto px-6 py-3">
+      <div class="flex items-center justify-between">
+        <a href="#" class="flex items-center space-x-2">
+          <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+            <span class="text-white font-bold text-xl">P</span>
+          </div>
+          <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Pickleball Connect</span>
+        </a>
+        
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="#about" class="text-gray-600 hover:text-blue-600 transition-colors">About</a>
+          <a href="#coaches" class="text-gray-600 hover:text-blue-600 transition-colors">Coaches</a>
+          <a href="#testimonials" class="text-gray-600 hover:text-blue-600 transition-colors">Testimonials</a>
+          <a href="#pricing" class="text-gray-600 hover:text-blue-600 transition-colors">Pricing</a>
+          <button class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+            Sign Up
+          </button>
+        </div>
+        
+        <!-- Mobile Menu Button -->
+        <div class="md:hidden">
+          <button id="mobile-menu-button" class="text-gray-500 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="md:hidden hidden bg-white rounded-lg mt-4 shadow-lg p-6 space-y-4">
+        <a href="#about" class="block text-gray-600 hover:text-blue-600 transition-colors">About</a>
+        <a href="#coaches" class="block text-gray-600 hover:text-blue-600 transition-colors">Coaches</a>
+        <a href="#testimonials" class="block text-gray-600 hover:text-blue-600 transition-colors">Testimonials</a>
+        <a href="#pricing" class="block text-gray-600 hover:text-blue-600 transition-colors">Pricing</a>
+        <button class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+          Sign Up
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <div class="pt-24 relative overflow-hidden">
+    <div class="hero-gradient absolute inset-0 opacity-10"></div>
+    <div class="container mx-auto px-6 py-16 relative z-10">
+      <div class="flex flex-col md:flex-row items-center">
+        <div class="md:w-1/2 mb-12 md:mb-0">
+          <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-6">
+            <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Elevate Your</span>
+            <br />Pickleball Game
+          </h1>
+          <p class="text-lg md:text-xl text-gray-600 mb-8 max-w-lg">Connect with elite coaches who will transform your skills and take your game to professional levels.</p>
+          <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <a href="#coaches" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full font-medium hover:shadow-xl transform hover:scale-105 transition-all text-center">
+              Find Your Coach
+            </a>
+            <a href="#about" class="bg-white text-gray-800 border border-gray-200 px-6 py-3 rounded-full font-medium hover:shadow-lg transition-all text-center">
+              Learn More
+            </a>
+          </div>
+          <div class="mt-8 flex items-center">
+            <div class="flex -space-x-2">
+              <img src="/api/placeholder/48/48" alt="User" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-white" />
+              <img src="/api/placeholder/48/48" alt="User" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-white" />
+              <img src="/api/placeholder/48/48" alt="User" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-white" />
+            </div>
+            <p class="ml-4 text-xs md:text-sm text-gray-600">Joined by <span class="font-semibold">2,500+</span> players</p>
+          </div>
+        </div>
+        <div class="md:w-1/2 relative ml-8" style="width: 500px;">
+          <div class="relative animate-float mx-auto max-w-[85%] md:max-w-full">
+            <img src="/api/placeholder/600/400" alt="Pickleball players" class="rounded-2xl shadow-2xl w-full" />
+            <div class="absolute -bottom-4 -left-4 sm:-bottom-6 sm:-left-6 bg-white p-2 sm:p-4 rounded-lg shadow-lg hidden sm:block">
+              <div class="flex items-center space-x-2">
+                <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-green-500 flex items-center justify-center">
+                  <svg class="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-xs sm:text-sm font-medium">97% Success Rate</p>
+                  <p class="text-xs text-gray-500 hidden sm:block">Player Improvement</p>
+                </div>
+              </div>
+            </div>
+            <div class="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 bg-white p-2 sm:p-4 rounded-lg shadow-lg hidden sm:block">
+              <div class="flex items-center space-x-2">
+                <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                  <svg class="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-xs sm:text-sm font-medium">200+ Coaches</p>
+                  <p class="text-xs text-gray-500 hidden sm:block">Nationwide</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Curved Wave Separator -->
+    <div class="absolute bottom-0 left-0 right-0">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120">
+        <path fill="#ffffff" fill-opacity="1" d="M0,32L60,53.3C120,75,240,117,360,117.3C480,117,600,75,720,64C840,53,960,75,1080,80C1200,85,1320,75,1380,69.3L1440,64L1440,120L1380,120C1320,120,1200,120,1080,120C960,120,840,120,720,120C600,120,480,120,360,120C240,120,120,120,60,120L0,120Z"></path>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Features Section with Icons -->
+  <div class="bg-white py-16">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16 scroll-section">
+        <h2 class="text-3xl font-bold mb-4">Why Players Choose Us</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">Discover the key advantages that make Pickleball Connect the premier platform for players seeking to improve their skills.</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 scroll-section">
+        <div class="bg-gradient-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
+          <div class="h-14 w-14 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Certified Coaches</h3>
+          <p class="text-gray-600">All our coaches are certified professionals with proven track records in training champions.</p>
+        </div>
+        
+        <div class="bg-gradient-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
+          <div class="h-14 w-14 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Flexible Scheduling</h3>
+          <p class="text-gray-600">Book sessions that fit your schedule, with options available 7 days a week, morning to evening.</p>
+        </div>
+        
+        <div class="bg-gradient-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
+          <div class="h-14 w-14 bg-green-100 rounded-full flex items-center justify-center mb-6">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Personalized Training</h3>
+          <p class="text-gray-600">Customized lessons targeting your specific needs and goals for maximum improvement.</p>
+        </div>
+        
+        <div class="bg-gradient-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
+          <div class="h-14 w-14 bg-yellow-100 rounded-full flex items-center justify-center mb-6">
+            <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Affordable Rates</h3>
+          <p class="text-gray-600">Competitive pricing with packages designed to fit any budget without compromising quality.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About Section - With Floating Elements -->
+  <div id="about" class="bg-gray-50 py-20 relative">
+    <div class="container mx-auto px-6">
+      <div class="flex flex-col md:flex-row items-center">
+        <div class="md:w-1/2 mb-12 md:mb-0 scroll-section">
+          <div class="relative">
+            <div class="bg-blue-100 h-64 w-64 rounded-full absolute -z-10 -top-10 -left-10 opacity-50"></div>
+            <img src="/api/placeholder/600/400" alt="Pickleball coaching" class="rounded-2xl shadow-xl relative z-10" />
+            <div class="absolute -bottom-8 -right-8 bg-white p-4 rounded-lg shadow-lg z-20">
+              <div class="flex items-center space-x-2">
+                <div class="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-3">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-bold">4.9/5 Rating</p>
+                  <p class="text-xs">From 500+ reviews</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="md:w-1/2 md:pl-12 scroll-section">
+          <h5 class="text-blue-600 font-semibold mb-2">ABOUT US</h5>
+          <h2 class="text-4xl font-bold mb-6">Transforming Pickleball Players Since 2017</h2>
+          <p class="text-gray-600 mb-6">At Pickleball Connect, we're passionate about connecting players with coaches who can take their game to the next level. Our platform was built by players, for players, with a deep understanding of what it takes to improve.</p>
+          <p class="text-gray-600 mb-8">We believe that the right coach can make all the difference in your pickleball journey. That's why we've carefully selected coaches who not only have the technical skills but also the teaching ability to communicate effectively and inspire their students.</p>
+          
+          <div class="grid grid-cols-2 gap-6 mb-8">
+            <div class="flex items-center space-x-3">
+              <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <span class="font-medium">10,000+ Sessions</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <span class="font-medium">200+ Coaches</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <span class="font-medium">50+ Locations</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <span class="font-medium">98% Satisfaction</span>
+            </div>
+          </div>
+          
+          <a href="#coaches" class="inline-flex items-center space-x-2 text-blue-600 font-medium hover:text-blue-800 transition-colors">
+            <span>Meet Our Coaches</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coaches Section - Card Grid with Hover Effects -->
+  <div id="coaches" class="py-20 bg-white">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16 scroll-section">
+        <h5 class="text-blue-600 font-semibold mb-2">EXPERT COACHES</h5>
+        <h2 class="text-4xl font-bold mb-4">Meet Our Elite Coaches</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">Our coaches are handpicked for their expertise, teaching skills, and passion for the game. Browse our selection and find the perfect match for your goals.</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 scroll-section">
+        <!-- Coach Card 1 -->
+        <div class="coach-card bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="relative">
+            <img src="/api/placeholder/400/300" alt="Coach Michael" class="w-full h-64 object-cover" />
+            <div class="absolute top-4 right-4 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">Pro Coach</div>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-2">Michael Stevens</h3>
+            <div class="flex items-center mb-4">
+              <div class="flex text-yellow-400">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+              <span class="text-gray-600 text-sm ml-2">5.0 (124 reviews)</span>
+            </div>
+            <p class="text-gray-600 mb-4">Former national champion with 12+ years of coaching experience. Specializes in advanced strategy and footwork.</p>
+            <div class="flex flex-wrap gap-2 mb-6">
+              <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">Advanced Play</span>
+              <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">Strategy</span>
+              <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">Footwork</span>
+            </div>
+            <button class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Book a Session
+            </button>
+          </div>
+        </div>
+        
+        <!-- Coach Card 2 -->
+        <div class="coach-card bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="relative">
+            <img src="/api/placeholder/400/300" alt="Coach Sarah" class="w-full h-64 object-cover" />
+            <div class="absolute top-4 right-4 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">Beginner Friendly</div>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-2">Sarah Johnson</h3>
+            <div class="flex items-center mb-4">
+              <div class="flex text-yellow-400">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star-half-alt"></i>
+              </div>
+              <span class="text-gray-600 text-sm ml-2">4.8 (98 reviews)</span>
+            </div>
+            <p class="text-gray-600 mb-4">Patient instructor with a talent for breaking down complex skills for beginners. Creates supportive learning environments.</p>
+            <div class="flex flex-wrap gap-2 mb-6">
+              <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">Beginners</span>
+              <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">Fundamentals</span>
+              <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">Drills</span>
+            </div>
+            <button class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Book a Session
+            </button>
+          </div>
+        </div>
+        
+        <!-- Coach Card 3 -->
+        <div class="coach-card bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="relative">
+            <img src="/api/placeholder/400/300" alt="Coach David" class="w-full h-64 object-cover" />
+            <div class="absolute top-4 right-4 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">Tournament Prep</div>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-2">David Rodriguez</h3>
+            <div class="flex items-center mb-4">
+              <div class="flex text-yellow-400">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+              <span class="text-gray-600 text-sm ml-2">4.9 (156 reviews)</span>
+            </div>
+            <p class="text-gray-600 mb-4">Tournament specialist who focuses on mental toughness and competitive strategy. Former collegiate athlete.</p>
+            <div class="flex flex-wrap gap-2 mb-6">
+
+              <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">Competition</span>
+              <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">Mental Game</span>
+              <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">Strategy</span>
+            </div>
+            <button class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Book a Session
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="text-center mt-12 scroll-section">
+        <a href="coaches.html" class="inline-flex items-center space-x-2 bg-white border border-blue-500 text-blue-600 px-8 py-3 rounded-full font-medium hover:bg-blue-50 transition-colors">
+          <span>View All Coaches</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Testimonials Section - Modern Cards with Quotes -->
+  <div id="testimonials" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16 scroll-section">
+        <h5 class="text-blue-600 font-semibold mb-2">SUCCESS STORIES</h5>
+        <h2 class="text-4xl font-bold mb-4">What Our Players Say</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">Don't just take our word for it. Hear from the players whose games have been transformed through Pickleball Connect.</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 scroll-section">
+        <!-- Testimonial 1 -->
+        <div class="bg-white rounded-xl shadow-lg p-8">
+          <div class="flex justify-center mb-6">
+            <div class="h-16 w-16 rounded-full overflow-hidden border-4 border-blue-500">
+              <img src="/api/placeholder/64/64" alt="Sarah L." class="w-full h-full object-cover" />
+            </div>
+          </div>
+          <div class="flex justify-center mb-4 text-yellow-400">
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+          </div>
+          <p class="text-gray-600 text-center italic mb-6">"I've been playing pickleball for a few years, but I was stuck at an intermediate level. Thanks to my coach from Pickleball Connect, I've improved my game significantly. The personalized training really made a difference!"</p>
+          <div class="text-center">
+            <h4 class="font-bold">Sarah L.</h4>
+            <p class="text-sm text-gray-500">Intermediate Player</p>
+          </div>
+        </div>
+        
+        <!-- Testimonial 2 -->
+        <div class="bg-white rounded-xl shadow-lg p-8">
+          <div class="flex justify-center mb-6">
+            <div class="h-16 w-16 rounded-full overflow-hidden border-4 border-blue-500">
+              <img src="/api/placeholder/64/64" alt="John D." class="w-full h-full object-cover" />
+            </div>
+          </div>
+          <div class="flex justify-center mb-4 text-yellow-400">
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+          </div>
+          <p class="text-gray-600 text-center italic mb-6">"The coaches here are amazing! They are patient, knowledgeable, and really know how to break down complex techniques into simple steps. I highly recommend Pickleball Connect to anyone looking to improve their game."</p>
+          <div class="text-center">
+            <h4 class="font-bold">John D.</h4>
+            <p class="text-sm text-gray-500">Advanced Player</p>
+          </div>
+        </div>
+        
+        <!-- Testimonial 3 -->
+        <div class="bg-white rounded-xl shadow-lg p-8">
+          <div class="flex justify-center mb-6">
+            <div class="h-16 w-16 rounded-full overflow-hidden border-4 border-blue-500">
+              <img src="/api/placeholder/64/64" alt="Emily R." class="w-full h-full object-cover" />
+            </div>
+          </div>
+          <div class="flex justify-center mb-4 text-yellow-400">
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star-half-alt"></i>
+          </div>
+          <p class="text-gray-600 text-center italic mb-6">"I started as a complete beginner, and within a few months, I was able to compete in local tournaments. The coaches are fantastic, and the platform is so easy to use. I couldn't be happier with my progress!"</p>
+          <div class="text-center">
+            <h4 class="font-bold">Emily R.</h4>
+            <p class="text-sm text-gray-500">Beginner Player</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pricing Section -->
+  <div id="pricing" class="py-20 bg-white">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16 scroll-section">
+        <h5 class="text-blue-600 font-semibold mb-2">PRICING PLANS</h5>
+        <h2 class="text-4xl font-bold mb-4">Choose Your Coaching Package</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">Flexible options to match your goals and budget. All packages include access to our online resources and community.</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 scroll-section">
+        <!-- Basic Plan -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all">
+          <div class="p-8">
+            <h3 class="text-xl font-bold mb-4">Starter Package</h3>
+            <div class="flex items-end mb-6">
+              <span class="text-4xl font-bold">$89</span>
+              <span class="text-gray-500 ml-2">/ session</span>
+            </div>
+            <p class="text-gray-600 mb-6">Perfect for beginners looking to learn the fundamentals or occasional players wanting to improve specific skills.</p>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>60-minute private session</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Personalized instruction</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Basic skill assessment</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Access to online resources</span>
+              </li>
+            </ul>
+            <button class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Get Started
+            </button>
+          </div>
+        </div>
+        
+        <!-- Premium Plan -->
+        <div class="bg-gradient-to-b from-blue-500 to-purple-600 rounded-xl shadow-xl transform scale-105 overflow-hidden">
+          <div class="bg-white m-1 rounded-lg p-8">
+            <div class="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full inline-block mb-4">MOST POPULAR</div>
+            <h3 class="text-xl font-bold mb-4">Performance Package</h3>
+            <div class="flex items-end mb-6">
+              <span class="text-4xl font-bold">$399</span>
+              <span class="text-gray-500 ml-2">/ month</span>
+            </div>
+            <p class="text-gray-600 mb-6">Ideal for serious players looking to make significant improvements through consistent coaching.</p>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>5 sessions per month (60 min)</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Comprehensive skill assessment</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Video analysis & feedback</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Custom training program</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Premium online resources</span>
+              </li>
+            </ul>
+            <button class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Get Started
+            </button>
+          </div>
+        </div>
+        
+        <!-- Elite Plan -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all">
+          <div class="p-8">
+            <h3 class="text-xl font-bold mb-4">Elite Package</h3>
+            <div class="flex items-end mb-6">
+              <span class="text-4xl font-bold">$699</span>
+              <span class="text-gray-500 ml-2">/ month</span>
+            </div>
+            <p class="text-gray-600 mb-6">For competitive players seeking intensive coaching to prepare for tournaments and high-level play.</p>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>8 sessions per month (90 min)</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Advanced competitive training</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Tournament strategy coaching</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Mental game preparation</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Direct coach contact & support</span>
+              </li>
+            </ul>
+            <button class="w-full bg-white border border-blue-500 text-blue-600 py-3 rounded-lg font-medium hover:bg-blue-50 transition-all">
+              Get Started
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA Section with Gradient Background -->
+  <div class="py-20 hero-gradient text-white">
+    <div class="container mx-auto px-6 text-center">
+      <div class="scroll-section">
+        <h2 class="text-4xl font-bold mb-6">Ready to Transform Your Pickleball Game?</h2>
+        <p class="text-xl mb-8 max-w-2xl mx-auto">Join thousands of players who've improved their skills with our expert coaches. Start your journey today!</p>
+        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+          <a href="#coaches" class="bg-white text-blue-600 px-8 py-4 rounded-full font-medium hover:shadow-xl transform hover:scale-105 transition-all">
+            Find Your Coach
+          </a>
+          <a href="#pricing" class="bg-transparent border-2 border-white text-white px-8 py-4 rounded-full font-medium hover:bg-white hover:text-blue-600 transition-all">
+            View Pricing
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Section -->
+  <div class="py-20 bg-gray-50">
+    <div class="container mx-auto px-6">
+      <div class="text-center mb-16 scroll-section">
+        <h5 class="text-blue-600 font-semibold mb-2">FREQUENTLY ASKED QUESTIONS</h5>
+        <h2 class="text-4xl font-bold mb-4">Common Questions</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">Find answers to the most frequently asked questions about our coaching services.</p>
+      </div>
+      
+      <div class="max-w-3xl mx-auto scroll-section">
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+          <button class="faq-button w-full px-6 py-4 text-left font-medium flex justify-between items-center focus:outline-none">
+            <span>How do I choose the right coach for me?</span>
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="px-6 pb-4">
+            <p class="text-gray-600">We recommend browsing coach profiles to find someone who specializes in the areas you want to improve. You can filter by skill level, specialties, and location. Many coaches offer a discounted first session so you can see if their teaching style matches your learning style.</p>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+          <button class="faq-button w-full px-6 py-4 text-left font-medium flex justify-between items-center focus:outline-none">
+            <span>Where do coaching sessions take place?</span>
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="px-6 pb-4">
+            <p class="text-gray-600">Coaches typically have access to courts where they conduct lessons. When you book a session, you'll be able to see the training location. Some coaches also offer to travel to your preferred court for an additional fee.</p>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+          <button class="faq-button w-full px-6 py-4 text-left font-medium flex justify-between items-center focus:outline-none">
+            <span>What should I bring to my first session?</span>
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="px-6 pb-4">
+            <p class="text-gray-600">Bring your paddle, comfortable athletic clothing, court shoes, water, and a positive attitude! Your coach will provide the balls and any training equipment needed. If you don't have your own paddle yet, let your coach know in advance, and they can provide one for your session.</p>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+          <button class="faq-button w-full px-6 py-4 text-left font-medium flex justify-between items-center focus:outline-none">
+            <span>Can I cancel or reschedule a session?</span>
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="px-6 pb-4">
+            <p class="text-gray-600">Yes, you can cancel or reschedule a session up to 24 hours before the scheduled time without any penalty. For cancellations less than 24 hours in advance, coaches may charge a cancellation fee. You can manage all your bookings through your account dashboard.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Newsletter Section -->
+  <div class="py-16 bg-white">
+    <div class="container mx-auto px-6">
+      <div class="max-w-3xl mx-auto bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl overflow-hidden shadow-xl scroll-section">
+        <div class="p-10 text-center text-white">
+          <h3 class="text-2xl font-bold mb-2">Stay Updated</h3>
+          <p class="mb-6">Subscribe to our newsletter for pickleball tips, coach spotlights, and exclusive offers.</p>
+          <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-2">
+            <input type="email" placeholder="Your email address" class="flex-grow px-4 py-3 rounded-lg text-gray-800 focus:outline-none" />
+            <button class="bg-white text-blue-600 font-medium px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors">
+              Subscribe
+            </button>
+          </div>
+          <p class="text-sm mt-4">We respect your privacy and will never share your information.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white pt-16 pb-8">
+    <div class="container mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
+        <div>
+          <div class="flex items-center space-x-2 mb-6">
+            <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+              <span class="text-white font-bold text-xl">P</span>
+            </div>
+            <span class="text-xl font-bold">Pickleball Connect</span>
+          </div>
+          <p class="text-gray-400 mb-6">Connecting passionate players with expert coaches since 2017. Our mission is to help every player reach their full potential.</p>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+              <i class="fab fa-youtube"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-6">Quick Links</h4>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Home</a></li>
+            <li><a href="#about" class="text-gray-400 hover:text-white transition-colors">About Us</a></li>
+            <li><a href="#coaches" class="text-gray-400 hover:text-white transition-colors">Our Coaches</a></li>
+            <li><a href="#pricing" class="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-6">Resources</h4>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Beginner's Guide</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Skill Development</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Strategy Tips</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Equipment Reviews</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Tournament Calendar</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-6">Contact Us</h4>
+          <ul class="space-y-3">
+            <li class="flex items-start space-x-3">
+              <svg class="w-5 h-5 text-blue-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              <span class="text-gray-400">123 Pickleball Way, <br>Seattle, WA 98101</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+              </svg>
+              <span class="text-gray-400">(555) 123-4567</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+              <span class="text-gray-400">info@pickleballconnect.com</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-700 pt-8">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+          <p class="text-gray-400 text-sm mb-4 md:mb-0">© 2025 Pickleball Connect. All rights reserved.</p>
+          <div class="flex space-x-6">
+            <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
+            <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a>
+            <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Cookies Policy</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Back to top button -->
+  <button id="back-to-top" class="fixed bottom-6 right-6 bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-transform hover:scale-110 opacity-0 invisible">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+    </svg>
+  </button>
+
+  <!-- JavaScript -->
+  <script>
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+    
+    // Scroll animations
+    document.addEventListener('DOMContentLoaded', () => {
+      const scrollSections = document.querySelectorAll('.scroll-section');
+      
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+          }
+        });
+      }, { threshold: 0.1 });
+      
+      scrollSections.forEach(section => {
+        observer.observe(section);
+      });
+      
+      // Back to top button
+      const backToTopButton = document.getElementById('back-to-top');
+      
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 500) {
+          backToTopButton.classList.remove('opacity-0', 'invisible');
+          backToTopButton.classList.add('opacity-100', 'visible');
+        } else {
+          backToTopButton.classList.add('opacity-0', 'invisible');
+          backToTopButton.classList.remove('opacity-100', 'visible');
+        }
+      });
+      
+      backToTopButton.addEventListener('click', () => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+      
+      // FAQ accordion - FIXED VERSION
+      const faqButtons = document.querySelectorAll('.faq-button');
+      
+      faqButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const content = button.nextElementSibling;
+          
+          // Toggle display for the FAQ content
+          if (content.style.display === 'none' || !content.style.display) {
+            content.style.display = 'block';
+            // Rotate the chevron icon
+            const icon = button.querySelector('svg');
+            icon.style.transform = 'rotate(180deg)';
+          } else {
+            content.style.display = 'none';
+            // Rotate back the chevron icon
+            const icon = button.querySelector('svg');
+            icon.style.transform = 'rotate(0deg)';
+          }
+        });
+        
+        // Initialize all FAQs as closed
+        const content = button.nextElementSibling;
+        content.style.display = 'none';
+      });
+      
+      // Navbar scroll effect
+      const navbar = document.querySelector('nav');
+      
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 100) {
+          navbar.classList.add('py-2', 'shadow-md');
+          navbar.classList.remove('py-3', 'shadow-sm');
+        } else {
+          navbar.classList.remove('py-2', 'shadow-md');
+          navbar.classList.add('py-3', 'shadow-sm');
+        }
+      });
+    });
+    
+    // Initialize GSAP ScrollTrigger
+    gsap.registerPlugin(ScrollTrigger);
+    
+    gsap.utils.toArray('.coach-card').forEach((card, i) => {
+      gsap.from(card, {
+        y: 50,
+        opacity: 0,
+        duration: 0.8,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: card,
+          start: "top 80%",
+          toggleActions: "play none none none"
+        }
+      });
+    });
+  </script>
+</body>
+</html>

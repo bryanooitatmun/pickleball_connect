@@ -1,0 +1,825 @@
+{% extends 'base.html' %}
+
+{% block title %}Pickleball Connect - Coach Registration{% endblock %}
+
+{% block extra_styles %}
+.progress-step {
+  transition: all 0.3s ease;
+}
+
+.progress-step.active {
+  background: linear-gradient(135deg, #4158D0 0%, #C850C0 100%);
+}
+
+.input-field:focus {
+  border-color: #4158D0;
+  box-shadow: 0 0 0 2px rgba(65, 88, 208, 0.2);
+}
+
+.form-section {
+  transition: all 0.5s ease;
+}
+
+.form-section.hidden {
+  display: none;
+  opacity: 0;
+}
+
+.form-section.active {
+  display: block;
+  opacity: 1;
+}
+
+.image-preview {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.remove-image {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.image-preview:hover .remove-image {
+  opacity: 1;
+}
+
+.upload-trigger {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-trigger:hover {
+  background-color: #f3f4f6;
+}
+
+.scroll-section {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 1s ease;
+}
+
+.scroll-section.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.showcase-images-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+{% endblock %}
+
+{% block head_scripts %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  <!-- Hero Banner with Gradient -->
+  <div class="pt-32 pb-12 relative overflow-hidden">
+    <div class="hero-gradient absolute inset-0 opacity-10"></div>
+    <div class="container mx-auto px-6 relative z-10">
+      <div class="text-center max-w-3xl mx-auto mb-12 scroll-section">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Join Our Team of</span>
+          <br/>Expert Pickleball Coaches
+        </h1>
+        <p class="text-lg text-gray-600 mb-8">Share your expertise, grow your coaching business, and help players improve their game.</p>
+      </div>
+    </div>
+    
+    <!-- Curved Wave Separator -->
+    <div class="absolute bottom-0 left-0 right-0">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120">
+        <path fill="#ffffff" fill-opacity="1" d="M0,32L60,53.3C120,75,240,117,360,117.3C480,117,600,75,720,64C840,53,960,75,1080,80C1200,85,1320,75,1380,69.3L1440,64L1440,120L1380,120C1320,120,1200,120,1080,120C960,120,840,120,720,120C600,120,480,120,360,120C240,120,120,120,60,120L0,120Z"></path>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="bg-white py-12">
+    <div class="container mx-auto px-6">      
+      <!-- Registration Form -->
+      <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden scroll-section">
+        <div class="p-8">
+          <h2 class="text-2xl font-bold text-center mb-8">Coach Registration</h2>
+          
+          <!-- Progress Tracker -->
+          <div class="flex justify-between items-center mb-8 relative">
+            <div class="absolute left-0 right-0 top-1/2 h-1 bg-gray-200 -z-10"></div>
+            
+            <div class="progress-step active flex flex-col items-center" id="step-indicator-1">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium mb-2">1</div>
+              <span class="text-sm">Personal Info</span>
+            </div>
+            
+            <div class="progress-step bg-gray-200 flex flex-col items-center" id="step-indicator-2">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 font-medium mb-2">2</div>
+              <span class="text-sm">Photos & Details</span>
+            </div>
+            
+            <div class="progress-step bg-gray-200 flex flex-col items-center" id="step-indicator-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 font-medium mb-2">3</div>
+              <span class="text-sm">Coaching Info</span>
+            </div>
+            
+            <div class="progress-step bg-gray-200 flex flex-col items-center" id="step-indicator-4">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 font-medium mb-2">4</div>
+              <span class="text-sm">Account Setup</span>
+            </div>
+          </div>
+          
+          <form id="coach-registration-form" enctype="multipart/form-data">
+            <!-- Step 1: Personal Information -->
+            <div id="step-1" class="form-section active">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="first_name" class="block text-gray-700 font-medium mb-2">First Name*</label>
+                  <input type="text" id="first_name" name="first_name" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required>
+                </div>
+                <div>
+                  <label for="last_name" class="block text-gray-700 font-medium mb-2">Last Name*</label>
+                  <input type="text" id="last_name" name="last_name" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="email" class="block text-gray-700 font-medium mb-2">Email Address*</label>
+                  <input type="email" id="email" name="email" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required>
+                </div>
+                <div>
+                  <label for="birth_date" class="block text-gray-700 font-medium mb-2">Birth Date*</label>
+                  <input type="date" id="birth_date" name="birth_date" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="gender" class="block text-gray-700 font-medium mb-2">Gender</label>
+                  <select id="gender" name="gender" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none">
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="location" class="block text-gray-700 font-medium mb-2">Location*</label>
+                  <input type="text" id="location" name="location" placeholder="City, State" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required>
+                </div>
+              </div>
+              
+              <div class="mb-6">
+                <label for="dupr_rating" class="block text-gray-700 font-medium mb-2">DUPR Rating*</label>
+                <input type="number" id="dupr_rating" name="dupr_rating" min="2.0" max="7.0" step="0.1" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required>
+                <p class="text-sm text-gray-500 mt-1">Coaches should have a minimum DUPR rating of 4.0</p>
+              </div>
+              
+              <div class="flex justify-end">
+                <button type="button" id="next-step-1" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">Continue</button>
+              </div>
+            </div>
+            
+            <!-- Step 2: Photos and Additional Details -->
+            <div id="step-2" class="form-section hidden">
+              <div class="mb-8">
+                <label class="block text-gray-700 font-medium mb-2">Profile Picture*</label>
+                <p class="text-sm text-gray-500 mb-4">This will be your main profile image that students will see</p>
+                
+                <div class="flex flex-col items-center">
+                  <div id="profile-preview" class="image-preview mb-4">
+                    <i class="fas fa-user text-gray-300 text-4xl"></i>
+                    <div class="remove-image" id="remove-profile-image">
+                      <i class="fas fa-times text-red-500"></i>
+                    </div>
+                  </div>
+                  
+                  <input type="file" id="profile_picture" name="profile_picture" accept="image/*" class="hidden" required>
+                  <label for="profile_picture" class="upload-trigger bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 cursor-pointer">
+                    <i class="fas fa-upload mr-2"></i> Upload Profile Picture
+                  </label>
+                </div>
+              </div>
+              
+              <div class="mb-8">
+                <label class="block text-gray-700 font-medium mb-2">Showcase Images</label>
+                <p class="text-sm text-gray-500 mb-4">Add photos showcasing your accomplishments, teaching style, etc. (optional)</p>
+                
+                <div class="showcase-images-container mb-4" id="showcase-images-container">
+                  <div class="image-preview upload-trigger flex flex-col items-center justify-center" id="add-showcase-image">
+                    <i class="fas fa-plus text-gray-300 text-2xl mb-2"></i>
+                    <span class="text-xs text-gray-500">Add Photo</span>
+                  </div>
+                </div>
+                
+                <input type="file" id="showcase_images" name="showcase_images" accept="image/*" multiple class="hidden">
+              </div>
+              
+              <div class="mb-6">
+                <label for="phone" class="block text-gray-700 font-medium mb-2">Phone Number*</label>
+                <input type="tel" id="phone" name="phone" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required>
+              </div>
+              
+              <div class="flex justify-between">
+                <button type="button" id="prev-step-2" class="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-all">Back</button>
+                <button type="button" id="next-step-2" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">Continue</button>
+              </div>
+            </div>
+            
+            <!-- Step 3: Coaching Details -->
+            <div id="step-3" class="form-section hidden">
+              <div class="mb-6">
+                <label for="hourly_rate" class="block text-gray-700 font-medium mb-2">Hourly Rate ($)*</label>
+                <input type="number" id="hourly_rate" name="hourly_rate" min="20" step="5" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required>
+                <p class="text-sm text-gray-500 mt-1">Suggested range: $45-$100 depending on experience</p>
+              </div>
+              
+              <div class="mb-6">
+                <label for="years_experience" class="block text-gray-700 font-medium mb-2">Years of Experience*</label>
+                <input type="number" id="years_experience" name="years_experience" min="0" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required>
+              </div>
+              
+              <div class="mb-6">
+                <label for="specialties" class="block text-gray-700 font-medium mb-2">Specialties*</label>
+                <input type="text" id="specialties" name="specialties" placeholder="e.g. Beginner training, strategy, drills" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required>
+                <p class="text-sm text-gray-500 mt-1">Separate multiple specialties with commas</p>
+              </div>
+              
+              <div class="mb-6">
+                <label for="courts" class="block text-gray-700 font-medium mb-2">Available Courts*</label>
+                <div id="court-options" class="mt-2 space-y-2 border border-gray-300 rounded-lg p-4 max-h-60 overflow-y-auto">
+                  <!-- Court checkboxes will be dynamically inserted here -->
+                  <div class="flex items-center p-2">
+                    <span class="text-gray-500 italic">Loading available courts...</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mb-6">
+                <label for="biography" class="block text-gray-700 font-medium mb-2">Coach Biography*</label>
+                <textarea id="biography" name="biography" rows="4" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required></textarea>
+                <p class="text-sm text-gray-500 mt-1">Tell players about your coaching style and experience</p>
+              </div>
+              
+              <div class="flex justify-between">
+                <button type="button" id="prev-step-3" class="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-all">Back</button>
+                <button type="button" id="next-step-3" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">Continue</button>
+              </div>
+            </div>
+            
+            <!-- Step 4: Account Setup -->
+            <div id="step-4" class="form-section hidden">
+              <div class="mb-6">
+                <label for="password" class="block text-gray-700 font-medium mb-2">Create Password*</label>
+                <input type="password" id="password" name="password" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required minlength="8">
+                <p class="text-sm text-gray-500 mt-1">Minimum 8 characters, must include at least one number</p>
+              </div>
+              
+              <div class="mb-6">
+                <label for="confirm_password" class="block text-gray-700 font-medium mb-2">Confirm Password*</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" required minlength="8">
+              </div>
+              
+              <div class="mb-6">
+                <label class="flex items-start">
+                  <input type="checkbox" id="terms_agreement" name="terms_agreement" class="mt-1" required>
+                  <span class="ml-2 text-gray-700">I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>*</span>
+                </label>
+              </div>
+              
+              <div class="flex justify-between">
+                <button type="button" id="prev-step-4" class="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-all">Back</button>
+                <button type="submit" id="submit-form" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">Create Coach Account</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Success Modal -->
+  <div id="success-modal" class="custom-modal fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+    <div class="bg-white rounded-xl shadow-xl p-8 max-w-md mx-4">
+      <div class="text-center">
+        <div class="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-4">Registration Successful!</h3>
+        <p class="text-gray-600 mb-6">Your coach account has been created successfully. You can now log in to start managing your coaching profile.</p>
+        <div class="flex justify-center">
+          <a href="{{ url_for('auth.login') }}" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">Go to Login</a>
+        </div>
+      </div>
+      <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 close-success-modal">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Scroll animations
+    const scrollSections = document.querySelectorAll('.scroll-section');
+    
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+    
+    scrollSections.forEach(section => {
+      observer.observe(section);
+    });
+    
+    // Multi-step form navigation
+    // Step navigation buttons
+    const nextStep1 = document.getElementById('next-step-1');
+    const nextStep2 = document.getElementById('next-step-2');
+    const nextStep3 = document.getElementById('next-step-3');
+    const prevStep2 = document.getElementById('prev-step-2');
+    const prevStep3 = document.getElementById('prev-step-3');
+    const prevStep4 = document.getElementById('prev-step-4');
+    
+    // Steps
+    const step1 = document.getElementById('step-1');
+    const step2 = document.getElementById('step-2');
+    const step3 = document.getElementById('step-3');
+    const step4 = document.getElementById('step-4');
+    
+    // Step indicators
+    const indicator1 = document.getElementById('step-indicator-1');
+    const indicator2 = document.getElementById('step-indicator-2');
+    const indicator3 = document.getElementById('step-indicator-3');
+    const indicator4 = document.getElementById('step-indicator-4');
+    
+    // Image handling
+    const profilePictureInput = document.getElementById('profile_picture');
+    const profilePreview = document.getElementById('profile-preview');
+    const removeProfileImageBtn = document.getElementById('remove-profile-image');
+    
+    const showcaseImagesInput = document.getElementById('showcase_images');
+    const showcaseImagesContainer = document.getElementById('showcase-images-container');
+    const addShowcaseImageBtn = document.getElementById('add-showcase-image');
+    
+    // Fetch available courts
+    fetchCourts();
+    
+    // Navigation handlers
+    nextStep1.addEventListener('click', () => {
+      if (validateStep1()) {
+        step1.classList.remove('active');
+        step1.classList.add('hidden');
+        step2.classList.remove('hidden');
+        step2.classList.add('active');
+        
+        indicator1.classList.remove('active');
+        indicator2.classList.add('active');
+        window.scrollTo(0, 0);
+      }
+    });
+    
+    prevStep2.addEventListener('click', () => {
+      step2.classList.remove('active');
+      step2.classList.add('hidden');
+      step1.classList.remove('hidden');
+      step1.classList.add('active');
+      
+      indicator2.classList.remove('active');
+      indicator1.classList.add('active');
+      window.scrollTo(0, 0);
+    });
+    
+    nextStep2.addEventListener('click', () => {
+      if (validateStep2()) {
+        step2.classList.remove('active');
+        step2.classList.add('hidden');
+        step3.classList.remove('hidden');
+        step3.classList.add('active');
+        
+        indicator2.classList.remove('active');
+        indicator3.classList.add('active');
+        window.scrollTo(0, 0);
+      }
+    });
+    
+    prevStep3.addEventListener('click', () => {
+      step3.classList.remove('active');
+      step3.classList.add('hidden');
+      step2.classList.remove('hidden');
+      step2.classList.add('active');
+      
+      indicator3.classList.remove('active');
+      indicator2.classList.add('active');
+      window.scrollTo(0, 0);
+    });
+    
+    nextStep3.addEventListener('click', () => {
+      if (validateStep3()) {
+        step3.classList.remove('active');
+        step3.classList.add('hidden');
+        step4.classList.remove('hidden');
+        step4.classList.add('active');
+        
+        indicator3.classList.remove('active');
+        indicator4.classList.add('active');
+        window.scrollTo(0, 0);
+      }
+    });
+    
+    prevStep4.addEventListener('click', () => {
+      step4.classList.remove('active');
+      step4.classList.add('hidden');
+      step3.classList.remove('hidden');
+      step3.classList.add('active');
+      
+      indicator4.classList.remove('active');
+      indicator3.classList.add('active');
+      window.scrollTo(0, 0);
+    });
+    
+    // Profile image preview
+    profilePictureInput.addEventListener('change', function(e) {
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          profilePreview.innerHTML = '';
+          profilePreview.style.backgroundImage = `url('${e.target.result}')`;
+          
+          const removeBtn = document.createElement('div');
+          removeBtn.className = 'remove-image';
+          removeBtn.innerHTML = '<i class="fas fa-times text-red-500"></i>';
+          removeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            removeProfileImage();
+          });
+          
+          profilePreview.appendChild(removeBtn);
+        }
+        
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+    
+    // Remove profile image
+    removeProfileImageBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      removeProfileImage();
+    });
+    
+    function removeProfileImage() {
+      profilePictureInput.value = '';
+      profilePreview.style.backgroundImage = '';
+      profilePreview.innerHTML = '<i class="fas fa-user text-gray-300 text-4xl"></i>';
+      profilePreview.appendChild(removeProfileImageBtn);
+    }
+    
+    // Add showcase image trigger
+    addShowcaseImageBtn.addEventListener('click', function() {
+      showcaseImagesInput.click();
+    });
+    
+    // Showcase images preview
+    showcaseImagesInput.addEventListener('change', function(e) {
+      if (this.files && this.files.length > 0) {
+        // Clear the container except for the add button
+        const images = showcaseImagesContainer.querySelectorAll('.showcase-image');
+        images.forEach(img => img.remove());
+        
+        // Add each new image
+        Array.from(this.files).forEach((file, index) => {
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'image-preview showcase-image';
+            imageContainer.style.backgroundImage = `url('${e.target.result}')`;
+            
+            const removeBtn = document.createElement('div');
+            removeBtn.className = 'remove-image';
+            removeBtn.innerHTML = '<i class="fas fa-times text-red-500"></i>';
+            removeBtn.dataset.index = index;
+            
+            removeBtn.addEventListener('click', function(e) {
+              e.stopPropagation();
+              imageContainer.remove();
+              
+              // We need to recreate the FileList without this image
+              // This is tricky because FileList is immutable
+              // For a real implementation, you'd need to maintain a separate array of files
+              // and create a new DataTransfer object
+            });
+            
+            imageContainer.appendChild(removeBtn);
+            showcaseImagesContainer.insertBefore(imageContainer, addShowcaseImageBtn);
+          }
+          
+          reader.readAsDataURL(file);
+        });
+      }
+    });
+    
+    // Form validation and submission
+    const form = document.getElementById('coach-registration-form');
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (validateStep4()) {
+        await submitCoachRegistration();
+      }
+    });
+    
+    // Validation functions
+    function validateStep1() {
+      const requiredFields = ['first_name', 'last_name', 'email', 'birth_date', 'location', 'dupr_rating'];
+      let valid = true;
+      
+      requiredFields.forEach(field => {
+        const input = document.getElementById(field);
+        if (!input.value.trim()) {
+          markInvalid(input);
+          valid = false;
+        } else {
+          markValid(input);
+        }
+      });
+      
+      // Additional validation for email format
+      const email = document.getElementById('email');
+      if (email.value && !isValidEmail(email.value)) {
+        markInvalid(email);
+        valid = false;
+      }
+      
+      // Additional validation for DUPR rating
+      const duprRating = document.getElementById('dupr_rating');
+      if (duprRating.value && (duprRating.value < 2.0 || duprRating.value > 7.0)) {
+        markInvalid(duprRating);
+        valid = false;
+      }
+      
+      return valid;
+    }
+    
+    function validateStep2() {
+      let valid = true;
+      
+      // Validate profile picture
+      const profilePicture = document.getElementById('profile_picture');
+      if (!profilePicture.files || profilePicture.files.length === 0) {
+        const profilePreview = document.getElementById('profile-preview');
+        profilePreview.classList.add('border-red-500');
+        valid = false;
+      } else {
+        const profilePreview = document.getElementById('profile-preview');
+        profilePreview.classList.remove('border-red-500');
+      }
+      
+      // Validate phone number
+      const phone = document.getElementById('phone');
+      if (!phone.value.trim()) {
+        markInvalid(phone);
+        valid = false;
+      } else {
+        markValid(phone);
+      }
+      
+      return valid;
+    }
+    
+    function validateStep3() {
+      const requiredFields = ['hourly_rate', 'years_experience', 'specialties', 'biography'];
+      let valid = true;
+      
+      requiredFields.forEach(field => {
+        const input = document.getElementById(field);
+        if (!input.value.trim()) {
+          markInvalid(input);
+          valid = false;
+        } else {
+          markValid(input);
+        }
+      });
+      
+      // Validate court selection
+      const courtCheckboxes = document.querySelectorAll('input[name="courts"]:checked');
+      if (courtCheckboxes.length === 0) {
+        const courtOptions = document.getElementById('court-options');
+        courtOptions.classList.add('border-red-500');
+        valid = false;
+      } else {
+        const courtOptions = document.getElementById('court-options');
+        courtOptions.classList.remove('border-red-500');
+      }
+      
+      return valid;
+    }
+    
+    function validateStep4() {
+      const password = document.getElementById('password');
+      const confirmPassword = document.getElementById('confirm_password');
+      const termsAgreement = document.getElementById('terms_agreement');
+      let valid = true;
+      
+      // Password validation
+      if (!password.value) {
+        markInvalid(password);
+        valid = false;
+      } else if (password.value.length < 8 || !/\d/.test(password.value)) {
+        markInvalid(password);
+        valid = false;
+      } else {
+        markValid(password);
+      }
+      
+      // Confirm password validation
+      if (password.value !== confirmPassword.value) {
+        markInvalid(confirmPassword);
+        valid = false;
+      } else if (confirmPassword.value) {
+        markValid(confirmPassword);
+      }
+      
+      // Terms agreement validation
+      if (!termsAgreement.checked) {
+        termsAgreement.parentElement.classList.add('text-red-500');
+        valid = false;
+      } else {
+        termsAgreement.parentElement.classList.remove('text-red-500');
+      }
+      
+      return valid;
+    }
+    
+    function markInvalid(input) {
+      input.classList.add('border-red-500');
+      input.classList.remove('border-gray-300');
+    }
+    
+    function markValid(input) {
+      input.classList.remove('border-red-500');
+      input.classList.add('border-gray-300');
+    }
+    
+    function isValidEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+    
+    // Fetch available courts
+    async function fetchCourts() {
+      try {
+        const response = await fetch('/coach/api/courts');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch courts');
+        }
+        
+        const courts = await response.json();
+        
+        const courtOptionsContainer = document.getElementById('court-options');
+        courtOptionsContainer.innerHTML = '';
+        
+        if (courts.length === 0) {
+          courtOptionsContainer.innerHTML = `
+            <div class="p-2 text-gray-500">
+              <p>No courts available. Please contact support.</p>
+            </div>
+          `;
+          return;
+        }
+        
+        courts.forEach(court => {
+          const courtOption = document.createElement('div');
+          courtOption.className = 'flex items-center p-2 hover:bg-gray-50 rounded';
+          courtOption.innerHTML = `
+            <input type="checkbox" id="court-${court.id}" name="courts" value="${court.id}" class="mr-3">
+            <label for="court-${court.id}" class="flex flex-col cursor-pointer">
+              <span class="font-medium">${court.name}</span>
+              <span class="text-sm text-gray-500">${court.address}, ${court.city}, ${court.state} ${court.zip_code}</span>
+            </label>
+          `;
+          courtOptionsContainer.appendChild(courtOption);
+        });
+      } catch (error) {
+        console.error('Error fetching courts:', error);
+        const courtOptionsContainer = document.getElementById('court-options');
+        courtOptionsContainer.innerHTML = `
+          <div class="p-2 text-red-500">
+            <p>Failed to load available courts. Please try again later.</p>
+          </div>
+        `;
+      }
+    }
+    
+    // Submit the coach registration form
+    async function submitCoachRegistration() {
+      try {
+        // Show loading state
+        const submitButton = document.getElementById('submit-form');
+        const originalButtonText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+        
+        // Get form data
+        const formData = new FormData(document.getElementById('coach-registration-form'));
+        
+        // Get selected courts
+        const selectedCourts = [];
+        document.querySelectorAll('input[name="courts"]:checked').forEach(checkbox => {
+          selectedCourts.push(parseInt(checkbox.value));
+        });
+        
+        // Add selected courts to form data
+        formData.append('selected_courts', JSON.stringify(selectedCourts));
+        
+        // Send the form data to the server
+        const response = await fetch('{{ url_for("auth.register_coach") }}', {
+          method: 'POST',
+          body: formData,
+          // Don't set Content-Type header when sending FormData
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Registration failed');
+        }
+        
+        // Show success modal
+        document.getElementById('success-modal').classList.remove('hidden');
+        
+        // Reset form (optional if redirecting)
+        // document.getElementById('coach-registration-form').reset();
+        
+      } catch (error) {
+        console.error('Error during registration:', error);
+        
+        // Create and show error message
+        const errorAlert = document.createElement('div');
+        errorAlert.className = 'bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6';
+        errorAlert.innerHTML = `
+          <p class="font-bold">Registration Error</p>
+          <p>${error.message || 'An unexpected error occurred. Please try again.'}</p>
+        `;
+        
+        // Insert at the top of the form
+        const formContainer = document.querySelector('.max-w-4xl.mx-auto.bg-white');
+        formContainer.insertBefore(errorAlert, formContainer.firstChild);
+        
+        // Scroll to the error message
+        window.scrollTo(0, formContainer.offsetTop - 100);
+        
+      } finally {
+        // Restore button state
+        const submitButton = document.getElementById('submit-form');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Create Coach Account';
+      }
+    }
+    
+    // Close success modal button
+    document.querySelectorAll('.close-success-modal').forEach(button => {
+      button.addEventListener('click', () => {
+        document.getElementById('success-modal').classList.add('hidden');
+      });
+    });
+  });
+</script>
+{% endblock %}

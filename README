@@ -1,0 +1,171 @@
+# Pickleball Connect
+
+Pickleball Connect is a web application that connects pickleball players with qualified coaches. The platform allows coaches to set their availability, manage their courts, and offer various pricing plans including package deals and first-time student discounts. Students can browse coaches, book sessions, and keep track of their training history.
+
+## Project Setup Guide
+
+Follow these instructions to set up the project after cloning the repository.
+
+### Prerequisites
+
+- Python 3.8 or higher
+- pip (Python package installer)
+- Git
+
+### Initial Setup
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/yourusername/pickleball-connect.git
+   cd pickleball-connect
+   ```
+
+2. **Create and activate a virtual environment**
+
+   On Windows:
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+
+   On macOS/Linux:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install required packages**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set up environment variables**
+
+   Create a `.env` file in the root directory:
+   ```
+   FLASK_APP=run.py
+   FLASK_ENV=development
+   SECRET_KEY=your-secret-key-here
+   DATABASE_URL=sqlite:///app.db
+   ```
+
+5. **Initialize the database**
+
+   ```bash
+   flask db init
+   flask db migrate -m "Initial migration"
+   flask db upgrade
+   ```
+
+6. **Seed the database** (optional)
+
+   ```bash
+   python seed.py
+   ```
+
+### Running the Application
+
+1. **Ensure your virtual environment is activated**
+
+   On Windows:
+   ```bash
+   venv\Scripts\activate
+   ```
+
+   On macOS/Linux:
+   ```bash
+   source venv/bin/activate
+   ```
+
+2. **Start the development server**
+
+   ```bash
+   flask run --debug
+   ```
+
+3. **Access the application**
+
+   Open your web browser and navigate to: http://127.0.0.1:5000
+
+## Project Structure
+
+```
+pickleball_connect/
+├── app/                      # Main application package
+│   ├── models/               # Database models
+│   ├── routes/               # Route handlers
+│   ├── forms/                # Form definitions
+│   ├── templates/            # HTML templates
+│   └── static/               # Static files (CSS, JS, images)
+├── migrations/               # Database migrations
+├── tests/                    # Test suite
+├── .env                      # Environment variables
+├── config.py                 # Application configuration
+├── requirements.txt          # Python dependencies
+├── run.py                    # Application entry point
+└── seed.py                   # Database seeding script
+```
+
+## User Accounts
+
+After running the seeding script, the following test accounts are available:
+
+### Admin
+- Email: admin@example.com
+- Password: password123
+
+### Coaches
+- Email: john@example.com
+- Password: password123
+  
+- Email: jane@example.com
+- Password: password123
+
+### Students
+- Email: alice@example.com
+- Password: password123
+  
+- Email: bob@example.com
+- Password: password123
+
+## Troubleshooting
+
+### Database Errors
+
+If you encounter database-related errors, try resetting the database:
+
+```bash
+rm -rf migrations
+rm -f app.db
+flask db init
+flask db migrate -m "Initial migration"
+flask db upgrade
+python seed.py  # Optional, to repopulate with test data
+```
+
+### Import Errors
+
+If you see import errors, make sure your virtual environment is activated and all dependencies are installed:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Running Tests
+
+To run the test suite:
+
+```bash
+pytest
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+

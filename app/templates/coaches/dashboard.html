@@ -1,0 +1,3789 @@
+{% extends 'base.html' %}
+
+{% block title %}Pickleball Connect - Coach Dashboard{% endblock %}
+
+{% block extra_styles %}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.active-nav-link {
+  background: linear-gradient(90deg, rgba(65, 88, 208, 0.15) 0%, rgba(200, 80, 192, 0.15) 100%);
+  border-left: 4px solid #4158D0;
+  color: #4158D0;
+  font-weight: 600;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.loading {
+  position: relative;
+}
+
+.loading:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.loading:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  margin-top: -25px;
+  margin-left: -25px;
+  border-radius: 50%;
+  border: 5px solid rgba(65, 88, 208, 0.2);
+  border-top-color: #4158D0;
+  animation: spin 1s linear infinite;
+  z-index: 20;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Image management styles */
+.image-preview {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+}
+
+.profile-image-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.profile-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+  cursor: pointer;
+}
+
+.profile-image-container:hover .profile-image-overlay {
+  opacity: 1;
+}
+
+.showcase-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.showcase-image-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+
+.showcase-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.showcase-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.showcase-image-item:hover .showcase-image-overlay {
+  opacity: 1;
+}
+
+.image-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  aspect-ratio: 1;
+  transition: all 0.2s;
+}
+
+.add-image-placeholder:hover {
+  background-color: #e5e7eb;
+}
+
+.remove-image {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.showcase-image-item:hover .remove-image {
+  opacity: 1;
+}
+
+[data-deleted="true"] img {
+  filter: grayscale(100%);
+  opacity: 0.5;
+}
+{% endblock %}
+
+{% block content %}
+  <!-- Navbar -->
+  <nav class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-6 py-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
+            <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+              <span class="text-white font-bold text-xl">P</span>
+            </div>
+            <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Pickleball Connect</span>
+          </a>
+          <span class="hidden md:inline-block text-gray-500">|</span>
+          <span class="hidden md:inline-block text-gray-700 font-medium">Coach Dashboard</span>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+          <div class="relative" id="notification-dropdown">
+            <button id="notification-btn" class="p-2 text-gray-600 hover:text-blue-600 transition-colors focus:outline-none">
+              <i class="fas fa-bell"></i>
+              <span id="notification-badge" class="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center hidden">0</span>
+            </button>
+            <div id="notification-menu" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 z-20 hidden">
+              <div class="px-4 py-2 border-b border-gray-100">
+                <h4 class="font-semibold">Notifications</h4>
+              </div>
+              <div id="notification-list" class="max-h-64 overflow-y-auto">
+                <!-- Notifications will be dynamically inserted here -->
+                <div class="px-4 py-3 text-center text-gray-500 text-sm">
+                  No new notifications
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="relative" id="profile-dropdown">
+            <button id="profile-btn" class="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors focus:outline-none">
+              <div id="profile-initial" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+                {% if current_user.profile_picture %}
+                  <img src="{{ url_for('static', filename=profile_picture) }}" alt="Profile" class="h-8 w-8 rounded-full object-cover">
+                {% else %}
+                  {{ current_user.first_name[0] }}
+                {% endif %}
+              </div>
+              <span id="profile-name" class="hidden md:inline-block">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+              <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div id="profile-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-20 hidden">
+              <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors" id="view-profile-link">
+                <i class="fas fa-user mr-2"></i> View Profile
+              </a>
+              <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors" id="account-settings-link">
+                <i class="fas fa-cog mr-2"></i> Account Settings
+              </a>
+              <div class="border-t border-gray-100 my-1"></div>
+              <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors" id="logout-link">
+                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <div class="w-64 bg-white shadow-sm hidden md:block">
+      <div class="p-6 space-y-6">
+        <div>
+          <span class="text-xs text-gray-500 uppercase tracking-wider">Main</span>
+          <ul class="mt-3 space-y-1">
+            <li>
+              <a href="#dashboard" class="dashboard-tab tab-link active-nav-link flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors">
+                <i class="fas fa-tachometer-alt w-5"></i>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="#profile" class="profile-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-user w-5"></i>
+                <span>My Profile</span>
+              </a>
+            </li>
+            <li>
+              <a href="#courts" class="courts-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-map-marker-alt w-5"></i>
+                <span>My Courts</span>
+              </a>
+            </li>
+            <li>
+              <a href="#bookings" class="bookings-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-calendar-alt w-5"></i>
+                <span>Bookings</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <span class="text-xs text-gray-500 uppercase tracking-wider">Manage</span>
+          <ul class="mt-3 space-y-1">
+            <li>
+              <a href="#availability" class="availability-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-clock w-5"></i>
+                <span>Availability</span>
+              </a>
+            </li>
+            <li>
+              <a href="#session-logs" class="session-logs-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-clipboard-list w-5"></i>
+                <span>Session Logs</span>
+              </a>
+            </li>
+            <li>
+              <a href="#pricing" class="pricing-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-dollar-sign w-5"></i>
+                <span>Pricing Plans</span>
+              </a>
+            </li>
+            <li>
+              <a href="#earnings" class="earnings-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-chart-line w-5"></i>
+                <span>Earnings</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <span class="text-xs text-gray-500 uppercase tracking-wider">Support</span>
+          <ul class="mt-3 space-y-1">
+            <li>
+              <a href="#help" class="help-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-question-circle w-5"></i>
+                <span>Help Center</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 p-6">
+      <!-- Mobile Navigation -->
+      <div class="md:hidden mb-6">
+        <select id="mobile-nav" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="dashboard">Dashboard</option>
+          <option value="profile">My Profile</option>
+          <option value="courts">My Courts</option>
+          <option value="bookings">Bookings</option>
+          <option value="availability">Availability</option>
+          <option value="session-logs">Session Logs</option>
+          <option value="pricing">Pricing Plans</option>
+          <option value="earnings">Earnings</option>
+          <option value="help">Help Center</option>
+        </select>
+      </div>
+
+      <!-- Dashboard Tab -->
+      <div id="dashboard-tab" class="tab-content active">
+        <!-- Dashboard content from your original dashboard.html -->
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+          <p class="text-gray-600">Welcome back, <span id="coach-name">{{ current_user.first_name }}</span>!</p>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-medium text-gray-500">Completed Sessions</h3>
+              <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <i class="fas fa-calendar-check text-blue-600"></i>
+              </div>
+            </div>
+            <p id="completed-sessions" class="text-2xl font-bold">0</p>
+            <p class="text-sm text-gray-500">All time</p>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-medium text-gray-500">Upcoming Sessions</h3>
+              <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                <i class="fas fa-calendar text-purple-600"></i>
+              </div>
+            </div>
+            <p id="upcoming-sessions" class="text-2xl font-bold">0</p>
+            <p class="text-sm text-gray-500">Next 30 days</p>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-medium text-gray-500">Total Earnings</h3>
+              <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                <i class="fas fa-dollar-sign text-green-600"></i>
+              </div>
+            </div>
+            <p id="total-earnings" class="text-2xl font-bold">$0</p>
+            <p class="text-sm text-gray-500">All time</p>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-medium text-gray-500">Rating</h3>
+              <div class="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                <i class="fas fa-star text-yellow-600"></i>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <p id="average-rating" class="text-2xl font-bold">0.0</p>
+              <div id="rating-stars" class="flex text-yellow-400 ml-2">
+                <!-- Stars will be dynamically inserted here -->
+              </div>
+            </div>
+            <p id="rating-count" class="text-sm text-gray-500">0 reviews</p>
+          </div>
+        </div>
+
+        <!-- Upcoming Bookings and Recent Activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <!-- Upcoming Bookings -->
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Upcoming Bookings</h3>
+              <a href="#bookings" class="text-sm text-blue-600 hover:underline">View All</a>
+            </div>
+            
+            <div id="upcoming-bookings-list" class="space-y-4">
+              <!-- Booking items will be dynamically inserted here -->
+              <div class="text-center py-6 text-gray-500">
+                <p>No upcoming bookings</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Session Logs -->
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Recent Session Logs</h3>
+              <a href="#session-logs" class="text-sm text-blue-600 hover:underline">View All</a>
+            </div>
+            
+            <div id="recent-logs-list" class="space-y-4">
+              <!-- Session log items will be dynamically inserted here -->
+              <div class="text-center py-6 text-gray-500">
+                <p>No recent session logs</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Earnings Chart -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Earnings Overview</h3>
+            <div class="flex space-x-2">
+              <select id="earnings-period" class="text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="h-64">
+            <canvas id="earnings-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Tab with Image Management -->
+      <div id="profile-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">My Profile</h1>
+          <p class="text-gray-600">Manage your personal information and coach profile</p>
+        </div>
+
+        <!-- Profile Images Management Section -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-6">Profile Images</h3>
+          
+          <!-- Profile Picture Section -->
+          <div class="flex flex-col md:flex-row md:items-center mb-8">
+            <div class="md:w-1/3">
+              <h4 class="font-medium text-gray-700 mb-2">Profile Picture</h4>
+              <p class="text-sm text-gray-500">This is your main profile image that students will see</p>
+            </div>
+            <div class="md:w-2/3 mt-4 md:mt-0 flex flex-col items-center">
+              <div class="profile-image-container">
+                {% if current_user.profile_picture %}
+                  <img id="profile-preview-image" src="{{ url_for('static', filename=profile_picture) }}" alt="Profile Picture">
+                {% else %}
+                  <div id="profile-preview-image" class="bg-gray-200 h-full w-full flex items-center justify-center">
+                    <i class="fas fa-user text-gray-400 text-4xl"></i>
+                  </div>
+                {% endif %}
+                <div class="profile-image-overlay" id="change-profile-picture">
+                  <i class="fas fa-camera text-white text-xl"></i>
+                </div>
+              </div>
+              <input type="file" id="profile-picture-input" name="profile_picture" accept="image/*" class="hidden">
+              <button type="button" id="remove-profile-picture" class="mt-2 text-red-600 text-sm hover:text-red-800" {% if not current_user.profile_picture %}style="display: none;"{% endif %}>
+                <i class="fas fa-trash mr-1"></i> Remove Photo
+              </button>
+              <p class="text-xs text-gray-500 mt-2">Recommended: Square image, at least 300x300px</p>
+            </div>
+          </div>
+          
+          <!-- Showcase Images Section -->
+          <div class="flex flex-col md:flex-row">
+            <div class="md:w-1/3">
+              <h4 class="font-medium text-gray-700 mb-2">Showcase Images</h4>
+              <p class="text-sm text-gray-500">Add photos showcasing your accomplishments, teaching style, etc.</p>
+            </div>
+            <div class="md:w-2/3 mt-4 md:mt-0">
+              <div class="showcase-image-grid mb-4" id="showcase-images-container">
+                <!-- Showcase images will be loaded here -->
+                <div class="loading-indicator flex items-center justify-center h-36 bg-gray-100 rounded-lg">
+                  <i class="fas fa-spinner fa-spin text-gray-400 text-xl"></i>
+                </div>
+              </div>
+              
+              <div class="flex flex-wrap gap-2">
+                <input type="file" id="showcase-images-input" multiple accept="image/*" class="hidden">
+                <button type="button" id="add-showcase-images" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+                  <i class="fas fa-plus mr-2"></i> Add Images
+                </button>
+                <button type="button" id="save-showcase-changes" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 hidden">
+                  <i class="fas fa-save mr-2"></i> Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Personal Information Form -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <form id="profile-form">
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="first_name" class="block text-gray-700 font-medium mb-2">First Name*</label>
+                  <input type="text" id="first_name" name="first_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                  <label for="last_name" class="block text-gray-700 font-medium mb-2">Last Name*</label>
+                  <input type="text" id="last_name" name="last_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="email" class="block text-gray-700 font-medium mb-2">Email Address*</label>
+                  <input type="email" id="email" name="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                  <label for="location" class="block text-gray-700 font-medium mb-2">Location*</label>
+                  <input type="text" id="location" name="location" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label for="gender" class="block text-gray-700 font-medium mb-2">Gender</label>
+                  <select id="gender" name="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="dupr_rating" class="block text-gray-700 font-medium mb-2">DUPR Rating*</label>
+                  <input type="number" id="dupr_rating" name="dupr_rating" min="2.0" max="7.0" step="0.1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">Coach Information</h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="hourly_rate" class="block text-gray-700 font-medium mb-2">Hourly Rate ($)*</label>
+                  <input type="number" id="hourly_rate" name="hourly_rate" min="20" step="5" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                  <label for="years_experience" class="block text-gray-700 font-medium mb-2">Years of Experience*</label>
+                  <input type="number" id="years_experience" name="years_experience" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+              </div>
+
+              <div class="mb-6">
+                <label for="specialties" class="block text-gray-700 font-medium mb-2">Specialties*</label>
+                <input type="text" id="specialties" name="specialties" placeholder="e.g. Beginner training, strategy, drills" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <p class="text-sm text-gray-500 mt-1">Separate multiple specialties with commas</p>
+              </div>
+
+              <div class="mb-6">
+                <label for="biography" class="block text-gray-700 font-medium mb-2">Coach Biography*</label>
+                <textarea id="biography" name="biography" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+              </div>
+            </div>
+
+            <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Save Changes
+            </button>
+          </form>
+        </div>
+
+        <!-- Password Change Form -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <form id="password-form">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div>
+                <label for="current_password" class="block text-gray-700 font-medium mb-2">Current Password*</label>
+                <input type="password" id="current_password" name="current_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+              <div>
+                <label for="new_password" class="block text-gray-700 font-medium mb-2">New Password*</label>
+                <input type="password" id="new_password" name="new_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+              <div>
+                <label for="confirm_password" class="block text-gray-700 font-medium mb-2">Confirm New Password*</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+            </div>
+
+            <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              Change Password
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Other tabs from the original dashboard.html -->
+      <div id="courts-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">My Courts</h1>
+          <p class="text-gray-600">Manage the courts where you provide coaching</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">My Courts</h3>
+            <button id="add-court-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none">
+              <i class="fas fa-plus mr-2"></i> Add Court
+            </button>
+          </div>
+          
+          <div id="my-courts-list" class="space-y-4">
+            <!-- Court items will be dynamically inserted here -->
+            <div class="text-center py-6 text-gray-500">
+              <p>No courts added yet</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add/Edit Court Modal -->
+        <div id="court-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+          <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+              <h3 id="court-modal-title" class="text-lg font-semibold">Add Court</h3>
+              <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-court-modal">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <form id="court-form">
+              <div class="mb-4">
+                <label for="court-select" class="block text-gray-700 font-medium mb-2">Select Court*</label>
+                <select id="court-select" name="court_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  <option value="">Select a court</option>
+                  <!-- Court options will be dynamically inserted here -->
+                </select>
+              </div>
+              
+              <div class="flex justify-end space-x-3">
+                <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-court-modal">
+                  Cancel
+                </button>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Remove Court Confirmation Modal -->
+        <div id="remove-court-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+          <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">Remove Court</h3>
+              <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-remove-court-modal">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <p class="mb-6">Are you sure you want to remove this court from your profile? This action cannot be undone.</p>
+            
+            <input type="hidden" id="remove-court-id" value="">
+            
+            <div class="flex justify-end space-x-3">
+              <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-remove-court-modal">
+                Cancel
+              </button>
+              <button id="confirm-remove-court-btn" type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bookings Tab -->
+      <div id="bookings-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Bookings</h1>
+          <p class="text-gray-600">Manage your upcoming and past coaching sessions</p>
+        </div>
+
+        <!-- Bookings Tabs -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="border-b border-gray-200 mb-6">
+            <ul class="flex flex-wrap -mb-px">
+              <li class="mr-2">
+                <button id="upcoming-tab-btn" class="inline-block py-2 px-4 text-blue-600 font-medium border-b-2 border-blue-600">Upcoming</button>
+              </li>
+              <li class="mr-2">
+                <button id="completed-tab-btn" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium border-b-2 border-transparent hover:border-gray-300">Completed</button>
+              </li>
+              <li class="mr-2">
+                <button id="cancelled-tab-btn" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium border-b-2 border-transparent hover:border-gray-300">Cancelled</button>
+              </li>
+            </ul>
+          </div>
+          
+          <div id="upcoming-bookings-tab" class="booking-content-tab active">
+            <div class="mb-4 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <input type="text" id="upcoming-search" placeholder="Search by student or court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="upcoming-filter-court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">All Courts</option>
+                  <!-- Court options will be dynamically inserted here -->
+                </select>
+              </div>
+              
+              <div>
+                <select id="upcoming-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="date-asc">Date: Oldest First</option>
+                  <option value="date-desc" selected>Date: Newest First</option>
+                </select>
+              </div>
+            </div>
+            
+            <div id="upcoming-bookings-container">
+              <!-- Upcoming bookings will be dynamically inserted here -->
+              <div class="text-center py-12 text-gray-500">
+                <p>No upcoming bookings found</p>
+              </div>
+            </div>
+          </div>
+          
+          <div id="completed-bookings-tab" class="booking-content-tab hidden">
+            <div class="mb-4 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <input type="text" id="completed-search" placeholder="Search by student or court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="completed-filter-court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">All Courts</option>
+                  <!-- Court options will be dynamically inserted here -->
+                </select>
+              </div>
+              
+              <div>
+                <select id="completed-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="date-asc">Date: Oldest First</option>
+                  <option value="date-desc" selected>Date: Newest First</option>
+                </select>
+              </div>
+            </div>
+            
+            <div id="completed-bookings-container">
+              <!-- Completed bookings will be dynamically inserted here -->
+              <div class="text-center py-12 text-gray-500">
+                <p>No completed bookings found</p>
+              </div>
+            </div>
+          </div>
+          
+          <div id="cancelled-bookings-tab" class="booking-content-tab hidden">
+            <div class="mb-4 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <input type="text" id="cancelled-search" placeholder="Search by student or court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="cancelled-filter-court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">All Courts</option>
+                  <!-- Court options will be dynamically inserted here -->
+                </select>
+              </div>
+              
+              <div>
+                <select id="cancelled-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="date-asc">Date: Oldest First</option>
+                  <option value="date-desc" selected>Date: Newest First</option>
+                </select>
+              </div>
+            </div>
+            
+            <div id="cancelled-bookings-container">
+              <!-- Cancelled bookings will be dynamically inserted here -->
+              <div class="text-center py-12 text-gray-500">
+                <p>No cancelled bookings found</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Complete Session Modal -->
+        <div id="complete-session-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+          <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">Complete Session</h3>
+              <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-complete-session-modal">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <p class="mb-6">Are you sure you want to mark this session as completed? A session log will be created for you to add notes.</p>
+            
+            <input type="hidden" id="complete-booking-id" value="">
+            
+            <div class="flex justify-end space-x-3">
+              <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-complete-session-modal">
+                Cancel
+              </button>
+              <button id="confirm-complete-session-btn" type="button" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 focus:outline-none">
+                Complete Session
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cancel Session Modal -->
+        <div id="cancel-session-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+          <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">Cancel Session</h3>
+              <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-cancel-session-modal">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <p class="mb-6">Are you sure you want to cancel this session? This action cannot be undone.</p>
+            
+            <input type="hidden" id="cancel-booking-id" value="">
+            
+            <div class="flex justify-end space-x-3">
+              <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-cancel-session-modal">
+                Back
+              </button>
+              <button id="confirm-cancel-session-btn" type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
+                Cancel Session
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Availability Tab -->
+      <div id="availability-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Availability</h1>
+          <p class="text-gray-600">Manage your coaching schedule and availability</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="font-semibold">Add Availability</h3>
+          </div>
+          
+          <form id="availability-form" class="mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div>
+                <label for="availability-court" class="block text-gray-700 font-medium mb-2">Court*</label>
+                <select id="availability-court" name="court_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  <option value="">Select a court</option>
+                  <!-- Court options will be dynamically inserted here -->
+                </select>
+              </div>
+              <div>
+                <label for="availability-date" class="block text-gray-700 font-medium mb-2">Date*</label>
+                <input type="date" id="availability-date" name="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required min="">
+              </div>
+              <div>
+                <label for="availability-start-time" class="block text-gray-700 font-medium mb-2">Start Time*</label>
+                <input type="time" id="availability-start-time" name="start_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+              <div>
+                <label for="availability-end-time" class="block text-gray-700 font-medium mb-2">End Time*</label>
+                <input type="time" id="availability-end-time" name="end_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+            </div>
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
+              Add Availability
+            </button>
+          </form>
+          
+          <hr class="my-6">
+          
+          <h3 class="font-semibold mb-4">My Availability</h3>
+          
+          <div class="mb-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <select id="availability-filter-court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Courts</option>
+                <!-- Court options will be dynamically inserted here -->
+              </select>
+              <input type="date" id="availability-filter-date" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+          
+          <div id="availability-container" class="border border-gray-200 rounded-lg overflow-hidden">
+            <!-- Availability items will be dynamically inserted here -->
+            <div class="text-center py-12 text-gray-500">
+              <p>No availability slots added yet</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delete Availability Modal -->
+        <div id="delete-availability-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+          <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">Delete Availability</h3>
+              <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-delete-availability-modal">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <p class="mb-6">Are you sure you want to delete this availability slot? This action cannot be undone.</p>
+            
+            <input type="hidden" id="delete-availability-id" value="">
+            
+            <div class="flex justify-end space-x-3">
+              <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-delete-availability-modal">
+                Cancel
+              </button>
+              <button id="confirm-delete-availability-btn" type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session Logs Tab -->
+      <div id="session-logs-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Session Logs</h1>
+          <p class="text-gray-600">Track and manage your coaching session logs</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="mb-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <input type="text" id="session-logs-search" placeholder="Search by student or title" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <select id="session-logs-filter-court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Courts</option>
+                <!-- Court options will be dynamically inserted here -->
+              </select>
+            </div>
+            
+            <div>
+              <select id="session-logs-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="date-asc">Date: Oldest First</option>
+                <option value="date-desc" selected>Date: Newest First</option>
+              </select>
+            </div>
+          </div>
+          
+          <div id="session-logs-container">
+            <!-- Session logs will be dynamically inserted here -->
+            <div class="text-center py-12 text-gray-500">
+              <p>No session logs found</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session Log Modal -->
+        <div id="session-log-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+          <div class="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+              <h3 id="session-log-modal-title" class="text-lg font-semibold">Session Log Details</h3>
+              <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-session-log-modal">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <form id="session-log-form">
+              <input type="hidden" id="session-log-id" name="log_id" value="">
+              <input type="hidden" id="session-log-booking-id" name="booking_id" value="">
+              
+              <div class="mb-4">
+                <label for="session-log-title" class="block text-gray-700 font-medium mb-2">Session Title*</label>
+                <input type="text" id="session-log-title" name="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+              
+              <div class="mb-4">
+                <label for="session-log-notes" class="block text-gray-700 font-medium mb-2">Session Notes (Visible to Student)*</label>
+                <textarea id="session-log-notes" name="notes" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+              </div>
+              
+              <div class="mb-6">
+                <label for="session-log-coach-notes" class="block text-gray-700 font-medium mb-2">Private Coach Notes</label>
+                <textarea id="session-log-coach-notes" name="coach_notes" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                <p class="text-sm text-gray-500 mt-1">These notes are only visible to you</p>
+              </div>
+              
+              <div class="flex justify-end space-x-3">
+                <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-session-log-modal">
+                  Cancel
+                </button>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing Plans Tab -->
+      <div id="pricing-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Pricing Plans</h1>
+          <p class="text-gray-600">Manage your pricing plans and discounts</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="font-semibold">Add Pricing Plan</h3>
+          </div>
+          
+          <form id="pricing-form" class="mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label for="pricing-name" class="block text-gray-700 font-medium mb-2">Plan Name*</label>
+                <input type="text" id="pricing-name" name="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+              <div>
+                <label for="pricing-discount-type" class="block text-gray-700 font-medium mb-2">Discount Type*</label>
+                <select id="pricing-discount-type" name="discount_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  <option value="">Select discount type</option>
+                  <option value="first_time">First-Time Student Discount</option>
+                  <option value="package">Package Deal</option>
+                  <option value="seasonal">Seasonal/Limited-Time Offer</option>
+                  <option value="custom">Custom Discount</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="mb-6">
+              <label for="pricing-description" class="block text-gray-700 font-medium mb-2">Description*</label>
+              <textarea id="pricing-description" name="description" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+            </div>
+            
+            <div class="pricing-fields-container">
+              <!-- First-Time Student Fields -->
+              <div id="first-time-fields" class="pricing-type-fields hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label class="block text-gray-700 font-medium mb-2">Discount Amount Type*</label>
+                    <div class="flex space-x-4">
+                      <label class="inline-flex items-center">
+                        <input type="radio" name="discount_amount_type" value="percentage" class="mr-2" checked>
+                        <span>Percentage (%)</span>
+                      </label>
+                      <label class="inline-flex items-center">
+                        <input type="radio" name="discount_amount_type" value="fixed" class="mr-2">
+                        <span>Fixed Amount ($)</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="first-time-discount" class="block text-gray-700 font-medium mb-2">Discount Amount*</label>
+                    <input type="number" id="first-time-discount" name="discount_amount" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Package Deal Fields -->
+              <div id="package-fields" class="pricing-type-fields hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label for="package-sessions" class="block text-gray-700 font-medium mb-2">Number of Sessions*</label>
+                    <input type="number" id="package-sessions" name="sessions_required" min="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  </div>
+                  <div>
+                    <label class="block text-gray-700 font-medium mb-2">Discount Amount Type*</label>
+                    <div class="flex space-x-4">
+                      <label class="inline-flex items-center">
+                        <input type="radio" name="package_discount_type" value="percentage" class="mr-2" checked>
+                        <span>Percentage (%)</span>
+                      </label>
+                      <label class="inline-flex items-center">
+                        <input type="radio" name="package_discount_type" value="fixed" class="mr-2">
+                        <span>Fixed Amount ($)</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="package-discount" class="block text-gray-700 font-medium mb-2">Discount Amount*</label>
+                    <input type="number" id="package-discount" name="package_discount_amount" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Seasonal/Limited-Time Fields -->
+              <div id="seasonal-fields" class="pricing-type-fields hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label for="seasonal-start" class="block text-gray-700 font-medium mb-2">Valid From*</label>
+                    <input type="date" id="seasonal-start" name="valid_from" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  </div>
+                  <div>
+                    <label for="seasonal-end" class="block text-gray-700 font-medium mb-2">Valid To*</label>
+                    <input type="date" id="seasonal-end" name="valid_to" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  </div>
+                  <div>
+                    <label class="block text-gray-700 font-medium mb-2">Discount Amount Type*</label>
+                    <div class="flex space-x-4">
+                      <label class="inline-flex items-center">
+                        <input type="radio" name="seasonal_discount_type" value="percentage" class="mr-2" checked>
+                        <span>Percentage (%)</span>
+                      </label>
+                      <label class="inline-flex items-center">
+                        <input type="radio" name="seasonal_discount_type" value="fixed" class="mr-2">
+                        <span>Fixed Amount ($)</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="seasonal-discount" class="block text-gray-700 font-medium mb-2">Discount Amount*</label>
+                    <input type="number" id="seasonal-discount" name="seasonal_discount_amount" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Custom Discount Fields -->
+              <div id="custom-fields" class="pricing-type-fields hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label class="block text-gray-700 font-medium mb-2">Discount Amount Type*</label>
+                    <div class="flex space-x-4">
+                      <label class="inline-flex items-center">
+                        <input type="radio" name="custom_discount_type" value="percentage" class="mr-2" checked>
+                        <span>Percentage (%)</span>
+                      </label>
+                      <label class="inline-flex items-center">
+                        <input type="radio" name="custom_discount_type" value="fixed" class="mr-2">
+                        <span>Fixed Amount ($)</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="custom-discount" class="block text-gray-700 font-medium mb-2">Discount Amount*</label>
+                    <input type="number" id="custom-discount" name="custom_discount_amount" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex items-center mb-6">
+              <input type="checkbox" id="pricing-active" name="is_active" class="mr-2" checked>
+              <label for="pricing-active">Active</label>
+            </div>
+            
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
+              Add Pricing Plan
+            </button>
+          </form>
+          
+          <hr class="my-6">
+          
+          <h3 class="font-semibold mb-4">My Pricing Plans</h3>
+          
+          <div id="pricing-plans-container">
+            <!-- Pricing plans will be dynamically inserted here -->
+            <div class="text-center py-12 text-gray-500">
+              <p>No pricing plans added yet</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delete Pricing Plan Modal -->
+        <div id="delete-pricing-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+          <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">Delete Pricing Plan</h3>
+              <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-delete-pricing-modal">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <p class="mb-6">Are you sure you want to delete this pricing plan? This action cannot be undone.</p>
+            
+            <input type="hidden" id="delete-pricing-id" value="">
+            
+            <div class="flex justify-end space-x-3">
+              <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-delete-pricing-modal">
+                Cancel
+              </button>
+              <button id="confirm-delete-pricing-btn" type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Earnings Tab -->
+      <div id="earnings-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Earnings</h1>
+          <p class="text-gray-600">Track your coaching income and earnings analytics</p>
+        </div>
+
+        <!-- Earnings Overview -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="font-semibold mb-6">Earnings Summary</h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h4 class="text-gray-500 text-sm font-medium mb-1">Total Earnings</h4>
+              <p id="total-earnings-value" class="text-2xl font-bold">$0.00</p>
+              <p class="text-sm text-gray-500">All time</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h4 class="text-gray-500 text-sm font-medium mb-1">Monthly Average</h4>
+              <p id="monthly-average" class="text-2xl font-bold">$0.00</p>
+              <p class="text-sm text-gray-500">Per month</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h4 class="text-gray-500 text-sm font-medium mb-1">This Month</h4>
+              <p id="this-month-earnings" class="text-2xl font-bold">$0.00</p>
+              <p id="this-month-comparison" class="text-sm text-green-600">+0% vs. last month</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Earnings Chart -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="font-semibold">Earnings Over Time</h3>
+            <select id="earnings-time-period" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="6">Last 6 Months</option>
+              <option value="12" selected>Last 12 Months</option>
+              <option value="24">Last 24 Months</option>
+            </select>
+          </div>
+          
+          <div class="h-80">
+            <canvas id="earnings-detailed-chart"></canvas>
+          </div>
+        </div>
+        
+        <!-- Earnings by Court -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="font-semibold mb-6">Earnings by Court</h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="h-64">
+              <canvas id="earnings-by-court-chart"></canvas>
+            </div>
+            <div id="earnings-by-court-list" class="space-y-4">
+              <!-- Court earnings will be dynamically inserted here -->
+              <div class="text-center py-6 text-gray-500">
+                <p>No earnings data available</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Earnings Breakdown -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="font-semibold">Earnings Breakdown</h3>
+            <div>
+              <select id="earnings-breakdown-period" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="this-month">This Month</option>
+                <option value="last-month">Last Month</option>
+                <option value="this-year" selected>This Year</option>
+                <option value="all-time">All Time</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="px-4 py-3 font-medium">Type</th>
+                  <th class="px-4 py-3 font-medium">Sessions</th>
+                  <th class="px-4 py-3 font-medium">Earnings</th>
+                  <th class="px-4 py-3 font-medium">% of Total</th>
+                </tr>
+              </thead>
+              <tbody id="earnings-breakdown-body">
+                <!-- Earnings breakdown will be dynamically inserted here -->
+                <tr>
+                  <td colspan="4" class="px-4 py-6 text-center text-gray-500">No earnings data available</td>
+                </tr>
+              </tbody>
+              <tfoot class="font-medium">
+                <tr class="border-t border-gray-200">
+                  <td class="px-4 py-3">Total</td>
+                  <td id="earnings-breakdown-total-sessions" class="px-4 py-3">0</td>
+                  <td id="earnings-breakdown-total-amount" class="px-4 py-3">$0.00</td>
+                  <td class="px-4 py-3">100%</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Help Center Tab -->
+      <div id="help-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Help Center</h1>
+          <p class="text-gray-600">Find answers to common questions and get support</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="font-semibold mb-6">Frequently Asked Questions</h3>
+          
+          <div class="space-y-4">
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                <span>How do I add my availability?</span>
+                <i class="fas fa-chevron-down transform transition-transform"></i>
+              </button>
+              <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <p>To add your availability for coaching sessions:</p>
+                <ol class="list-decimal ml-5 mt-2 space-y-2">
+                  <li>Go to the "Availability" tab in your dashboard</li>
+                  <li>Fill out the form with your available court, date, start time, and end time</li>
+                  <li>Click "Add Availability"</li>
+                  <li>Your available time slot will appear in the list below and be visible to students looking to book sessions</li>
+                </ol>
+              </div>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                <span>How do I create pricing plans and discounts?</span>
+                <i class="fas fa-chevron-down transform transition-transform"></i>
+              </button>
+              <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <p>To create pricing plans and offer discounts to your students:</p>
+                <ol class="list-decimal ml-5 mt-2 space-y-2">
+                  <li>Navigate to the "Pricing Plans" tab in your dashboard</li>
+                  <li>Fill out the form with details about your pricing plan, including name, type, and discount amount</li>
+                  <li>Choose from different discount types: first-time student, package deal, seasonal offer, or custom discount</li>
+                  <li>Click "Add Pricing Plan" to create your new plan</li>
+                  <li>Your plan will be displayed to students when they book sessions with you</li>
+                </ol>
+              </div>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                <span>How do I complete a session and add session notes?</span>
+                <i class="fas fa-chevron-down transform transition-transform"></i>
+              </button>
+              <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <p>After you've completed a coaching session with a student:</p>
+                <ol class="list-decimal ml-5 mt-2 space-y-2">
+                  <li>Go to the "Bookings" tab and find the completed session</li>
+                  <li>Click the "Complete Session" button on the booking card</li>
+                  <li>A session log will be automatically created</li>
+                  <li>Click "Edit Log" to add your notes about the session</li>
+                  <li>Add notes visible to the student and private notes only for yourself</li>
+                  <li>Click "Save" to update the session log</li>
+                </ol>
+                <p class="mt-2">You can view and edit all your session logs in the "Session Logs" tab.</p>
+              </div>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                <span>How are my earnings calculated?</span>
+                <i class="fas fa-chevron-down transform transition-transform"></i>
+              </button>
+              <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <p>Your earnings are calculated based on completed sessions:</p>
+                <ul class="list-disc ml-5 mt-2 space-y-2">
+                  <li>Each session generates revenue based on your hourly rate and any applicable discounts</li>
+                  <li>Package deals may affect individual session prices</li>
+                  <li>Earnings are tracked and displayed in the "Earnings" tab</li>
+                  <li>You can view earnings by time period, court location, and session type</li>
+                  <li>Payments are processed according to the schedule in your coach agreement</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="font-semibold mb-6">Contact Support</h3>
+          
+          <form id="support-form">
+            <div class="mb-4">
+              <label for="support-subject" class="block text-gray-700 font-medium mb-2">Subject*</label>
+              <input type="text" id="support-subject" name="subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            
+            <div class="mb-4">
+              <label for="support-message" class="block text-gray-700 font-medium mb-2">Message*</label>
+              <textarea id="support-message" name="message" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+            </div>
+            
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
+              Submit
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-notification" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-y-24 opacity-0 transition-all duration-300 hidden">
+    <div class="flex items-start space-x-3">
+      <div id="toast-icon" class="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded-full text-white"></div>
+      <div>
+        <h4 id="toast-title" class="font-semibold"></h4>
+        <p id="toast-message" class="text-sm text-gray-600"></p>
+      </div>
+      <button id="toast-close" class="text-gray-400 hover:text-gray-500">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+    // Helper functions
+    function formatDate(dateString) {
+      const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+      return new Date(dateString).toLocaleDateString('en-US', options);
+    }
+
+    function formatTime(timeString) {
+      return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function formatCurrency(amount) {
+      return `${Number(amount).toFixed(2)}`;
+    }
+
+    function showLoading(element) {
+      element.classList.add('loading');
+    }
+
+    function hideLoading(element) {
+      element.classList.remove('loading');
+    }
+
+    function showToast(title, message, type = 'success') {
+      const toast = document.getElementById('toast-notification');
+      const toastTitle = document.getElementById('toast-title');
+      const toastMessage = document.getElementById('toast-message');
+      const toastIcon = document.getElementById('toast-icon');
+      
+      toastTitle.textContent = title;
+      toastMessage.textContent = message;
+      
+      // Set icon and color based on type
+      if (type === 'success') {
+        toastIcon.innerHTML = '<i class="fas fa-check"></i>';
+        toastIcon.classList.add('bg-green-500');
+        toastIcon.classList.remove('bg-red-500', 'bg-blue-500');
+      } else if (type === 'error') {
+        toastIcon.innerHTML = '<i class="fas fa-exclamation"></i>';
+        toastIcon.classList.add('bg-red-500');
+        toastIcon.classList.remove('bg-green-500', 'bg-blue-500');
+      } else if (type === 'info') {
+        toastIcon.innerHTML = '<i class="fas fa-info"></i>';
+        toastIcon.classList.add('bg-blue-500');
+        toastIcon.classList.remove('bg-green-500', 'bg-red-500');
+      }
+      
+      // Show toast
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-24', 'opacity-0');
+      }, 10);
+      
+      // Hide toast after 5 seconds
+      setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0');
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 300);
+      }, 5000);
+    }
+
+    // API call functions
+    const API_BASE_URL = '/api';
+
+    async function fetchAPI(endpoint, options = {}) {
+      try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.statusText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+      }
+    }
+
+    async function getCoachProfile() {
+      return fetchAPI('/coach/profile');
+    }
+
+    async function updateCoachProfile(profileData) {
+      return fetchAPI('/coach/profile', {
+        method: 'PUT',
+        body: JSON.stringify(profileData)
+      });
+    }
+
+    async function changePassword(passwordData) {
+      return fetchAPI('/coach/change-password', {
+        method: 'POST',
+        body: JSON.stringify(passwordData)
+      });
+    }
+
+    async function getCourts() {
+      return fetchAPI('/courts');
+    }
+
+    async function getCoachCourts() {
+      return fetchAPI('/coach/courts');
+    }
+
+    async function addCoachCourt(courtId) {
+      return fetchAPI('/coach/courts/add', {
+        method: 'POST',
+        body: JSON.stringify({ court_id: courtId })
+      });
+    }
+
+    async function removeCoachCourt(courtId) {
+      return fetchAPI('/coach/courts/remove', {
+        method: 'POST',
+        body: JSON.stringify({ court_id: courtId })
+      });
+    }
+
+    async function getAvailability() {
+      return fetchAPI('/coach/availability');
+    }
+
+    async function addAvailability(availabilityData) {
+      return fetchAPI('/coach/availability/add', {
+        method: 'POST',
+        body: JSON.stringify(availabilityData)
+      });
+    }
+
+    async function deleteAvailability(availabilityId) {
+      return fetchAPI('/coach/availability/delete', {
+        method: 'POST',
+        body: JSON.stringify({ availability_id: availabilityId })
+      });
+    }
+
+    async function getBookings(status = 'upcoming') {
+      return fetchAPI(`/coach/bookings/${status}`);
+    }
+
+    async function completeSession(bookingId) {
+      return fetchAPI('/coach/complete-session', {
+        method: 'POST',
+        body: JSON.stringify({ booking_id: bookingId })
+      });
+    }
+
+    async function cancelSession(bookingId) {
+      return fetchAPI('/coach/cancel-session', {
+        method: 'POST',
+        body: JSON.stringify({ booking_id: bookingId })
+      });
+    }
+
+    async function getSessionLogs() {
+      return fetchAPI('/coach/session-logs');
+    }
+
+    async function getSessionLog(logId) {
+      return fetchAPI(`/coach/session-logs/${logId}`);
+    }
+
+    async function updateSessionLog(logData) {
+      return fetchAPI('/coach/session-logs/update', {
+        method: 'POST',
+        body: JSON.stringify(logData)
+      });
+    }
+
+    async function getPricingPlans() {
+      return fetchAPI('/coach/pricing-plans');
+    }
+
+    async function addPricingPlan(planData) {
+      return fetchAPI('/coach/pricing-plans/add', {
+        method: 'POST',
+        body: JSON.stringify(planData)
+      });
+    }
+
+    async function deletePricingPlan(planId) {
+      return fetchAPI('/coach/pricing-plans/delete', {
+        method: 'POST',
+        body: JSON.stringify({ plan_id: planId })
+      });
+    }
+
+    async function getEarnings(period = 'all') {
+      return fetchAPI(`/coach/earnings/${period}`);
+    }
+
+    async function submitSupportRequest(requestData) {
+      return fetchAPI('/support/request', {
+        method: 'POST',
+        body: JSON.stringify(requestData)
+      });
+    }
+
+    // DOM manipulation and event handling
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize tabs
+      const tabLinks = document.querySelectorAll('.tab-link');
+      const tabContents = document.querySelectorAll('.tab-content');
+      const mobileNav = document.getElementById('mobile-nav');
+
+      function activateTab(tabId) {
+        // Hide all tab contents
+        tabContents.forEach(content => {
+          content.classList.remove('active');
+        });
+        
+        // Remove active class from all tab links
+        tabLinks.forEach(link => {
+          link.classList.remove('active-nav-link');
+        });
+        
+        // Show the selected tab content
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+        
+        // Add active class to the clicked tab link
+        document.querySelector(`.${tabId}-tab`).classList.add('active-nav-link');
+        
+        // Update mobile nav
+        mobileNav.value = tabId;
+      }
+
+      tabLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const tabId = this.getAttribute('href').substring(1);
+          activateTab(tabId);
+        });
+      });
+
+      mobileNav.addEventListener('change', function() {
+        activateTab(this.value);
+      });
+
+      // Initialize dropdowns
+      const profileBtn = document.getElementById('profile-btn');
+      const profileMenu = document.getElementById('profile-menu');
+      const notificationBtn = document.getElementById('notification-btn');
+      const notificationMenu = document.getElementById('notification-menu');
+
+      profileBtn.addEventListener('click', function() {
+        profileMenu.classList.toggle('hidden');
+        notificationMenu.classList.add('hidden');
+      });
+
+      notificationBtn.addEventListener('click', function() {
+        notificationMenu.classList.toggle('hidden');
+        profileMenu.classList.add('hidden');
+      });
+
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+          profileMenu.classList.add('hidden');
+        }
+        
+        if (!notificationBtn.contains(e.target) && !notificationMenu.contains(e.target)) {
+          notificationMenu.classList.add('hidden');
+        }
+      });
+
+      // Profile Image Management
+      const profilePictureInput = document.getElementById('profile-picture-input');
+      const changeProfilePictureBtn = document.getElementById('change-profile-picture');
+      const removeProfilePictureBtn = document.getElementById('remove-profile-picture');
+      const profilePreviewImage = document.getElementById('profile-preview-image');
+
+    // Change profile picture
+    changeProfilePictureBtn.addEventListener('click', function() {
+      profilePictureInput.click();
+    });
+
+    profilePictureInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          if (profilePreviewImage.tagName === 'IMG') {
+            profilePreviewImage.src = e.target.result;
+          } else {
+            // Replace the placeholder div with an actual image
+            const parent = profilePreviewImage.parentElement;
+            const img = document.createElement('img');
+            img.id = 'profile-preview-image';
+            img.src = e.target.result;
+            img.alt = 'Profile Picture';
+            img.className = 'h-full w-full object-cover';
+            parent.replaceChild(img, profilePreviewImage);
+          }
+          
+          // Show the remove button
+          removeProfilePictureBtn.style.display = 'block';
+          
+          // Upload the image
+          uploadProfilePicture(profilePictureInput.files[0]);
+        };
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+
+    // Remove profile picture
+    removeProfilePictureBtn.addEventListener('click', function() {
+      // Ask for confirmation
+      if (confirm('Are you sure you want to remove your profile picture?')) {
+        // Replace the image with placeholder
+        const parent = profilePreviewImage.parentElement;
+        const placeholder = document.createElement('div');
+        placeholder.id = 'profile-preview-image';
+        placeholder.className = 'bg-gray-200 h-full w-full flex items-center justify-center';
+        placeholder.innerHTML = '<i class="fas fa-user text-gray-400 text-4xl"></i>';
+        
+        // If the current element is an image, replace it
+        if (profilePreviewImage.tagName === 'IMG') {
+          parent.replaceChild(placeholder, profilePreviewImage);
+        }
+        
+        // Hide the remove button
+        removeProfilePictureBtn.style.display = 'none';
+        
+        // Send request to server to remove profile picture
+        removeProfilePicture();
+      }
+    });
+
+    // Upload profile picture to server
+    async function uploadProfilePicture(file) {
+      try {
+        const formData = new FormData();
+        formData.append('profile_picture', file);
+        
+        // Show loading indicator
+        changeProfilePictureBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-white text-xl"></i>';
+        
+        const response = await fetch('/api/coach/update-profile-picture', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to upload profile picture');
+        }
+        
+        // Reset loading indicator
+        changeProfilePictureBtn.innerHTML = '<i class="fas fa-camera text-white text-xl"></i>';
+        
+        // Show success message
+        showToast('Success', 'Profile picture updated successfully', 'success');
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        changeProfilePictureBtn.innerHTML = '<i class="fas fa-camera text-white text-xl"></i>';
+        showToast('Error', 'Failed to update profile picture', 'error');
+      }
+    }
+
+    // Remove profile picture from server
+    async function removeProfilePicture() {
+      try {
+        const response = await fetch('/api/coach/remove-profile-picture', {
+          method: 'POST'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to remove profile picture');
+        }
+        
+        showToast('Success', 'Profile picture removed successfully', 'success');
+      } catch (error) {
+        console.error('Error removing profile picture:', error);
+        showToast('Error', 'Failed to remove profile picture', 'error');
+      }
+    }
+
+    // Showcase Images Management
+    const showcaseImagesContainer = document.getElementById('showcase-images-container');
+    const showcaseImagesInput = document.getElementById('showcase-images-input');
+    const addShowcaseImagesBtn = document.getElementById('add-showcase-images');
+    const saveShowcaseChangesBtn = document.getElementById('save-showcase-changes');
+    
+    // Track changes to showcase images
+    let showcaseImagesChanged = false;
+    let deletedImageIds = [];
+    let newImages = [];
+
+    // Load showcase images
+    loadShowcaseImages();
+
+    // Add showcase images button
+    addShowcaseImagesBtn.addEventListener('click', function() {
+      showcaseImagesInput.click();
+    });
+
+    // Handle file selection
+    showcaseImagesInput.addEventListener('change', function() {
+      if (this.files && this.files.length > 0) {
+        // Store the selected files
+        newImages = Array.from(this.files);
+        
+        // Preview the new images
+        newImages.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            addShowcaseImagePreview(e.target.result, null, true);
+          };
+          reader.readAsDataURL(file);
+        });
+        
+        // Show the save button
+        saveShowcaseChangesBtn.classList.remove('hidden');
+        showcaseImagesChanged = true;
+      }
+    });
+
+    // Save changes button
+    saveShowcaseChangesBtn.addEventListener('click', function() {
+      if (showcaseImagesChanged) {
+        saveShowcaseChanges();
+      }
+    });
+
+    // Load showcase images from server
+    async function loadShowcaseImages() {
+      try {
+        const response = await fetch('/api/coach/showcase-images');
+        
+        if (!response.ok) {
+          throw new Error('Failed to load showcase images');
+        }
+        
+        const data = await response.json();
+        
+        // Clear loading indicator
+        showcaseImagesContainer.innerHTML = '';
+        
+        // Add images to the container
+        if (data.images && data.images.length > 0) {
+          data.images.forEach(image => {
+            addShowcaseImagePreview(image.url, image.id);
+          });
+        }
+        
+        // Add the "Add Image" placeholder
+        addAddImagePlaceholder();
+        
+      } catch (error) {
+        console.error('Error loading showcase images:', error);
+        showcaseImagesContainer.innerHTML = `
+          <div class="col-span-full p-4 text-center">
+            <p class="text-red-500">Failed to load images. Please try again.</p>
+            <button type="button" class="mt-2 text-blue-600 hover:text-blue-800" onclick="loadShowcaseImages()">
+              <i class="fas fa-sync-alt mr-1"></i> Retry
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // Add a showcase image preview to the container
+    function addShowcaseImagePreview(imageUrl, imageId, isNew = false) {
+      const imageItem = document.createElement('div');
+      imageItem.className = 'showcase-image-item';
+      if (imageId) imageItem.dataset.id = imageId;
+      if (isNew) imageItem.dataset.new = 'true';
+      
+      imageItem.innerHTML = `
+        <img src="${imageUrl}" alt="Showcase Image">
+        <div class="remove-image">
+          <i class="fas fa-times text-red-500"></i>
+        </div>
+      `;
+      
+      // Add remove button click handler
+      const removeBtn = imageItem.querySelector('.remove-image');
+      removeBtn.addEventListener('click', function() {
+        if (isNew) {
+          // Just remove from display
+          imageItem.remove();
+          
+          // Update new images array if needed
+          const imgIndex = Array.from(showcaseImagesContainer.querySelectorAll('[data-new="true"]')).indexOf(imageItem);
+          if (imgIndex > -1 && imgIndex < newImages.length) {
+            newImages.splice(imgIndex, 1);
+          }
+        } else {
+          // Mark as deleted and add to deleted IDs
+          imageItem.dataset.deleted = 'true';
+          deletedImageIds.push(imageId);
+        }
+        
+        // Show save button
+        saveShowcaseChangesBtn.classList.remove('hidden');
+        showcaseImagesChanged = true;
+      });
+      
+      // Add to container before the "Add Image" placeholder
+      const addPlaceholder = showcaseImagesContainer.querySelector('.add-image-placeholder');
+      if (addPlaceholder) {
+        showcaseImagesContainer.insertBefore(imageItem, addPlaceholder);
+      } else {
+        showcaseImagesContainer.appendChild(imageItem);
+      }
+    }
+
+    // Add the "Add Image" placeholder
+    function addAddImagePlaceholder() {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'add-image-placeholder';
+      placeholder.innerHTML = `
+        <i class="fas fa-plus text-gray-400 text-2xl mb-1"></i>
+        <span class="text-xs text-gray-500">Add Photo</span>
+      `;
+      
+      placeholder.addEventListener('click', function() {
+        addShowcaseImagesBtn.click();
+      });
+      
+      showcaseImagesContainer.appendChild(placeholder);
+    }
+
+    // Save showcase image changes
+    async function saveShowcaseChanges() {
+      try {
+        // Show loading state
+        saveShowcaseChangesBtn.disabled = true;
+        saveShowcaseChangesBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+        
+        const formData = new FormData();
+        
+        // Add new images to form data
+        newImages.forEach(file => {
+          formData.append('new_images', file);
+        });
+        
+        // Add deleted image IDs
+        if (deletedImageIds.length > 0) {
+          formData.append('deleted_image_ids', JSON.stringify(deletedImageIds));
+        }
+        
+        const response = await fetch('/api/coach/update-showcase-images', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to update showcase images');
+        }
+        
+        // Reset state
+        newImages = [];
+        deletedImageIds = [];
+        showcaseImagesChanged = false;
+        
+        // Hide save button
+        saveShowcaseChangesBtn.classList.add('hidden');
+        
+        // Reload images
+        await loadShowcaseImages();
+        
+        // Show success toast
+        showToast('Success', 'Showcase images updated successfully', 'success');
+        
+      } catch (error) {
+        console.error('Error saving showcase images:', error);
+        showToast('Error', 'Failed to update showcase images: ' + error.message, 'error');
+      } finally {
+        // Reset button state
+        saveShowcaseChangesBtn.disabled = false;
+        saveShowcaseChangesBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
+      }
+    }
+
+      // Initialize FAQ accordions
+      const faqToggles = document.querySelectorAll('.faq-toggle');
+      
+      faqToggles.forEach(toggle => {
+        toggle.addEventListener('click', function() {
+          const content = this.nextElementSibling;
+          const icon = this.querySelector('i');
+          
+          content.classList.toggle('hidden');
+          icon.classList.toggle('rotate-180');
+        });
+      });
+
+      // Initialize toast close button
+      document.getElementById('toast-close').addEventListener('click', function() {
+        const toast = document.getElementById('toast-notification');
+        toast.classList.add('translate-y-24', 'opacity-0');
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 300);
+      });
+
+      // Load initial data
+      loadDashboardData();
+      
+      // Set current date as minimum for availability date input
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('availability-date').min = today;
+      
+      // Setup form submit event listeners
+      setupForms();
+      
+      // Setup modal event listeners
+      setupModals();
+
+      // Setup booking tabs
+      setupBookingTabs();
+    });
+
+    // Load dashboard data
+    async function loadDashboardData() {
+      try {
+        const coachProfile = await getCoachProfile();
+        
+        // Update profile display
+        document.getElementById('coach-name').textContent = coachProfile.user.first_name;
+        document.getElementById('profile-name').textContent = `${coachProfile.user.first_name} ${coachProfile.user.last_name}`;
+        document.getElementById('profile-initial').textContent = coachProfile.user.first_name.charAt(0);
+        
+        // Populate profile form
+        populateProfileForm(coachProfile);
+        
+        // Load courts
+        loadCourts();
+        
+        // Load bookings
+        loadBookings();
+        
+        // Load session logs
+        loadSessionLogs();
+        
+        // Load availability
+        loadAvailability();
+        
+        // Load pricing plans
+        loadPricingPlans();
+        
+        // Load earnings data
+        loadEarningsData();
+        
+        // Update dashboard stats
+        updateDashboardStats();
+        
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        showToast('Error', 'Failed to load dashboard data. Please refresh the page.', 'error');
+      }
+    }
+
+    // Setup form submit handlers
+    function setupForms() {
+      // Profile form
+      document.getElementById('profile-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const profileData = {
+          user: {
+            first_name: formData.get('first_name'),
+            last_name: formData.get('last_name'),
+            email: formData.get('email'),
+            gender: formData.get('gender'),
+            location: formData.get('location'),
+            dupr_rating: parseFloat(formData.get('dupr_rating'))
+          },
+          coach: {
+            hourly_rate: parseFloat(formData.get('hourly_rate')),
+            years_experience: parseInt(formData.get('years_experience')),
+            specialties: formData.get('specialties'),
+            biography: formData.get('biography')
+          }
+        };
+        
+        try {
+          showLoading(this);
+          await updateCoachProfile(profileData);
+          hideLoading(this);
+          showToast('Success', 'Your profile has been updated successfully.', 'success');
+        } catch (error) {
+          hideLoading(this);
+          showToast('Error', 'Failed to update profile. Please try again.', 'error');
+        }
+      });
+      
+      // Password form
+      document.getElementById('password-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const currentPassword = formData.get('current_password');
+        const newPassword = formData.get('new_password');
+        const confirmPassword = formData.get('confirm_password');
+        
+        if (newPassword !== confirmPassword) {
+          showToast('Error', 'New passwords do not match.', 'error');
+          return;
+        }
+        
+        try {
+          showLoading(this);
+          await changePassword({
+            current_password: currentPassword,
+            new_password: newPassword
+          });
+          hideLoading(this);
+          showToast('Success', 'Your password has been changed successfully.', 'success');
+          this.reset();
+        } catch (error) {
+          hideLoading(this);
+          showToast('Error', 'Failed to change password. Please check your current password and try again.', 'error');
+        }
+      });
+      
+      // Court form
+      document.getElementById('court-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const courtId = document.getElementById('court-select').value;
+        
+        if (!courtId) {
+          showToast('Error', 'Please select a court.', 'error');
+          return;
+        }
+        
+        try {
+          showLoading(this);
+          await addCoachCourt(courtId);
+          hideLoading(this);
+          document.querySelector('.close-court-modal').click();
+          showToast('Success', 'Court added successfully.', 'success');
+          loadCourts();
+        } catch (error) {
+          hideLoading(this);
+          showToast('Error', 'Failed to add court. Please try again.', 'error');
+        }
+      });
+      
+      // Availability form
+      document.getElementById('availability-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const availabilityData = {
+          court_id: formData.get('court_id'),
+          date: formData.get('date'),
+          start_time: formData.get('start_time'),
+          end_time: formData.get('end_time')
+        };
+        
+        // Validate time
+        if (availabilityData.start_time >= availabilityData.end_time) {
+          showToast('Error', 'End time must be after start time.', 'error');
+          return;
+        }
+        
+        try {
+          showLoading(this);
+          await addAvailability(availabilityData);
+          hideLoading(this);
+          showToast('Success', 'Availability added successfully.', 'success');
+          this.reset();
+          loadAvailability();
+        } catch (error) {
+          hideLoading(this);
+          showToast('Error', 'Failed to add availability. Please try again.', 'error');
+        }
+      });
+      
+      // Session log form
+      document.getElementById('session-log-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const logData = {
+          log_id: formData.get('log_id'),
+          booking_id: formData.get('booking_id'),
+          title: formData.get('title'),
+          notes: formData.get('notes'),
+          coach_notes: formData.get('coach_notes')
+        };
+        
+        try {
+          showLoading(this);
+          await updateSessionLog(logData);
+          hideLoading(this);
+          document.querySelector('.close-session-log-modal').click();
+          showToast('Success', 'Session log updated successfully.', 'success');
+          loadSessionLogs();
+        } catch (error) {
+          hideLoading(this);
+          showToast('Error', 'Failed to update session log. Please try again.', 'error');
+        }
+      });
+      
+      // Pricing form
+      document.getElementById('pricing-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const discountType = formData.get('discount_type');
+        
+        let planData = {
+          name: formData.get('name'),
+          description: formData.get('description'),
+          discount_type: discountType,
+          is_active: formData.get('is_active') ? true : false
+        };
+        
+        // Add fields based on discount type
+        if (discountType === 'first_time') {
+          const amountType = formData.get('discount_amount_type');
+          if (amountType === 'percentage') {
+            planData.percentage_discount = parseFloat(formData.get('discount_amount'));
+          } else {
+            planData.fixed_discount = parseFloat(formData.get('discount_amount'));
+          }
+          planData.first_time_only = true;
+        }
+        else if (discountType === 'package') {
+          const amountType = formData.get('package_discount_type');
+          if (amountType === 'percentage') {
+            planData.percentage_discount = parseFloat(formData.get('package_discount_amount'));
+          } else {
+            planData.fixed_discount = parseFloat(formData.get('package_discount_amount'));
+          }
+          planData.sessions_required = parseInt(formData.get('sessions_required'));
+        }
+        else if (discountType === 'seasonal') {
+          const amountType = formData.get('seasonal_discount_type');
+          if (amountType === 'percentage') {
+            planData.percentage_discount = parseFloat(formData.get('seasonal_discount_amount'));
+          } else {
+            planData.fixed_discount = parseFloat(formData.get('seasonal_discount_amount'));
+          }
+          planData.valid_from = formData.get('valid_from');
+          planData.valid_to = formData.get('valid_to');
+        }
+        else if (discountType === 'custom') {
+          const amountType = formData.get('custom_discount_type');
+          if (amountType === 'percentage') {
+            planData.percentage_discount = parseFloat(formData.get('custom_discount_amount'));
+          } else {
+            planData.fixed_discount = parseFloat(formData.get('custom_discount_amount'));
+          }
+        }
+        
+        try {
+          showLoading(this);
+          await addPricingPlan(planData);
+          hideLoading(this);
+          showToast('Success', 'Pricing plan added successfully.', 'success');
+          this.reset();
+          loadPricingPlans();
+        } catch (error) {
+          hideLoading(this);
+          showToast('Error', 'Failed to add pricing plan. Please try again.', 'error');
+        }
+      });
+      
+      // Support form
+      document.getElementById('support-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const requestData = {
+          subject: formData.get('subject'),
+          message: formData.get('message')
+        };
+        
+        try {
+          showLoading(this);
+          await submitSupportRequest(requestData);
+          hideLoading(this);
+          showToast('Success', 'Your support request has been submitted.', 'success');
+          this.reset();
+        } catch (error) {
+          hideLoading(this);
+          showToast('Error', 'Failed to submit support request. Please try again.', 'error');
+        }
+      });
+      
+      // Pricing discount type change handler
+      document.getElementById('pricing-discount-type').addEventListener('change', function() {
+        const discountType = this.value;
+        const discountFields = document.querySelectorAll('.pricing-type-fields');
+        
+        // Hide all discount fields
+        discountFields.forEach(field => {
+          field.classList.add('hidden');
+        });
+        
+        // Show fields based on discount type
+        if (discountType === 'first_time') {
+          document.getElementById('first-time-fields').classList.remove('hidden');
+        } else if (discountType === 'package') {
+          document.getElementById('package-fields').classList.remove('hidden');
+        } else if (discountType === 'seasonal') {
+          document.getElementById('seasonal-fields').classList.remove('hidden');
+        } else if (discountType === 'custom') {
+          document.getElementById('custom-fields').classList.remove('hidden');
+        }
+      });
+    }
+
+    // Setup modal event handlers
+    function setupModals() {
+      // Court modal
+      document.getElementById('add-court-btn').addEventListener('click', function() {
+        document.getElementById('court-modal').classList.remove('hidden');
+      });
+      
+      document.querySelectorAll('.close-court-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.getElementById('court-modal').classList.add('hidden');
+        });
+      });
+      
+      // Remove court modal
+      document.querySelectorAll('.close-remove-court-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.getElementById('remove-court-modal').classList.add('hidden');
+        });
+      });
+      
+      document.getElementById('confirm-remove-court-btn').addEventListener('click', async function() {
+        const courtId = document.getElementById('remove-court-id').value;
+        
+        try {
+          document.getElementById('remove-court-modal').classList.add('hidden');
+          await removeCoachCourt(courtId);
+          showToast('Success', 'Court removed successfully.', 'success');
+          loadCourts();
+        } catch (error) {
+          showToast('Error', 'Failed to remove court. Please try again.', 'error');
+        }
+      });
+      
+      // Delete availability modal
+      document.querySelectorAll('.close-delete-availability-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.getElementById('delete-availability-modal').classList.add('hidden');
+        });
+      });
+      
+      document.getElementById('confirm-delete-availability-btn').addEventListener('click', async function() {
+        const availabilityId = document.getElementById('delete-availability-id').value;
+        
+        try {
+          document.getElementById('delete-availability-modal').classList.add('hidden');
+          await deleteAvailability(availabilityId);
+          showToast('Success', 'Availability deleted successfully.', 'success');
+          loadAvailability();
+        } catch (error) {
+          showToast('Error', 'Failed to delete availability. Please try again.', 'error');
+        }
+      });
+      
+      // Complete session modal
+      document.querySelectorAll('.close-complete-session-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.getElementById('complete-session-modal').classList.add('hidden');
+        });
+      });
+      
+      document.getElementById('confirm-complete-session-btn').addEventListener('click', async function() {
+        const bookingId = document.getElementById('complete-booking-id').value;
+        
+        try {
+          document.getElementById('complete-session-modal').classList.add('hidden');
+          await completeSession(bookingId);
+          showToast('Success', 'Session marked as completed.', 'success');
+          loadBookings();
+          updateDashboardStats();
+        } catch (error) {
+          showToast('Error', 'Failed to complete session. Please try again.', 'error');
+        }
+      });
+      
+      // Cancel session modal
+      document.querySelectorAll('.close-cancel-session-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.getElementById('cancel-session-modal').classList.add('hidden');
+        });
+      });
+      
+      document.getElementById('confirm-cancel-session-btn').addEventListener('click', async function() {
+        const bookingId = document.getElementById('cancel-booking-id').value;
+        
+        try {
+          document.getElementById('cancel-session-modal').classList.add('hidden');
+          await cancelSession(bookingId);
+          showToast('Success', 'Session cancelled successfully.', 'success');
+          loadBookings();
+        } catch (error) {
+          showToast('Error', 'Failed to cancel session. Please try again.', 'error');
+        }
+      });
+      
+      // Session log modal
+      document.querySelectorAll('.close-session-log-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.getElementById('session-log-modal').classList.add('hidden');
+        });
+      });
+      
+      // Delete pricing plan modal
+      document.querySelectorAll('.close-delete-pricing-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.getElementById('delete-pricing-modal').classList.add('hidden');
+        });
+      });
+      
+      document.getElementById('confirm-delete-pricing-btn').addEventListener('click', async function() {
+        const planId = document.getElementById('delete-pricing-id').value;
+        
+        try {
+          document.getElementById('delete-pricing-modal').classList.add('hidden');
+          await deletePricingPlan(planId);
+          showToast('Success', 'Pricing plan deleted successfully.', 'success');
+          loadPricingPlans();
+        } catch (error) {
+          showToast('Error', 'Failed to delete pricing plan. Please try again.', 'error');
+        }
+      });
+    }
+
+    function setupBookingTabs() {
+      const upcomingBtn = document.getElementById('upcoming-tab-btn');
+      const completedBtn = document.getElementById('completed-tab-btn');
+      const cancelledBtn = document.getElementById('cancelled-tab-btn');
+      
+      if (!upcomingBtn || !completedBtn || !cancelledBtn) return;
+      
+      const upcomingTab = document.getElementById('upcoming-bookings-tab');
+      const completedTab = document.getElementById('completed-bookings-tab');
+      const cancelledTab = document.getElementById('cancelled-bookings-tab');
+      
+      upcomingBtn.addEventListener('click', function() {
+        // Update button styles
+        upcomingBtn.classList.add('text-blue-600', 'border-blue-600');
+        upcomingBtn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        completedBtn.classList.remove('text-blue-600', 'border-blue-600');
+        completedBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        cancelledBtn.classList.remove('text-blue-600', 'border-blue-600');
+        cancelledBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        // Show/hide tabs
+        upcomingTab.classList.remove('hidden');
+        upcomingTab.classList.add('active');
+        
+        completedTab.classList.add('hidden');
+        completedTab.classList.remove('active');
+        
+        cancelledTab.classList.add('hidden');
+        cancelledTab.classList.remove('active');
+      });
+      
+      completedBtn.addEventListener('click', function() {
+        // Update button styles
+        completedBtn.classList.add('text-blue-600', 'border-blue-600');
+        completedBtn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        upcomingBtn.classList.remove('text-blue-600', 'border-blue-600');
+        upcomingBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        cancelledBtn.classList.remove('text-blue-600', 'border-blue-600');
+        cancelledBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        // Show/hide tabs
+        completedTab.classList.remove('hidden');
+        completedTab.classList.add('active');
+        
+        upcomingTab.classList.add('hidden');
+        upcomingTab.classList.remove('active');
+        
+        cancelledTab.classList.add('hidden');
+        cancelledTab.classList.remove('active');
+      });
+      
+      cancelledBtn.addEventListener('click', function() {
+        // Update button styles
+        cancelledBtn.classList.add('text-blue-600', 'border-blue-600');
+        cancelledBtn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        upcomingBtn.classList.remove('text-blue-600', 'border-blue-600');
+        upcomingBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        completedBtn.classList.remove('text-blue-600', 'border-blue-600');
+        completedBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        // Show/hide tabs
+        cancelledTab.classList.remove('hidden');
+        cancelledTab.classList.add('active');
+        
+        upcomingTab.classList.add('hidden');
+        upcomingTab.classList.remove('active');
+        
+        completedTab.classList.add('hidden');
+        completedTab.classList.remove('active');
+      });
+
+      // Add search and filter functionality
+      document.getElementById('upcoming-search')?.addEventListener('input', function() {
+        filterBookings('upcoming');
+      });
+      
+      document.getElementById('completed-search')?.addEventListener('input', function() {
+        filterBookings('completed');
+      });
+      
+      document.getElementById('cancelled-search')?.addEventListener('input', function() {
+        filterBookings('cancelled');
+      });
+      
+      document.getElementById('upcoming-filter-court')?.addEventListener('change', function() {
+        filterBookings('upcoming');
+      });
+      
+      document.getElementById('completed-filter-court')?.addEventListener('change', function() {
+        filterBookings('completed');
+      });
+      
+      document.getElementById('cancelled-filter-court')?.addEventListener('change', function() {
+        filterBookings('cancelled');
+      });
+      
+      document.getElementById('upcoming-sort')?.addEventListener('change', function() {
+        filterBookings('upcoming');
+      });
+      
+      document.getElementById('completed-sort')?.addEventListener('change', function() {
+        filterBookings('completed');
+      });
+      
+      document.getElementById('cancelled-sort')?.addEventListener('change', function() {
+        filterBookings('cancelled');
+      });
+    }
+
+    // Filter bookings based on search and filters for coach dashboard
+    function filterBookings(status) {
+      const searchInput = document.getElementById(`${status}-search`);
+      const courtFilter = document.getElementById(`${status}-filter-court`);
+      const sortSelect = document.getElementById(`${status}-sort`);
+      
+      if (!searchInput || !courtFilter || !sortSelect) return;
+      
+      const search = searchInput.value.toLowerCase();
+      const courtId = courtFilter.value;
+      const sortBy = sortSelect.value;
+      
+      const bookingCards = Array.from(document.querySelectorAll(`#${status}-bookings-container > div`));
+      
+      // Filter based on search and court
+      const filteredCards = bookingCards.filter(card => {
+        // Skip if it's the "no bookings" message
+        if (card.classList.contains('text-center')) return false;
+        
+        const studentName = card.querySelector('h3')?.textContent.toLowerCase() || '';
+        const courtName = card.querySelector('div:nth-child(4) > span')?.textContent.toLowerCase() || '';
+        
+        // Search filter
+        const matchesSearch = studentName.includes(search) || courtName.includes(search);
+        
+        // Court filter
+        const matchesCourt = !courtId || card.dataset.courtId === courtId;
+        
+        return matchesSearch && matchesCourt;
+      });
+      
+      // Sort the filtered cards
+      filteredCards.sort((a, b) => {
+        const dateA = new Date(a.dataset.date || 0);
+        const dateB = new Date(b.dataset.date || 0);
+        
+        if (sortBy === 'date-asc') {
+          return dateA - dateB;
+        } else {
+          return dateB - dateA;
+        }
+      });
+      
+      // Clear container
+      const container = document.getElementById(`${status}-bookings-container`);
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      // Add filtered and sorted cards back to container
+      if (filteredCards.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <p>No ${status} bookings found matching your filters</p>
+          </div>
+        `;
+      } else {
+        filteredCards.forEach(card => {
+          container.appendChild(card);
+        });
+      }
+    }
+
+    // Populate profile form with coach data
+    function populateProfileForm(coachData) {
+      const user = coachData.user;
+      const coach = coachData.coach;
+      
+      // User data
+      document.getElementById('first_name').value = user.first_name;
+      document.getElementById('last_name').value = user.last_name;
+      document.getElementById('email').value = user.email;
+      document.getElementById('gender').value = user.gender || '';
+      document.getElementById('location').value = user.location;
+      document.getElementById('dupr_rating').value = user.dupr_rating;
+      
+      // Coach data
+      document.getElementById('hourly_rate').value = coach.hourly_rate;
+      document.getElementById('years_experience').value = coach.years_experience;
+      document.getElementById('specialties').value = coach.specialties;
+      document.getElementById('biography').value = coach.biography;
+    }
+
+    // Load courts data
+    async function loadCourts() {
+      try {
+        // Get all courts
+        const courts = await getCourts();
+        
+        // Get coach courts
+        const coachCourts = await getCoachCourts();
+        
+        // Populate court select in court modal
+        const courtSelect = document.getElementById('court-select');
+        courtSelect.innerHTML = '<option value="">Select a court</option>';
+        
+        // Filter out courts the coach is already associated with
+        const availableCourts = courts.filter(court => 
+          !coachCourts.some(coachCourt => coachCourt.id === court.id)
+        );
+        
+        availableCourts.forEach(court => {
+          const option = document.createElement('option');
+          option.value = court.id;
+          option.textContent = `${court.name} - ${court.address}, ${court.city}`;
+          courtSelect.appendChild(option);
+        });
+        
+        // Populate coach courts list
+        const courtsContainer = document.getElementById('my-courts-list');
+        
+        if (coachCourts.length === 0) {
+          courtsContainer.innerHTML = `
+            <div class="text-center py-6 text-gray-500">
+              <p>No courts added yet</p>
+            </div>
+          `;
+          return;
+        }
+        
+        courtsContainer.innerHTML = '';
+        
+        coachCourts.forEach(court => {
+          const courtCard = document.createElement('div');
+          courtCard.className = 'bg-gray-50 rounded-lg p-4 flex justify-between items-center';
+          courtCard.innerHTML = `
+            <div>
+              <h4 class="font-medium">${court.name}</h4>
+              <p class="text-gray-500 text-sm">${court.address}, ${court.city}, ${court.state} ${court.zip_code}</p>
+            </div>
+            <button class="text-red-600 hover:text-red-700 remove-court-btn" data-court-id="${court.id}">
+              <i class="fas fa-trash"></i>
+            </button>
+          `;
+          courtsContainer.appendChild(courtCard);
+        });
+        
+        // Add event listeners to remove buttons
+        document.querySelectorAll('.remove-court-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const courtId = this.getAttribute('data-court-id');
+            document.getElementById('remove-court-id').value = courtId;
+            document.getElementById('remove-court-modal').classList.remove('hidden');
+          });
+        });
+        
+        // Populate court filters in other forms
+        populateCourtFilters(coachCourts);
+        
+      } catch (error) {
+        console.error('Error loading courts:', error);
+        showToast('Error', 'Failed to load courts data.', 'error');
+      }
+    }
+
+    // Populate court filters in various forms
+    function populateCourtFilters(courts) {
+      // Availability court select
+      const availabilityCourt = document.getElementById('availability-court');
+      availabilityCourt.innerHTML = '<option value="">Select a court</option>';
+      
+      courts.forEach(court => {
+        const option = document.createElement('option');
+        option.value = court.id;
+        option.textContent = court.name;
+        availabilityCourt.appendChild(option);
+      });
+      
+      // Availability filter
+      const availabilityFilter = document.getElementById('availability-filter-court');
+      availabilityFilter.innerHTML = '<option value="">All Courts</option>';
+      
+      courts.forEach(court => {
+        const option = document.createElement('option');
+        option.value = court.id;
+        option.textContent = court.name;
+        availabilityFilter.appendChild(option);
+      });
+      
+      // Bookings filters
+      const upcomingFilter = document.getElementById('upcoming-filter-court');
+      const completedFilter = document.getElementById('completed-filter-court');
+      const cancelledFilter = document.getElementById('cancelled-filter-court');
+      
+      [upcomingFilter, completedFilter, cancelledFilter].forEach(filter => {
+        filter.innerHTML = '<option value="">All Courts</option>';
+        
+        courts.forEach(court => {
+          const option = document.createElement('option');
+          option.value = court.id;
+          option.textContent = court.name;
+          filter.appendChild(option);
+        });
+      });
+      
+      // Session logs filter
+      const sessionLogsFilter = document.getElementById('session-logs-filter-court');
+      sessionLogsFilter.innerHTML = '<option value="">All Courts</option>';
+      
+      courts.forEach(court => {
+        const option = document.createElement('option');
+        option.value = court.id;
+        option.textContent = court.name;
+        sessionLogsFilter.appendChild(option);
+      });
+    }
+
+    // Load bookings data
+    async function loadBookings() {
+      try {
+        // Load upcoming bookings
+        const upcomingBookings = await getBookings('upcoming');
+        displayBookings(upcomingBookings, 'upcoming');
+        
+        // Load completed bookings
+        const completedBookings = await getBookings('completed');
+        displayBookings(completedBookings, 'completed');
+        
+        // Load cancelled bookings
+        const cancelledBookings = await getBookings('cancelled');
+        displayBookings(cancelledBookings, 'cancelled');
+        
+        // Update upcoming bookings on dashboard
+        updateUpcomingBookingsList(upcomingBookings.slice(0, 3));
+        
+      } catch (error) {
+        console.error('Error loading bookings:', error);
+        showToast('Error', 'Failed to load bookings data.', 'error');
+      }
+    }
+
+    // Display bookings in the respective containers
+    function displayBookings(bookings, status) {
+      const container = document.getElementById(`${status}-bookings-container`);
+      
+      if (bookings.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <p>No ${status} bookings found</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      bookings.forEach(booking => {
+        const bookingCard = document.createElement('div');
+        bookingCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+        
+        // Format date and time
+        const bookingDate = formatDate(booking.date);
+        const startTime = formatTime(booking.start_time);
+        const endTime = formatTime(booking.end_time);
+        
+        let actionsHtml = '';
+        
+        if (status === 'upcoming') {
+          actionsHtml = `
+            <div class="flex space-x-2 mt-4">
+              <button class="bg-green-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-green-700 complete-session-btn" data-booking-id="${booking.id}">
+                Complete
+              </button>
+              <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-session-btn" data-booking-id="${booking.id}">
+                Cancel
+              </button>
+            </div>
+          `;
+        } else if (status === 'completed') {
+          const hasSessionLog = booking.session_log !== null;
+          
+          actionsHtml = `
+            <div class="flex space-x-2 mt-4">
+              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-booking-id="${booking.id}" data-log-id="${hasSessionLog ? booking.session_log.id : ''}">
+                ${hasSessionLog ? 'Edit Log' : 'Add Log'}
+              </button>
+            </div>
+          `;
+        }
+        
+        bookingCard.innerHTML = `
+          <div class="flex justify-between">
+            <div>
+              <h3 class="font-semibold">${booking.student.first_name} ${booking.student.last_name}</h3>
+              <p class="text-gray-500 text-sm">Student</p>
+            </div>
+            <div class="text-right">
+              <span class="font-semibold">${formatCurrency(booking.price)}</span>
+              <p class="text-gray-500 text-sm">${booking.pricing_plan ? 'Discount Applied' : 'Regular Rate'}</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center mt-3 text-gray-600">
+            <i class="fas fa-calendar-day mr-2"></i>
+            <span>${bookingDate}</span>
+          </div>
+          
+          <div class="flex items-center mt-1 text-gray-600">
+            <i class="fas fa-clock mr-2"></i>
+            <span>${startTime} - ${endTime}</span>
+          </div>
+          
+          <div class="flex items-center mt-1 text-gray-600">
+            <i class="fas fa-map-marker-alt mr-2"></i>
+            <span>${booking.court.name}</span>
+          </div>
+          
+          ${actionsHtml}
+        `;
+        
+        container.appendChild(bookingCard);
+      });
+      
+      // Add event listeners for action buttons
+      if (status === 'upcoming') {
+        // Complete session buttons
+        document.querySelectorAll('.complete-session-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const bookingId = this.getAttribute('data-booking-id');
+            document.getElementById('complete-booking-id').value = bookingId;
+            document.getElementById('complete-session-modal').classList.remove('hidden');
+          });
+        });
+        
+        // Cancel session buttons
+        document.querySelectorAll('.cancel-session-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const bookingId = this.getAttribute('data-booking-id');
+            document.getElementById('cancel-booking-id').value = bookingId;
+            document.getElementById('cancel-session-modal').classList.remove('hidden');
+          });
+        });
+      } else if (status === 'completed') {
+        // Edit log buttons
+        document.querySelectorAll('.edit-log-btn').forEach(btn => {
+          btn.addEventListener('click', async function() {
+            const bookingId = this.getAttribute('data-booking-id');
+            const logId = this.getAttribute('data-log-id');
+            
+            openSessionLogModal(bookingId, logId);
+          });
+        });
+      }
+    }
+
+    // Update upcoming bookings list on dashboard
+    function updateUpcomingBookingsList(bookings) {
+      const container = document.getElementById('upcoming-bookings-list');
+      
+      if (bookings.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-gray-500">
+            <p>No upcoming bookings</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      bookings.forEach(booking => {
+        const bookingItem = document.createElement('div');
+        bookingItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+        
+        // Format date and time
+        const bookingDate = formatDate(booking.date);
+        const startTime = formatTime(booking.start_time);
+        
+        bookingItem.innerHTML = `
+          <div>
+            <h4 class="font-medium">${booking.student.first_name} ${booking.student.last_name}</h4>
+            <p class="text-gray-500 text-sm">${bookingDate} at ${startTime}</p>
+          </div>
+          <div class="text-right">
+            <p class="font-medium">${formatCurrency(booking.price)}</p>
+            <p class="text-gray-500 text-sm">${booking.court.name}</p>
+          </div>
+        `;
+        
+        container.appendChild(bookingItem);
+      });
+    }
+
+    // Load session logs
+    async function loadSessionLogs() {
+      try {
+        const sessionLogs = await getSessionLogs();
+        
+        const container = document.getElementById('session-logs-container');
+        
+        if (sessionLogs.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 text-gray-500">
+              <p>No session logs found</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = '';
+        
+        sessionLogs.forEach(log => {
+          const logCard = document.createElement('div');
+          logCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+          
+          // Format date
+          const logDate = formatDate(log.booking.date);
+          
+          logCard.innerHTML = `
+            <div class="flex justify-between">
+              <div>
+                <h3 class="font-semibold">${log.title}</h3>
+                <p class="text-gray-500 text-sm">Session with ${log.student.first_name} ${log.student.last_name}</p>
+              </div>
+              <div class="text-right">
+                <span class="text-gray-600">${logDate}</span>
+              </div>
+            </div>
+            
+            <div class="mt-3">
+              <h4 class="text-sm font-medium text-gray-700">Session Notes</h4>
+              <p class="text-gray-600 mt-1">${log.notes || 'No notes added'}</p>
+            </div>
+            
+            <div class="flex justify-end mt-4">
+              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-log-id="${log.id}" data-booking-id="${log.booking_id}">
+                Edit Log
+              </button>
+            </div>
+          `;
+          
+          container.appendChild(logCard);
+        });
+        
+        // Add event listeners for edit buttons
+        document.querySelectorAll('.edit-log-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const logId = this.getAttribute('data-log-id');
+            const bookingId = this.getAttribute('data-booking-id');
+            
+            openSessionLogModal(bookingId, logId);
+          });
+        });
+        
+        // Update recent logs on dashboard
+        updateRecentLogsList(sessionLogs.slice(0, 3));
+        
+      } catch (error) {
+        console.error('Error loading session logs:', error);
+        showToast('Error', 'Failed to load session logs.', 'error');
+      }
+    }
+
+    // Update recent logs list on dashboard
+    function updateRecentLogsList(logs) {
+      const container = document.getElementById('recent-logs-list');
+      
+      if (logs.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-gray-500">
+            <p>No recent session logs</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      logs.forEach(log => {
+        const logItem = document.createElement('div');
+        logItem.className = 'p-3 bg-gray-50 rounded-lg';
+        
+        // Format date
+        const logDate = formatDate(log.booking.date);
+        
+        logItem.innerHTML = `
+          <div class="flex justify-between mb-1">
+            <h4 class="font-medium">${log.title}</h4>
+            <span class="text-sm text-gray-500">${logDate}</span>
+          </div>
+          <p class="text-gray-600 text-sm line-clamp-2">${log.notes || 'No notes added'}</p>
+        `;
+        
+        container.appendChild(logItem);
+      });
+    }
+
+    // Open session log modal
+    function openSessionLogModal(bookingId, logId) {
+      const modal = document.getElementById('session-log-modal');
+      const form = document.getElementById('session-log-form');
+      
+      // Reset form
+      form.reset();
+      
+      // Set booking ID
+      document.getElementById('session-log-booking-id').value = bookingId;
+      
+      // Set modal title
+      document.getElementById('session-log-modal-title').textContent = logId ? 'Edit Session Log' : 'Add Session Log';
+      
+      if (logId) {
+        try {
+          // Show loading indicator
+          modal.classList.add('loading');
+          
+          // Get session log data asynchronously
+          getSessionLog(logId)
+            .then(logData => {
+              // Populate form
+              document.getElementById('session-log-id').value = logData.id;
+              document.getElementById('session-log-title').value = logData.title || '';
+              document.getElementById('session-log-notes').value = logData.notes || '';
+              document.getElementById('session-log-coach-notes').value = logData.coach_notes || '';
+              
+              // Hide loading indicator
+              modal.classList.remove('loading');
+            })
+            .catch(error => {
+              console.error('Error loading session log:', error);
+              showToast('Error', 'Failed to load session log data.', 'error');
+              modal.classList.remove('loading');
+              modal.classList.add('hidden');
+            });
+        } catch (error) {
+          console.error('Error setting up session log modal:', error);
+          showToast('Error', 'Failed to load session log data.', 'error');
+          return;
+        }
+      } else {
+        // Clear form fields
+        document.getElementById('session-log-id').value = '';
+        document.getElementById('session-log-title').value = 'Pickleball Session';
+        document.getElementById('session-log-notes').value = '';
+        document.getElementById('session-log-coach-notes').value = '';
+      }
+      
+      // Show modal
+      modal.classList.remove('hidden');
+    }
+
+    // Load availability data
+    async function loadAvailability() {
+      try {
+        const availability = await getAvailability();
+        
+        const container = document.getElementById('availability-container');
+        
+        if (availability.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 text-gray-500">
+              <p>No availability slots added yet</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = '';
+        
+        // Group availability by date
+        const groupedByDate = {};
+        
+        availability.forEach(slot => {
+          const date = slot.date;
+          
+          if (!groupedByDate[date]) {
+            groupedByDate[date] = [];
+          }
+          
+          groupedByDate[date].push(slot);
+        });
+        
+        // Sort dates
+        const sortedDates = Object.keys(groupedByDate).sort();
+        
+        sortedDates.forEach(date => {
+          const dateHeader = document.createElement('div');
+          dateHeader.className = 'bg-gray-100 p-3 font-medium';
+          dateHeader.textContent = formatDate(date);
+          container.appendChild(dateHeader);
+          
+          const slots = groupedByDate[date];
+          
+          // Sort slots by start time
+          slots.sort((a, b) => a.start_time.localeCompare(b.start_time));
+          
+          slots.forEach(slot => {
+            const slotItem = document.createElement('div');
+            slotItem.className = 'flex justify-between items-center p-3 border-b border-gray-200';
+            
+            // Format time
+            const startTime = formatTime(slot.start_time);
+            const endTime = formatTime(slot.end_time);
+            
+            slotItem.innerHTML = `
+              <div>
+                <span class="font-medium">${startTime} - ${endTime}</span>
+                <p class="text-gray-500 text-sm">${slot.court.name}</p>
+              </div>
+              <div class="flex items-center">
+                <span class="mr-3 ${slot.is_booked ? 'text-green-600' : 'text-gray-600'}">
+                  ${slot.is_booked ? 'Booked' : 'Available'}
+                </span>
+                ${!slot.is_booked ? `
+                  <button class="text-red-600 hover:text-red-700 delete-availability-btn" data-availability-id="${slot.id}">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                ` : ''}
+              </div>
+            `;
+            
+            container.appendChild(slotItem);
+          });
+        });
+        
+        // Add event listeners for delete buttons
+        document.querySelectorAll('.delete-availability-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const availabilityId = this.getAttribute('data-availability-id');
+            document.getElementById('delete-availability-id').value = availabilityId;
+            document.getElementById('delete-availability-modal').classList.remove('hidden');
+          });
+        });
+        
+      } catch (error) {
+        console.error('Error loading availability:', error);
+        showToast('Error', 'Failed to load availability data.', 'error');
+      }
+    }
+
+    // Load pricing plans
+    async function loadPricingPlans() {
+      try {
+        const plans = await getPricingPlans();
+        
+        const container = document.getElementById('pricing-plans-container');
+        
+        if (plans.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 text-gray-500">
+              <p>No pricing plans added yet</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = '';
+        
+        plans.forEach(plan => {
+          const planCard = document.createElement('div');
+          planCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+          
+          // Format discount details
+          let discountDetails = '';
+          
+          if (plan.percentage_discount) {
+            discountDetails = `${plan.percentage_discount}% off`;
+          } else if (plan.fixed_discount) {
+            discountDetails = `${plan.fixed_discount} off`;
+          }
+          
+          // Format plan type details
+          let planTypeDetails = '';
+          
+          if (plan.discount_type === 'first_time') {
+            planTypeDetails = 'First-Time Student Discount';
+          } else if (plan.discount_type === 'package') {
+            planTypeDetails = `Package Deal (${plan.sessions_required} sessions)`;
+          } else if (plan.discount_type === 'seasonal'){
+            const validFrom = formatDate(plan.valid_from);
+            const validTo = formatDate(plan.valid_to);
+            planTypeDetails = `Seasonal Offer (Valid ${validFrom} to ${validTo})`;
+          } else if (plan.discount_type === 'custom') {
+            planTypeDetails = 'Custom Discount';
+          }
+          
+          planCard.innerHTML = `
+            <div class="flex justify-between">
+              <div>
+                <h3 class="font-semibold">${plan.name}</h3>
+                <p class="text-gray-500 text-sm">${planTypeDetails}</p>
+              </div>
+              <div class="text-right">
+                <span class="font-semibold">${discountDetails}</span>
+                <p class="text-gray-500 text-sm">${plan.is_active ? 'Active' : 'Inactive'}</p>
+              </div>
+            </div>
+            
+            <p class="mt-3 text-gray-600">${plan.description}</p>
+            
+            <div class="flex justify-end mt-4">
+              <button class="text-red-600 hover:text-red-700 delete-pricing-btn" data-plan-id="${plan.id}">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </div>
+          `;
+          
+          container.appendChild(planCard);
+        });
+        
+        // Add event listeners for delete buttons
+        document.querySelectorAll('.delete-pricing-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const planId = this.getAttribute('data-plan-id');
+            document.getElementById('delete-pricing-id').value = planId;
+            document.getElementById('delete-pricing-modal').classList.remove('hidden');
+          });
+        });
+        
+      } catch (error) {
+        console.error('Error loading pricing plans:', error);
+        showToast('Error', 'Failed to load pricing plans data.', 'error');
+      }
+    }
+
+    // Load earnings data
+    async function loadEarningsData() {
+      try {
+        const earningsData = await getEarnings();
+        
+        // Update earnings summary
+        document.getElementById('total-earnings-value').textContent = formatCurrency(earningsData.total);
+        document.getElementById('monthly-average').textContent = formatCurrency(earningsData.monthly_average);
+        document.getElementById('this-month-earnings').textContent = formatCurrency(earningsData.this_month);
+        
+        // Calculate month-over-month change
+        const lastMonth = earningsData.last_month || 0;
+        let percentageChange = 0;
+        
+        if (lastMonth > 0) {
+          percentageChange = ((earningsData.this_month - lastMonth) / lastMonth) * 100;
+        }
+        
+        const comparisonElem = document.getElementById('this-month-comparison');
+        
+        if (percentageChange > 0) {
+          comparisonElem.textContent = `+${percentageChange.toFixed(1)}% vs. last month`;
+          comparisonElem.className = 'text-sm text-green-600';
+        } else if (percentageChange < 0) {
+          comparisonElem.textContent = `${percentageChange.toFixed(1)}% vs. last month`;
+          comparisonElem.className = 'text-sm text-red-600';
+        } else {
+          comparisonElem.textContent = `0% vs. last month`;
+          comparisonElem.className = 'text-sm text-gray-600';
+        }
+        
+        // Create charts
+        createEarningsChart(earningsData.monthly);
+        createEarningsByCourtChart(earningsData.by_court);
+        
+        // Update earnings breakdown
+        updateEarningsBreakdown(earningsData.breakdown);
+        
+      } catch (error) {
+        console.error('Error loading earnings data:', error);
+        showToast('Error', 'Failed to load earnings data.', 'error');
+      }
+    }
+
+    // Create earnings chart
+    function createEarningsChart(monthlyData) {
+      const ctx = document.getElementById('earnings-detailed-chart').getContext('2d');
+      
+      // Extract labels and data
+      const labels = [];
+      const data = [];
+      
+      // Sort months chronologically
+      const sortedMonths = Object.keys(monthlyData).sort((a, b) => {
+        const dateA = new Date(a);
+        const dateB = new Date(b);
+        return dateA - dateB;
+      });
+      
+      sortedMonths.forEach(month => {
+        // Format month as MMM YYYY
+        const date = new Date(month);
+        const formattedMonth = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        
+        labels.push(formattedMonth);
+        data.push(monthlyData[month]);
+      });
+      
+      // Create chart
+      const earningsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Earnings',
+            data: data,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 2,
+            tension: 0.1,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                    return '$' + value;
+                }
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return 'Earnings: ' + formatCurrency(context.raw);
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      // Update chart when time period changes
+      document.getElementById('earnings-time-period').addEventListener('change', async function() {
+        const months = parseInt(this.value);
+        
+        try {
+          const periodData = await getEarnings(months);
+          
+          // Update chart
+          earningsChart.data.labels = [];
+          earningsChart.data.datasets[0].data = [];
+          
+          // Sort months chronologically
+          const sortedPeriodMonths = Object.keys(periodData.monthly).sort((a, b) => {
+            const dateA = new Date(a);
+            const dateB = new Date(b);
+            return dateA - dateB;
+          });
+          
+          sortedPeriodMonths.forEach(month => {
+            // Format month as MMM YYYY
+            const date = new Date(month);
+            const formattedMonth = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            
+            earningsChart.data.labels.push(formattedMonth);
+            earningsChart.data.datasets[0].data.push(periodData.monthly[month]);
+          });
+          
+          earningsChart.update();
+          
+        } catch (error) {
+          console.error('Error updating earnings chart:', error);
+          showToast('Error', 'Failed to update earnings chart.', 'error');
+        }
+      });
+    }
+
+    // Create earnings by court chart
+    function createEarningsByCourtChart(courtData) {
+      const ctx = document.getElementById('earnings-by-court-chart').getContext('2d');
+      
+      // Extract labels and data
+      const labels = [];
+      const data = [];
+      const backgroundColor = [
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(54, 162, 235, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+        'rgba(255, 159, 64, 0.7)',
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(255, 205, 86, 0.7)'
+      ];
+      
+      Object.keys(courtData).forEach((courtName, index) => {
+        labels.push(courtName);
+        data.push(courtData[courtName]);
+      });
+      
+      // Create chart
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: backgroundColor,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const value = context.raw;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${context.label}: ${formatCurrency(value)} (${percentage}%)`;
+                }
+              }
+            },
+            legend: {
+              position: 'right'
+            }
+          }
+        }
+      });
+      
+      // Populate earnings by court list
+      const listContainer = document.getElementById('earnings-by-court-list');
+      listContainer.innerHTML = '';
+      
+      let index = 0;
+      Object.entries(courtData)
+        .sort((a, b) => b[1] - a[1]) // Sort by earnings in descending order
+        .forEach(([courtName, amount]) => {
+          const listItem = document.createElement('div');
+          listItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+          
+          listItem.innerHTML = `
+            <div class="flex items-center">
+              <div class="h-3 w-3 rounded-full mr-2" style="background-color: ${backgroundColor[index % backgroundColor.length]}"></div>
+              <span>${courtName}</span>
+            </div>
+            <span class="font-medium">${formatCurrency(amount)}</span>
+          `;
+          
+          listContainer.appendChild(listItem);
+          index++;
+        });
+    }
+
+    // Update earnings breakdown
+    function updateEarningsBreakdown(breakdownData) {
+      const tbody = document.getElementById('earnings-breakdown-body');
+      if (!tbody) return;
+      
+      tbody.innerHTML = '';
+      
+      const types = Object.keys(breakdownData || {});
+      
+      if (!breakdownData || types.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-4 py-6 text-center text-gray-500">No earnings data available</td>
+          </tr>
+        `;
+        return;
+      }
+      
+      // Calculate totals
+      let totalSessions = 0;
+      let totalEarnings = 0;
+      
+      types.forEach(type => {
+        totalSessions += breakdownData[type].sessions || 0;
+        totalEarnings += breakdownData[type].amount || 0;
+      });
+      
+      // Populate table rows
+      types.forEach(type => {
+        const data = breakdownData[type];
+        const row = document.createElement('tr');
+        
+        const percentage = totalEarnings > 0 ? ((data.amount / totalEarnings) * 100).toFixed(1) : 0;
+        
+        row.innerHTML = `
+          <td class="px-4 py-3">${formatBreakdownType(type)}</td>
+          <td class="px-4 py-3">${data.sessions}</td>
+          <td class="px-4 py-3">$${formatCurrency(data.amount)}</td>
+          <td class="px-4 py-3">${percentage}%</td>
+        `;
+        
+        tbody.appendChild(row);
+      });
+      
+      // Update totals
+      const totalSessionsElement = document.getElementById('earnings-breakdown-total-sessions');
+      const totalAmountElement = document.getElementById('earnings-breakdown-total-amount');
+      
+      if (totalSessionsElement) totalSessionsElement.textContent = totalSessions;
+      if (totalAmountElement) totalAmountElement.textContent = '$' + formatCurrency(totalEarnings);
+    }
+
+    // Format breakdown type
+    function formatBreakdownType(type) {
+      switch (type) {
+        case 'regular':
+          return 'Regular Sessions';
+        case 'first_time':
+          return 'First-Time Discount';
+        case 'package':
+          return 'Package Deals';
+        case 'seasonal':
+          return 'Seasonal Offers';
+        case 'custom':
+          return 'Custom Discounts';
+        default:
+          return type;
+      }
+    }
+
+    // Update dashboard stats
+    async function updateDashboardStats() {
+      try {
+        const stats = await fetchAPI('/coach/stats');
+        
+        // Update completed sessions
+        document.getElementById('completed-sessions').textContent = stats.completed_sessions;
+        
+        // Update upcoming sessions
+        document.getElementById('upcoming-sessions').textContent = stats.upcoming_sessions;
+        
+        // Update total earnings
+        document.getElementById('total-earnings').textContent = formatCurrency(stats.total_earnings);
+        
+        // Update rating
+        document.getElementById('average-rating').textContent = stats.average_rating.toFixed(1);
+        document.getElementById('rating-count').textContent = `${stats.rating_count} reviews`;
+        
+        // Update rating stars
+        const starsContainer = document.getElementById('rating-stars');
+        starsContainer.innerHTML = '';
+        
+        const fullStars = Math.floor(stats.average_rating);
+        const hasHalfStar = stats.average_rating % 1 >= 0.5;
+        
+        for (let i = 1; i <= 5; i++) {
+          const star = document.createElement('i');
+          
+          if (i <= fullStars) {
+            star.className = 'fas fa-star';
+          } else if (i === fullStars + 1 && hasHalfStar) {
+            star.className = 'fas fa-star-half-alt';
+          } else {
+            star.className = 'far fa-star';
+          }
+          
+          starsContainer.appendChild(star);
+        }
+        
+        // Create dashboard earnings chart
+        createDashboardEarningsChart(stats.monthly_earnings);
+        
+      } catch (error) {
+        console.error('Error updating dashboard stats:', error);
+      }
+    }
+
+    // Create dashboard earnings chart
+    function createDashboardEarningsChart(monthlyEarnings) {
+      const ctx = document.getElementById('earnings-chart').getContext('2d');
+      
+      if (!ctx) {
+        console.error('Canvas context for earnings chart not found');
+        return;
+      }
+      
+      // Clear any existing chart
+      if (window.earningsChart) {
+        window.earningsChart.destroy();
+      }
+      
+      // Extract labels and data
+      const labels = [];
+      const data = [];
+      
+      // Sort months chronologically
+      const sortedMonths = Object.keys(monthlyEarnings || {}).sort((a, b) => {
+        const dateA = new Date(a);
+        const dateB = new Date(b);
+        return dateA - dateB;
+      });
+      
+      // Take the last 6 months
+      const recentMonths = sortedMonths.slice(-6);
+      
+      recentMonths.forEach(month => {
+        // Format month as MMM
+        const date = new Date(month);
+        const formattedMonth = date.toLocaleDateString('en-US', { month: 'short' });
+        
+        labels.push(formattedMonth);
+        data.push(monthlyEarnings[month]);
+      });
+      
+      // Create chart
+      window.earningsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Earnings',
+            data: data,
+            backgroundColor: 'rgba(101, 116, 205, 0.7)',
+            borderWidth: 0,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '$' + value;
+                }
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return 'Earnings: $' + context.raw.toFixed(2);
+                }
+              }
+            },
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
+  // Improved rating stars display
+  function updateRatingStars(rating, container) {
+    container.innerHTML = '';
+    
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement('i');
+      
+      if (i <= fullStars) {
+        star.className = 'fas fa-star';
+      } else if (i === fullStars + 1 && hasHalfStar) {
+        star.className = 'fas fa-star-half-alt';
+      } else {
+        star.className = 'far fa-star';
+      }
+      
+      container.appendChild(star);
+    }
+  }
+
+  // Add event listener for earnings period change
+  document.addEventListener('DOMContentLoaded', function() {
+    const earningsPeriodSelect = document.getElementById('earnings-period');
+    if (earningsPeriodSelect) {
+      earningsPeriodSelect.addEventListener('change', async function() {
+        const period = this.value;
+        
+        try {
+          const statsData = await fetchAPI(`/coach/stats/${period}`);
+          createDashboardEarningsChart(statsData.monthly_earnings);
+        } catch (error) {
+          console.error('Error updating dashboard earnings chart:', error);
+          showToast('Error', 'Failed to update earnings chart.', 'error');
+        }
+      });
+    }
+    
+    // Enhanced availability date validation
+    const availabilityDateInput = document.getElementById('availability-date');
+    if (availabilityDateInput) {
+      // Set minimum date to today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      availabilityDateInput.min = today.toISOString().split('T')[0];
+      
+      // Validate that selected date is not in the past
+      availabilityDateInput.addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        if (selectedDate < today) {
+          showToast('Error', 'Please select a date in the future.', 'error');
+          this.value = today.toISOString().split('T')[0];
+        }
+      });
+    }
+  });
+  </script>
+{% endblock %}

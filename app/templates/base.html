@@ -1,0 +1,141 @@
+<!-- app/templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Pickleball Connect{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      scroll-behavior: smooth;
+    }
+    
+    .hero-gradient {
+      background: linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+    }
+    
+    .bg-gradient-card {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7));
+      backdrop-filter: blur(10px);
+    }
+    
+    /* Global styles */
+    {% block extra_styles %}{% endblock %}
+  </style>
+  {% block head_scripts %}{% endblock %}
+</head>
+<body class="bg-gray-50 overflow-x-hidden">
+  <!-- Navbar - Fixed, Transparent with Blur effect -->
+  {% include 'partials/navbar.html' %}
+
+  <!-- Main Content -->
+  {% block content %}{% endblock %}
+
+  <!-- Modals -->
+  {% include 'partials/login_modal.html' %}
+  {% include 'partials/register_modal.html' %}
+
+  <!-- Footer -->
+  {% include 'partials/footer.html' %}
+
+  <!-- Back to top button -->
+  <button id="back-to-top"
+    class="custom-modal fixed bottom-6 right-6 bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-transform hover:scale-110 opacity-0 invisible">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+    </svg>
+  </button>
+
+  <!-- Global Scripts -->
+  <script>
+    // Common JavaScript for all pages
+    document.addEventListener('DOMContentLoaded', function() {
+      // Setup authentication-related handlers
+      setupAuthHandlers();
+    });
+    
+    function setupAuthHandlers() {
+      // Login/Register Modal Toggles
+      document.querySelectorAll('.login-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          document.getElementById('login-modal').classList.remove('hidden');
+        });
+      });
+      
+      document.querySelectorAll('.register-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          document.getElementById('register-modal').classList.remove('hidden');
+        });
+      });
+      
+      // Close modal buttons
+      document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', function() {
+          document.querySelectorAll('.custom-modal').forEach(modal => {
+            modal.classList.add('hidden');
+          });
+        });
+      });
+      
+      // Close modals when clicking outside
+      window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('custom-modal')) {
+          document.querySelectorAll('.custom-modal').forEach(modal => {
+            modal.classList.add('hidden');
+          });
+        }
+      });
+      
+      // Toggle links between modals
+      document.querySelectorAll('.login-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          document.querySelectorAll('.custom-modal').forEach(modal => {
+            modal.classList.add('hidden');
+          });
+          document.getElementById('login-modal').classList.remove('hidden');
+        });
+      });
+      
+      document.querySelectorAll('.register-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          document.querySelectorAll('.custom-modal').forEach(modal => {
+            modal.classList.add('hidden');
+          });
+          document.getElementById('register-modal').classList.remove('hidden');
+        });
+      });
+
+      // Back to top button
+      const backToTopButton = document.getElementById('back-to-top');
+      
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 500) {
+          backToTopButton.classList.remove('opacity-0', 'invisible');
+          backToTopButton.classList.add('opacity-100', 'visible');
+        } else {
+          backToTopButton.classList.add('opacity-0', 'invisible');
+          backToTopButton.classList.remove('opacity-100', 'visible');
+        }
+      });
+      
+      backToTopButton.addEventListener('click', () => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+    }
+  </script>
+  <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

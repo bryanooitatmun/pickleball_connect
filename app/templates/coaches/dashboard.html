@@ -2074,6 +2074,12 @@
         document.getElementById('profile-name').textContent = `${coachProfile.user.first_name} ${coachProfile.user.last_name}`;
         document.getElementById('profile-initial').textContent = coachProfile.user.first_name.charAt(0);
         
+        // Set profile picture if exists
+        if (coachProfile.user.profile_picture) {
+          const profileInitial = document.getElementById('profile-initial');
+          profileInitial.innerHTML = `<img src="/static/${coachProfile.user.profile_picture}" alt="Profile" class="h-8 w-8 rounded-full object-cover">`;
+        }
+
         // Populate profile form
         populateProfileForm(coachProfile);
         
@@ -2662,8 +2668,8 @@
     // Populate profile form with coach data
     function populateProfileForm(coachData) {
       const user = coachData.user;
-      const coach = coachData.coach;
-      
+      const coach = coachData;
+
       // User data
       document.getElementById('first_name').value = user.first_name;
       document.getElementById('last_name').value = user.last_name;

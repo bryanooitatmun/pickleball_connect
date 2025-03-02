@@ -1,80 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pickleball Connect - Student Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-    
-    body {
-      font-family: 'Poppins', sans-serif;
-      scroll-behavior: smooth;
-    }
-    
-    .hero-gradient {
-      background: linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
-    }
-    
-    .active-nav-link {
-      background: linear-gradient(90deg, rgba(65, 88, 208, 0.15) 0%, rgba(200, 80, 192, 0.15) 100%);
-      border-left: 4px solid #4158D0;
-      color: #4158D0;
-      font-weight: 600;
-    }
-    
-    .tab-content {
-      display: none;
-    }
-    
-    .tab-content.active {
-      display: block;
-    }
+{% extends "base.html" %}
 
-    .loading {
-      position: relative;
-    }
+{% block title %}Student Dashboard - Pickleball Connect{% endblock %}
 
-    .loading:after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(255, 255, 255, 0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-    }
+{% block head_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+{% endblock %}
 
-    .loading:before {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 50px;
-      height: 50px;
-      margin-top: -25px;
-      margin-left: -25px;
-      border-radius: 50%;
-      border: 5px solid rgba(65, 88, 208, 0.2);
-      border-top-color: #4158D0;
-      animation: spin 1s linear infinite;
-      z-index: 20;
-    }
+{% block extra_styles %}
+.active-nav-link {
+  background: linear-gradient(90deg, rgba(65, 88, 208, 0.15) 0%, rgba(200, 80, 192, 0.15) 100%);
+  border-left: 4px solid #4158D0;
+  color: #4158D0;
+  font-weight: 600;
+}
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
-</head>
-<body class="bg-gray-50">
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.loading {
+  position: relative;
+}
+
+.loading:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.loading:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  margin-top: -25px;
+  margin-left: -25px;
+  border-radius: 50%;
+  border: 5px solid rgba(65, 88, 208, 0.2);
+  border-top-color: #4158D0;
+  animation: spin 1s linear infinite;
+  z-index: 20;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+{% endblock %}
+
+{% block content %}
+
+
   <!-- Navbar -->
   <nav class="bg-white shadow-sm sticky top-0 z-50">
     <div class="container mx-auto px-6 py-3">
@@ -263,7 +253,7 @@
           <div class="bg-white rounded-xl shadow-sm p-6">
             <div class="flex items-center justify-between mb-4">
               <h3 class="font-semibold">Upcoming Sessions</h3>
-              <a href="#bookings" class="text-sm text-blue-600 hover:underline">View All</a>
+              <a href="#bookings" class="tab-link text-sm text-blue-600 hover:underline">View All</a>
             </div>
             
             <div id="upcoming-bookings-list" class="space-y-4">
@@ -278,7 +268,7 @@
           <div class="bg-white rounded-xl shadow-sm p-6">
             <div class="flex items-center justify-between mb-4">
               <h3 class="font-semibold">Recent Session Logs</h3>
-              <a href="#session-logs" class="text-sm text-blue-600 hover:underline">View All</a>
+              <a href="#session-logs" class="tab-link text-sm text-blue-600 hover:underline">View All</a>
             </div>
             
             <div id="recent-logs-list" class="space-y-4">
@@ -294,7 +284,7 @@
         <div class="bg-white rounded-xl shadow-sm p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="font-semibold">Quick Find Coaches</h3>
-            <a href="#coaches" class="text-sm text-blue-600 hover:underline">View All Coaches</a>
+            <a href="#coaches" class="tab-link text-sm text-blue-600 hover:underline">View All Coaches</a>
           </div>
           
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="featured-coaches">
@@ -803,23 +793,26 @@
           </div>
         </div>
       </div>
-    </div>
+  </div>
   
-    <!-- Notification Toast -->
-    <div id="notification-toast" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-y-24 opacity-0 transition-all duration-300 hidden">
-      <div class="flex items-start space-x-3">
-        <div id="toast-icon" class="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded-full text-white"></div>
-        <div>
-          <h4 id="toast-title" class="font-semibold"></h4>
-          <p id="toast-message" class="text-sm text-gray-600"></p>
-        </div>
-        <button id="toast-close" class="text-gray-400 hover:text-gray-500 focus:outline-none">
-          <i class="fas fa-times"></i>
-        </button>
+  <!-- Notification Toast -->
+  <div id="notification-toast" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-y-24 opacity-0 transition-all duration-300 hidden">
+    <div class="flex items-start space-x-3">
+      <div id="toast-icon" class="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded-full text-white"></div>
+      <div>
+        <h4 id="toast-title" class="font-semibold"></h4>
+        <p id="toast-message" class="text-sm text-gray-600"></p>
       </div>
+      <button id="toast-close" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
-  
-    <script>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script>
       // Helper functions
       function formatDate(dateString) {
         const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
@@ -882,7 +875,7 @@
       }
   
       // API call functions
-      const API_BASE_URL = '/student/api';
+      const API_BASE_URL = '/api';
   
       async function fetchAPI(endpoint, options = {}) {
         try {
@@ -906,63 +899,63 @@
       }
   
       async function getStudentProfile() {
-        return fetchAPI('/profile');
+        return fetchAPI('/student/profile');
       }
   
       async function updateStudentProfile(profileData) {
-        return fetchAPI('/profile', {
+        return fetchAPI('/student/profile', {
           method: 'PUT',
           body: JSON.stringify(profileData)
         });
       }
   
       async function changePassword(passwordData) {
-        return fetchAPI('/change-password', {
+        return fetchAPI('/student/change-password', {
           method: 'POST',
           body: JSON.stringify(passwordData)
         });
       }
   
       async function getCoaches() {
-        return fetchAPI('/coaches');
+        return fetchAPI('/student/coaches');
       }
   
       async function getCoachDetails(coachId) {
-        return fetchAPI(`/coaches/${coachId}`);
+        return fetchAPI(`/student/coaches/${coachId}`);
       }
   
       async function getBookings(status = 'upcoming') {
-        return fetchAPI(`/bookings/${status}`);
+        return fetchAPI(`/student/bookings/${status}`);
       }
   
       async function cancelBooking(bookingId) {
-        return fetchAPI('/bookings/cancel', {
+        return fetchAPI('/student/bookings/cancel', {
           method: 'POST',
           body: JSON.stringify({ booking_id: bookingId })
         });
       }
   
       async function getPackages() {
-        return fetchAPI('/packages');
+        return fetchAPI('/student/packages');
       }
   
       async function getSessionLogs() {
-        return fetchAPI('/session-logs');
+        return fetchAPI('/student/session-logs');
       }
   
       async function getSessionLog(logId) {
-        return fetchAPI(`/session-logs/${logId}`);
+        return fetchAPI(`/student/session-logs/${logId}`);
       }
   
       async function updateStudentNotes(logId, notes) {
-        return fetchAPI('/session-logs/update-notes', {
+        return fetchAPI('/student/session-logs/update-notes', {
           method: 'POST',
           body: JSON.stringify({ log_id: logId, student_notes: notes })
         });
       }
   
       async function getCourts() {
-        return fetchAPI('/courts');
+        return fetchAPI('/student/courts');
       }
   
       async function submitSupportRequest(requestData) {
@@ -2266,5 +2259,6 @@
       }
     }
   </script>
-</body>
+
+{% endblock %}
 </html>

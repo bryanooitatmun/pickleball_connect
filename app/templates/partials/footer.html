@@ -12,32 +12,6 @@
           <p class="text-gray-400 mb-6">Connecting passionate players with expert coaches since 2017. Our mission is to help every player reach their full potential.</p>
         </div>
         
-        <div>
-          <h4 class="text-lg font-semibold mb-6">Quick Links</h4>
-          <ul class="space-y-3">
-            <li><a href="{{ url_for('main.index') }}" class="text-gray-400 hover:text-white transition-colors">Home</a></li>
-            <li><a href="{{ url_for('main.about') }}" class="text-gray-400 hover:text-white transition-colors">About Us</a></li>
-            <li><a href="{{ url_for('coaches.index') }}" class="text-gray-400 hover:text-white transition-colors">Our Coaches</a></li>
-          </ul>
-        </div>
-        
-        <div>
-          <h4 class="text-lg font-semibold mb-6">Account</h4>
-          <ul class="space-y-3">
-            {% if current_user.is_authenticated %}
-              {% if current_user.is_coach %}
-                <li><a href="{{ url_for('coaches.dashboard') }}" class="text-gray-400 hover:text-white transition-colors">Coach Dashboard</a></li>
-              {% else %}
-                <li><a href="{{ url_for('students.dashboard') }}" class="text-gray-400 hover:text-white transition-colors">Student Dashboard</a></li>
-                <li><a href="{{ url_for('students.bookings') }}" class="text-gray-400 hover:text-white transition-colors">My Bookings</a></li>
-              {% endif %}
-              <li><a href="{{ url_for('auth.logout') }}" class="text-gray-400 hover:text-white transition-colors">Logout</a></li>
-            {% else %}
-              <li><a href="#" class="login-link text-gray-400 hover:text-white transition-colors">Login</a></li>
-              <li><a href="#" class="register-link text-gray-400 hover:text-white transition-colors">Register</a></li>
-            {% endif %}
-          </ul>
-        </div>
         
         <div>
           <h4 class="text-lg font-semibold mb-6">Contact Us</h4>

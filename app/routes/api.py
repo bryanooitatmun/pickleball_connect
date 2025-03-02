@@ -116,6 +116,331 @@ def get_coach_stats():
         'monthly_earnings': monthly_earnings
     })
 
+@bp.route('/coach/pricing-plans')
+@login_required
+def get_pricing_plans():
+    """API endpoint to get coach pricing plans"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    plans = PricingPlan.query.filter_by(coach_id=coach.id).all()
+    
+    result = []
+    for plan in plans:
+        plan_data = {
+            'id': plan.id,
+            'name': plan.name,
+            'description': plan.description,
+            'discount_type': plan.discount_type,
+            'is_active': plan.is_active,
+            'sessions_required': plan.sessions_required,
+            'percentage_discount': plan.percentage_discount,
+            'fixed_discount': plan.fixed_discount,
+            'first_time_only': plan.first_time_only,
+            'valid_from': plan.valid_from.isoformat() if plan.valid_from else None,
+            'valid_to': plan.valid_to.isoformat() if plan.valid_to else None
+        }
+        result.append(plan_data)
+    
+    return jsonify(result)
+
+@bp.route('/coach/pricing-plans/add', methods=['POST'])
+@login_required
+def add_pricing_plan():
+    """API endpoint to add a pricing plan"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Create new pricing plan
+    plan = PricingPlan(
+        coach_id=coach.id,
+        name=data.get('name'),
+        description=data.get('description'),
+        discount_type=data.get('discount_type'),
+        is_active=data.get('is_active', True)
+    )
+    
+    # Set specific fields based on discount type
+    if data.get('discount_type') == 'first_time':
+        plan.first_time_only = True
+    
+    if data.get('discount_type') == 'package':
+        plan.sessions_required = data.get('sessions_required')
+    
+    if data.get('valid_from') and data.get('valid_to'):
+        plan.valid_from = datetime.fromisoformat(data.get('valid_from'))
+        plan.valid_to = datetime.fromisoformat(data.get('valid_to'))
+    
+    # Set discount values
+    if data.get('percentage_discount'):
+        plan.percentage_discount = float(data.get('percentage_discount'))
+    elif data.get('fixed_discount'):
+        plan.fixed_discount = float(data.get('fixed_discount'))
+    
+    try:
+        db.session.add(plan)
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'id': plan.id
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/pricing-plans/delete', methods=['POST'])
+@login_required
+def delete_pricing_plan():
+    """API endpoint to delete a pricing plan"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    plan_id = data.get('plan_id')
+    
+    plan = PricingPlan.query.filter_by(id=plan_id, coach_id=Coach.query.filter_by(user_id=current_user.id).first().id).first_or_404()
+    
+    try:
+        db.session.delete(plan)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/availability')
+@login_required
+def get_availability():
+    """API endpoint to get coach availability"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Get availability for future dates
+    availabilities = Availability.query.filter(
+        Availability.coach_id == coach.id,
+        Availability.date >= datetime.now().date()
+    ).order_by(Availability.date, Availability.start_time).all()
+    
+    result = []
+    for availability in availabilities:
+        result.append({
+            'id': availability.id,
+            'court_id': availability.court_id,
+            'court': {
+                'id': availability.court.id,
+                'name': availability.court.name
+            },
+            'date': availability.date.isoformat(),
+            'start_time': availability.start_time.strftime('%H:%M:%S'),
+            'end_time': availability.end_time.strftime('%H:%M:%S'),
+            'is_booked': availability.is_booked
+        })
+    
+    return jsonify(result)
+
+@bp.route('/coach/availability/add', methods=['POST'])
+@login_required
+def add_availability():
+    """API endpoint to add availability"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Validate the data
+    if not all(key in data for key in ['court_id', 'date', 'start_time', 'end_time']):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    try:
+        # Parse date and times
+        date_obj = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        start_time = datetime.strptime(data['start_time'], '%H:%M').time()
+        end_time = datetime.strptime(data['end_time'], '%H:%M').time()
+        
+        # Check if date is in the future
+        if date_obj < datetime.now().date():
+            return jsonify({'error': 'Cannot add availability for past dates'}), 400
+        
+        # Check if end time is after start time
+        if start_time >= end_time:
+            return jsonify({'error': 'End time must be after start time'}), 400
+        
+        # Create availability record
+        availability = Availability(
+            coach_id=coach.id,
+            court_id=data['court_id'],
+            date=date_obj,
+            start_time=start_time,
+            end_time=end_time,
+            is_booked=False
+        )
+        
+        db.session.add(availability)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'id': availability.id
+        })
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/availability/delete', methods=['POST'])
+@login_required
+def delete_availability():
+    """API endpoint to delete availability"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    availability_id = data.get('availability_id')
+    
+    availability = Availability.query.filter_by(
+        id=availability_id, 
+        coach_id=Coach.query.filter_by(user_id=current_user.id).first().id
+    ).first_or_404()
+    
+    # Check if it's booked
+    if availability.is_booked:
+        return jsonify({'error': 'Cannot delete a booked availability'}), 400
+    
+    try:
+        db.session.delete(availability)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/earnings/<period>')
+@login_required
+def get_earnings(period):
+    """API endpoint to get coach earnings for specified period"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Get total earnings
+    total_earnings = db.session.query(func.sum(Booking.price)).filter(
+        Booking.coach_id == coach.id,
+        Booking.status == 'completed'
+    ).scalar() or 0
+    
+    # Current month earnings
+    now = datetime.now()
+    this_month_earnings = db.session.query(func.sum(Booking.price)).filter(
+        Booking.coach_id == coach.id,
+        Booking.status == 'completed',
+        extract('year', Booking.date) == now.year,
+        extract('month', Booking.date) == now.month
+    ).scalar() or 0
+    
+    # Last month earnings
+    last_month = now.replace(day=1) - timedelta(days=1)
+    last_month_earnings = db.session.query(func.sum(Booking.price)).filter(
+        Booking.coach_id == coach.id,
+        Booking.status == 'completed',
+        extract('year', Booking.date) == last_month.year,
+        extract('month', Booking.date) == last_month.month
+    ).scalar() or 0
+    
+    # Get monthly earnings for chart
+    monthly_data = {}
+    months_to_fetch = 12
+    if period.isdigit():
+        months_to_fetch = int(period)
+    
+    for i in range(months_to_fetch-1, -1, -1):
+        month_date = now.replace(day=1) - timedelta(days=i*30)
+        month_key = month_date.strftime('%Y-%m')
+        month_name = month_date.strftime('%B %Y')
+        
+        month_earnings = db.session.query(func.sum(Booking.price)).filter(
+            Booking.coach_id == coach.id,
+            Booking.status == 'completed',
+            extract('year', Booking.date) == month_date.year,
+            extract('month', Booking.date) == month_date.month
+        ).scalar() or 0
+        
+        monthly_data[month_name] = float(month_earnings)
+    
+    # Get earnings by court
+    court_earnings = {}
+    courts = Court.query.join(CoachCourt).filter(CoachCourt.coach_id == coach.id).all()
+    for court in courts:
+        court_total = db.session.query(func.sum(Booking.price)).filter(
+            Booking.coach_id == coach.id,
+            Booking.court_id == court.id,
+            Booking.status == 'completed'
+        ).scalar() or 0
+        
+        if court_total > 0:
+            court_earnings[court.name] = float(court_total)
+    
+    # Get earnings breakdown by discount type
+    earnings_breakdown = {}
+    # Regular sessions (no discount)
+    regular_count = Booking.query.filter(
+        Booking.coach_id == coach.id,
+        Booking.status == 'completed',
+        Booking.pricing_plan_id.is_(None)
+    ).count()
+    
+    regular_amount = db.session.query(func.sum(Booking.price)).filter(
+        Booking.coach_id == coach.id,
+        Booking.status == 'completed',
+        Booking.pricing_plan_id.is_(None)
+    ).scalar() or 0
+    
+    earnings_breakdown['regular'] = {
+        'sessions': regular_count,
+        'amount': float(regular_amount)
+    }
+    
+    # Discounted sessions by type
+    for discount_type in ['first_time', 'package', 'seasonal', 'custom']:
+        discount_count = Booking.query.join(PricingPlan).filter(
+            Booking.coach_id == coach.id,
+            Booking.status == 'completed',
+            PricingPlan.discount_type == discount_type
+        ).count()
+        
+        discount_amount = db.session.query(func.sum(Booking.price)).join(PricingPlan).filter(
+            Booking.coach_id == coach.id,
+            Booking.status == 'completed',
+            PricingPlan.discount_type == discount_type
+        ).scalar() or 0
+        
+        if discount_count > 0:
+            earnings_breakdown[discount_type] = {
+                'sessions': discount_count,
+                'amount': float(discount_amount)
+            }
+    
+    response = {
+        'total': float(total_earnings),
+        'this_month': float(this_month_earnings),
+        'last_month': float(last_month_earnings),
+        'monthly': monthly_data,
+        'by_court': court_earnings,
+        'breakdown': earnings_breakdown
+    }
+    
+    return jsonify(response)
+
 @bp.route('/coach/bookings/<status>')
 @login_required
 def get_coach_bookings(status):

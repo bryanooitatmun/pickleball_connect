@@ -127,54 +127,99 @@
   </div>
   
   <!-- Main Content -->
-  <div class="pt-32 pb-12 container mx-auto px-6">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden scroll-section">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
-        <div class="relative">
-          <div class="bg-blue-100 h-64 w-64 rounded-full absolute -z-10 -top-10 -left-10 opacity-30"></div>
-          <img id="coach-image" src="/api/placeholder/400/400" alt="Coach Profile"
-            class="w-full h-full object-cover rounded-xl shadow-xl relative z-10">
-          <div id="dupr-badge"
-            class="absolute top-4 right-4 bg-blue-600 text-white text-sm font-bold px-4 py-1 rounded-full">
-            DUPR 5.2
-          </div>
-        </div>
-        <div>
-          <h1 id="coach-name"
-            class="text-4xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Coach Name</h1>
-
-          <div class="flex items-center mb-4">
-            <div id="coach-stars" class="flex text-yellow-400">
-              <!-- Star ratings will be dynamically generated -->
+  <div class="container mx-auto px-6 py-12">
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- Coach Info Section -->
+      <div class="lg:w-1/3">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <!-- Coach profile image -->
+          <div id="coach-profile-image" class="flex justify-center mb-6">
+            <!-- Profile image will be inserted here by JavaScript -->
+            <div class="h-32 w-32 rounded-full bg-blue-100 flex items-center justify-center">
+              <span class="text-blue-600 font-bold text-4xl">C</span>
             </div>
-            <span id="coach-rating" class="text-gray-600 ml-2">4.8/5</span>
           </div>
-
+          
+          <!-- Coach details -->
+          <h1 id="coach-name" class="text-2xl font-bold text-center mb-2">Loading...</h1>
+          
+          <div class="flex justify-center mb-4">
+            <!-- Rating stars -->
+            <div id="coach-rating" class="flex text-yellow-400">
+              <!-- Rating stars will be inserted here by JavaScript -->
+              <i class="far fa-star"></i>
+              <i class="far fa-star"></i>
+              <i class="far fa-star"></i>
+              <i class="far fa-star"></i>
+              <i class="far fa-star"></i>
+            </div>
+            <span id="rating-count" class="text-gray-500 ml-2">(0 reviews)</span>
+          </div>
+          
+          <!-- Coach stats and info -->
           <div class="space-y-3 mb-6">
-            <p class="flex items-center text-gray-700">
-              <span class="w-32 inline-block font-semibold">Coaching Rate:</span>
-              <span id="coach-rate" class="font-bold text-blue-600">$50/hour</span>
-            </p>
-            <p class="flex items-center text-gray-700">
-              <span class="w-32 inline-block font-semibold">Sessions:</span>
-              <span id="coach-sessions">120 completed</span>
-            </p>
-            <p class="flex items-center text-gray-700">
-              <span class="w-32 inline-block font-semibold">Courts:</span>
-              <span id="coach-courts">Loading...</span>
-            </p>
+            <div class="flex items-center">
+              <i class="fas fa-dollar-sign w-8 text-blue-500"></i>
+              <span id="coach-rate">$0/hour</span>
+            </div>
+            <div class="flex items-center">
+              <i class="fas fa-medal w-8 text-blue-500"></i>
+              <span id="coach-dupr">DUPR Rating: 0.0</span>
+            </div>
+            <div class="flex items-center">
+              <i class="fas fa-history w-8 text-blue-500"></i>
+              <span id="coach-experience">0 Years Experience</span>
+            </div>
+            <div class="flex items-center">
+              <i class="fas fa-check-circle w-8 text-blue-500"></i>
+              <span id="coach-sessions">0 Sessions Completed</span>
+            </div>
+            <div id="coach-location-container" class="flex items-center hidden">
+              <i class="fas fa-map-marker-alt w-8 text-blue-500"></i>
+              <span id="coach-location"></span>
+            </div>
           </div>
-
-          <p id="coach-bio" class="text-gray-700 mb-8 leading-relaxed">
-            Loading coach biography...
-          </p>
-
-          <button id="schedule-btn"
-            class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-xl transform hover:scale-105 transition-all">
-            Schedule Session
+          
+          <!-- Coach specialties -->
+          <div id="coach-specialties-container" class="mb-6 hidden">
+            <h3 class="font-semibold mb-2">Specialties</h3>
+            <p id="coach-specialties" class="text-gray-600"></p>
+          </div>
+          
+          <!-- Available courts -->
+          <div id="coach-courts-container" class="mb-6 hidden">
+            <h3 class="font-semibold mb-2">Available at</h3>
+            <ul id="coach-courts" class="space-y-1">
+              <!-- Courts will be inserted here by JavaScript -->
+            </ul>
+          </div>
+          
+          <!-- Book button -->
+          <button id="schedule-btn" class="block w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium text-center hover:shadow-lg transform hover:scale-105 transition-all">
+            Book a Session
           </button>
         </div>
+      </div>
+      
+      <!-- Biography and Showcase Section -->
+      <div class="lg:w-2/3">
+        <!-- Biography section -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <h2 class="text-xl font-semibold mb-4">About <span id="coach-first-name">this coach</span></h2>
+          <div class="text-gray-700">
+            <p id="coach-bio">Loading bio information...</p>
+          </div>
+        </div>
+        
+        <!-- Image showcase section -->
+        <div id="showcase-container" class="bg-white rounded-xl shadow-sm p-6 hidden">
+          <h2 class="text-xl font-semibold mb-4">Showcase</h2>
+          <div id="showcase-images" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Showcase images will be inserted here by JavaScript -->
+          </div>
+        </div>
+        
+        <!-- Ratings and reviews could go here -->
       </div>
     </div>
   </div>
@@ -708,49 +753,124 @@
       });
 
       // Fetch coach data
-      async function fetchCoachData() {
+      async function fetchCoachData(coachId) {
         try {
-          // Extract coach id from URL
-          const coachId =  {{ coach.id }}  || 1; // Default to 1 if no ID is provided
-
           const response = await fetch(`/coach/api/coach/${coachId}`);
-
           if (!response.ok) {
             throw new Error('Failed to fetch coach data');
           }
-
-          coachData = await response.json();
-
-          // Update UI with coach data
-          coachName.textContent = `${coachData.first_name} ${coachData.last_name}`;
-          document.title = `${coachData.first_name} ${coachData.last_name} - Pickleball Connect`;
-          duprBadge.textContent = `DUPR ${coachData.dupr_rating.toFixed(1)}`;
-          coachStars.innerHTML = generateStars(coachData.avg_rating);
-          coachRating.textContent = `${coachData.avg_rating.toFixed(1)}/5`;
-          coachRate.textContent = `${coachData.hourly_rate}/hour`;
-          coachSessions.textContent = `${coachData.sessions_completed} completed`;
+          
+          const coach = await response.json();
+          coachData = coach;
+          // Update profile image
+          const profileImageContainer = document.getElementById('coach-profile-image');
+          if (coach.profile_picture) {
+            profileImageContainer.innerHTML = `
+              <img src="${coach.profile_picture.replace('%5C','/')}" alt="${coach.first_name}" class="h-32 w-32 rounded-full object-cover border-4 border-blue-100">
+            `;
+          } else {
+            profileImageContainer.innerHTML = `
+              <div class="h-32 w-32 rounded-full bg-blue-100 flex items-center justify-center">
+                <span class="text-blue-600 font-bold text-4xl">${coach.first_name.charAt(0)}</span>
+              </div>
+            `;
+          }
+          
+          // Update coach details
+          document.getElementById('coach-name').textContent = `${coach.first_name} ${coach.last_name}`;
+          document.getElementById('coach-first-name').textContent = coach.first_name;
+          document.getElementById('coach-rate').textContent = `$${coach.hourly_rate}/hour`;
+          document.getElementById('coach-dupr').textContent = `DUPR Rating: ${coach.dupr_rating || 'N/A'}`;
+          document.getElementById('coach-experience').textContent = `${coach.years_experience || '0'} Years Experience`;
+          document.getElementById('coach-sessions').textContent = `${coach.sessions_completed || '0'} Sessions Completed`;
+          document.getElementById('coach-bio').textContent = coach.biography || 'No biography available.';
 
           // Format courts list
-          const courtNames = coachData.courts.map(court => court.name).join(', ');
+          const courtNames = coach.courts.map(court => court.name).join(', ');
           coachCourts.textContent = courtNames;
-
-          coachBio.textContent = coachData.biography || 'No biography available.';
 
           // Populate court select dropdown
           courtSelect.innerHTML = '<option value="">Select a court</option>';
-          coachData.courts.forEach(court => {
+          coach.courts.forEach(court => {
             const option = document.createElement('option');
             option.value = court.id;
             option.textContent = court.name;
             courtSelect.appendChild(option);
           });
+          
+          // Update location if available
+          if (coach.location) {
+            document.getElementById('coach-location').textContent = coach.location;
+            document.getElementById('coach-location-container').classList.remove('hidden');
+          }
+          
+          // Update specialties if available
+          if (coach.specialties) {
+            document.getElementById('coach-specialties').textContent = coach.specialties;
+            document.getElementById('coach-specialties-container').classList.remove('hidden');
+          }
+          
+          // Update rating stars
+          const ratingContainer = document.getElementById('coach-rating');
+          ratingContainer.innerHTML = '';
+          
+          for (let i = 1; i <= 5; i++) {
+            const star = document.createElement('i');
+            if (i <= Math.floor(coach.avg_rating)) {
+              star.className = 'fas fa-star';
+            } else if (i === Math.ceil(coach.avg_rating) && coach.avg_rating % 1 > 0) {
+              star.className = 'fas fa-star-half-alt';
+            } else {
+              star.className = 'far fa-star';
+            }
+            ratingContainer.appendChild(star);
+          }
+          
+          document.getElementById('rating-count').textContent = `(${coach.rating_count || 0} reviews)`;
+          
+          // Update courts list
+          if (coach.courts && coach.courts.length > 0) {
+            const courtsContainer = document.getElementById('coach-courts');
+            courtsContainer.innerHTML = '';
+            
+            coach.courts.forEach(court => {
+              const courtItem = document.createElement('li');
+              courtItem.className = 'flex items-center';
+              courtItem.innerHTML = `
+                <i class="fas fa-map-pin text-blue-500 mr-2"></i>
+                <span>${court.name}</span>
+              `;
+              courtsContainer.appendChild(courtItem);
+            });
+            
+            document.getElementById('coach-courts-container').classList.remove('hidden');
+          }
+          
+          // Update showcase images
+          if (coach.showcase_images && coach.showcase_images.length > 0) {
+            const showcaseContainer = document.getElementById('showcase-images');
+            showcaseContainer.innerHTML = '';
+            
+            coach.showcase_images.forEach(imageSrc => {
+              const imageDiv = document.createElement('div');
+              imageDiv.className = 'rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow';
+              imageDiv.innerHTML = `
+                <img src="${imageSrc.replace('%5C','/')}" alt="Coaching showcase" class="w-full h-64 object-cover">
+              `;
+              showcaseContainer.appendChild(imageDiv);
+            });
+            
+            document.getElementById('showcase-container').classList.remove('hidden');
+          }
+          
 
           // Hide loading overlay
-          loadingOverlay.classList.add('hidden');
-
+          loadingOverlay.classList.add('hidden');          
         } catch (error) {
           console.error('Error fetching coach data:', error);
-          alert('Failed to load coach profile. Please try again later.');
+          document.getElementById('coach-bio').textContent = 'Failed to load coach information. Please try again later.';
+          // Hide loading overlay
+          loadingOverlay.classList.add('hidden');
         }
       }
 
@@ -1819,7 +1939,9 @@
       });
 
       // Initialize
-      fetchCoachData();
+      // Extract coach id from URL
+      const coachId =  {{ coach.id }}  || 1; // Default to 1 if no ID is provided
+      fetchCoachData(coachId);
     });
   </script>
   {% endblock %}

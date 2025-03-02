@@ -478,7 +478,7 @@
       // Load courts for filter dropdown
       async function loadCourts() {
         try {
-          const response = await fetch('/coach/api/courts');
+          const response = await fetch('/api/courts');
           const courts = await response.json();
           
           // Populate court filter dropdown
@@ -534,13 +534,15 @@
         
         coaches.forEach(coach => {
           const clone = template.content.cloneNode(true);
-          
+          console.log(coach);
           // Update coach data
+          clone.querySelector('.coach-image').src = `/static/${coach.profile_picture}`;
           clone.querySelector('.coach-name').textContent = `${coach.first_name} ${coach.last_name}`;
           clone.querySelector('.coach-dupr').textContent = `DUPR ${coach.dupr_rating.toFixed(1)}`;
           clone.querySelector('.coach-rate').textContent = `${coach.hourly_rate}/hour`;
           clone.querySelector('.coach-sessions').textContent = coach.sessions_completed;
           clone.querySelector('.coach-courts').textContent = coach.courts.join(', ');
+          
           
           // Generate star rating
           clone.querySelector('.coach-stars').innerHTML = generateStars(coach.avg_rating);

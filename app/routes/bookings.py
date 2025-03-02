@@ -8,10 +8,12 @@ from app.models.court import Court, CoachCourt
 from app.models.court_fee import CourtFee
 from app.models.pricing import PricingPlan
 from app.models.booking import Availability, Booking
+from app.models.package import BookingPackage
 from app.forms.booking import BookingForm
 from datetime import datetime, timedelta
 from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
+
 import uuid 
 
 bp = Blueprint('bookings', __name__)

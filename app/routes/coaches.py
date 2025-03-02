@@ -118,7 +118,8 @@ def get_coaches():
             'avg_rating': round(avg_rating, 1) if avg_rating else 0,
             'rating_count': rating_count,
             'courts': court_names,
-            'biography': coach.biography
+            'biography': coach.biography,
+            'profile_picture': user.profile_picture
         }
         result.append(coach_data)
     

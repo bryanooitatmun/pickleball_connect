@@ -1,0 +1,192 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Pickleball Connect - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
+    <p class="text-gray-600">Welcome back, {{ current_user.first_name }}!</p>
+</div>
+
+<!-- Stats Overview -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-500">Total Users</h3>
+            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <i class="fas fa-users text-blue-600"></i>
+            </div>
+        </div>
+        <p class="text-2xl font-bold">{{ users_count }}</p>
+        <a href="{{ url_for('admin.users') }}" class="text-sm text-blue-600 hover:underline">View all users</a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-500">Total Coaches</h3>
+            <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                <i class="fas fa-user-tie text-purple-600"></i>
+            </div>
+        </div>
+        <p class="text-2xl font-bold">{{ coaches_count }}</p>
+        <a href="{{ url_for('admin.coaches') }}" class="text-sm text-blue-600 hover:underline">View all coaches</a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-500">Total Courts</h3>
+            <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                <i class="fas fa-map-marker-alt text-green-600"></i>
+            </div>
+        </div>
+        <p class="text-2xl font-bold">{{ courts_count }}</p>
+        <a href="{{ url_for('admin.courts') }}" class="text-sm text-blue-600 hover:underline">View all courts</a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-500">Total Bookings</h3>
+            <div class="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                <i class="fas fa-calendar-alt text-yellow-600"></i>
+            </div>
+        </div>
+        <p class="text-2xl font-bold">{{ bookings_count }}</p>
+        <a href="{{ url_for('admin.bookings') }}" class="text-sm text-blue-600 hover:underline">View all bookings</a>
+    </div>
+</div>
+
+<!-- Revenue Overview & Recent Bookings -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Revenue Overview -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Revenue Overview</h3>
+            <a href="{{ url_for('admin.earnings') }}" class="text-sm text-blue-600 hover:underline">View detailed analytics</a>
+        </div>
+        
+        <div class="mb-4">
+            <p class="text-gray-500 text-sm">Total Revenue</p>
+            <p class="text-2xl font-bold">${{ "%.2f"|format(total_revenue) }}</p>
+        </div>
+        
+        <div class="h-64">
+            <canvas id="revenue-chart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Recent Bookings</h3>
+            <a href="{{ url_for('admin.bookings') }}" class="text-sm text-blue-600 hover:underline">View all</a>
+        </div>
+        
+        <div class="space-y-4">
+            {% if recent_bookings %}
+                {% for booking in recent_bookings %}
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between">
+                            <div>
+                                <h4 class="font-medium">Session with {{ booking.student.first_name }} {{ booking.student.last_name }}</h4>
+                                <p class="text-gray-500 text-sm">{{ booking.date.strftime('%a, %b %d, %Y') }} at {{ booking.start_time.strftime('%I:%M %p') }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium">${{ "%.2f"|format(booking.price) }}</p>
+                                <p class="text-sm {% if booking.status == 'upcoming' %}text-blue-600{% elif booking.status == 'completed' %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {{ booking.status.capitalize() }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-6 text-gray-500">
+                    <p>No recent bookings</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Access Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <a href="{{ url_for('admin.add_court') }}" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+        <div class="flex flex-col items-center text-center">
+            <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                <i class="fas fa-plus text-indigo-600"></i>
+            </div>
+            <h3 class="font-semibold mb-2">Add New Court</h3>
+            <p class="text-gray-500 text-sm">Create a new court for coaches to use</p>
+        </div>
+    </a>
+    
+    <a href="{{ url_for('admin.earnings') }}" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+        <div class="flex flex-col items-center text-center">
+            <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                <i class="fas fa-chart-line text-green-600"></i>
+            </div>
+            <h3 class="font-semibold mb-2">View Earnings</h3>
+            <p class="text-gray-500 text-sm">See detailed earnings analytics</p>
+        </div>
+    </a>
+    
+    <a href="{{ url_for('admin.support_tickets') }}" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+        <div class="flex flex-col items-center text-center">
+            <div class="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center mb-4">
+                <i class="fas fa-ticket-alt text-yellow-600"></i>
+            </div>
+            <h3 class="font-semibold mb-2">Support Tickets</h3>
+            <p class="text-gray-500 text-sm">Manage support tickets from users</p>
+        </div>
+    </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+// Create the revenue chart
+const revenueChart = document.getElementById('revenue-chart');
+if (revenueChart) {
+    const labels = [{% for month, revenue in monthly_revenue.items() %}'{{ month }}'{% if not loop.last %}, {% endif %}{% endfor %}];
+    const data = [{% for month, revenue in monthly_revenue.items() %}{{ revenue }}{% if not loop.last %}, {% endif %}{% endfor %}];
+    
+    new Chart(revenueChart, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Monthly Revenue',
+                data: data,
+                backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                borderWidth: 0,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+{% endblock %}

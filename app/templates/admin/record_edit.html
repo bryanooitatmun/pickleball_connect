@@ -1,0 +1,120 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Pickleball Connect - Edit {{ table }} Record{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Edit {{ table }} Record</h1>
+        <p class="text-gray-600">ID: {{ record.id }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.record_view', table=table, record_id=record.id) }}" class="mr-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+            <i class="fas fa-eye mr-1"></i> View Record
+        </a>
+        <a href="{{ url_for('admin.table_view', table=table) }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+            <i class="fas fa-arrow-left mr-1"></i> Back to Table
+        </a>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6">
+    <form method="POST" action="{{ url_for('admin.record_edit', table=table, record_id=record.id) }}">
+        {% for column in columns %}
+            {% if not column.primary_key %}
+                <div class="mb-6">
+                    <label for="{{ column.name }}" class="block text-gray-700 font-medium mb-2">{{ column.name }}</label>
+                    
+                    {% if column.type.startswith('VARCHAR') or column.type.startswith('CHAR') %}
+                        <input 
+                            type="text" 
+                            id="{{ column.name }}" 
+                            name="{{ column.name }}" 
+                            value="{{ column.value or '' }}" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                    {% elif column.type.startswith('TEXT') %}
+                        <textarea 
+                            id="{{ column.name }}" 
+                            name="{{ column.name }}" 
+                            rows="4"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >{{ column.value or '' }}</textarea>
+                    {% elif column.type.startswith('INT') or column.type.startswith('BIGINT') %}
+                        <input 
+                            type="number" 
+                            id="{{ column.name }}" 
+                            name="{{ column.name }}" 
+                            value="{{ column.value or '' }}" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                    {% elif column.type.startswith('FLOAT') or column.type.startswith('DOUBLE') or column.type.startswith('DECIMAL') %}
+                        <input 
+                            type="number" 
+                            id="{{ column.name }}" 
+                            name="{{ column.name }}" 
+                            value="{{ column.value or '' }}" 
+                            step="0.01"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                    {% elif column.type.startswith('DATE') %}
+                        <input 
+                            type="date" 
+                            id="{{ column.name }}" 
+                            name="{{ column.name }}" 
+                            value="{{ column.value.strftime('%Y-%m-%d') if column.value else '' }}" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                    {% elif column.type.startswith('TIME') %}
+                        <input 
+                            type="time" 
+                            id="{{ column.name }}" 
+                            name="{{ column.name }}" 
+                            value="{{ column.value.strftime('%H:%M') if column.value else '' }}" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                    {% elif column.type.startswith('DATETIME') %}
+                        <input 
+                            type="datetime-local" 
+                            id="{{ column.name }}" 
+                            name="{{ column.name }}" 
+                            value="{{ column.value.strftime('%Y-%m-%dT%H:%M') if column.value else '' }}" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                    {% elif column.type.startswith('BOOLEAN') %}
+                        <div class="flex items-center">
+                            <input 
+                                type="checkbox" 
+                                id="{{ column.name }}" 
+                                name="{{ column.name }}" 
+                                {% if column.value %}checked{% endif %}
+                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            >
+                            <label for="{{ column.name }}" class="ml-2 block text-gray-700">{{ column.name }}</label>
+                        </div>
+                    {% else %}
+                        <input 
+                            type="text" 
+                            id="{{ column.name }}" 
+                            name="{{ column.name }}" 
+                            value="{{ column.value or '' }}" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                    {% endif %}
+                    
+                    <p class="mt-1 text-sm text-gray-500">Type: {{ column.type }}</p>
+                </div>
+            {% endif %}
+        {% endfor %}
+        
+        <div class="flex justify-end space-x-3 mt-6">
+            <a href="{{ url_for('admin.record_view', table=table, record_id=record.id) }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancel
+            </a>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,353 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Pickleball Connect - Support Tickets{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Support Tickets</h1>
+    <p class="text-gray-600">Manage support tickets from students and coaches</p>
+</div>
+
+<!-- Tickets Tabs -->
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <div class="border-b border-gray-200 mb-6">
+        <ul class="flex flex-wrap -mb-px">
+            <li class="mr-2">
+                <button id="open-tab-btn" class="inline-block py-2 px-4 text-indigo-600 font-medium border-b-2 border-indigo-600">Open</button>
+            </li>
+            <li class="mr-2">
+                <button id="in-progress-tab-btn" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium border-b-2 border-transparent hover:border-gray-300">In Progress</button>
+            </li>
+            <li class="mr-2">
+                <button id="resolved-tab-btn" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium border-b-2 border-transparent hover:border-gray-300">Resolved</button>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="mb-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <input type="text" id="ticket-search" placeholder="Search by subject or email" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select id="ticket-type-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">All Types</option>
+                <option value="student">Student</option>
+                <option value="coach">Coach</option>
+            </select>
+        </div>
+        
+        <div>
+            <select id="ticket-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="date-desc" selected>Date: Newest First</option>
+                <option value="date-asc">Date: Oldest First</option>
+                <option value="priority-desc">Priority: High to Low</option>
+                <option value="priority-asc">Priority: Low to High</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Open Tickets Tab -->
+    <div id="open-tickets-tab" class="ticket-tab">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <!-- This would be populated with actual ticket data -->
+                    {% if tickets %}
+                        {% for ticket in tickets if ticket.status == 'open' %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{{ ticket.id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.subject }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.user.first_name }} {{ ticket.user.last_name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if ticket.user.is_coach %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            Coach
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            Student
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.created_at.strftime('%b %d, %Y') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if ticket.priority == 'high' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            High
+                                        </span>
+                                    {% elif ticket.priority == 'medium' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            Medium
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            Low
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">No open tickets found</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">No tickets found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- In Progress Tickets Tab -->
+    <div id="in-progress-tickets-tab" class="ticket-tab hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <!-- This would be populated with actual ticket data -->
+                    {% if tickets %}
+                        {% for ticket in tickets if ticket.status == 'in_progress' %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{{ ticket.id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.subject }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.user.first_name }} {{ ticket.user.last_name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if ticket.user.is_coach %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            Coach
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            Student
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.created_at.strftime('%b %d, %Y') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.assigned_to.first_name if ticket.assigned_to else 'Unassigned' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">No in-progress tickets found</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">No tickets found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Resolved Tickets Tab -->
+    <div id="resolved-tickets-tab" class="ticket-tab hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Resolved</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resolved By</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <!-- This would be populated with actual ticket data -->
+                    {% if tickets %}
+                        {% for ticket in tickets if ticket.status == 'resolved' %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{{ ticket.id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.subject }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.user.first_name }} {{ ticket.user.last_name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if ticket.user.is_coach %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            Coach
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            Student
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.resolved_at.strftime('%b %d, %Y') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.resolved_by.first_name if ticket.resolved_by else 'Unknown' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">No resolved tickets found</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">No tickets found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{# <!-- Ticket Support Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Response Time</h3>
+            <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                <i class="fas fa-clock text-indigo-600"></i>
+            </div>
+        </div>
+        <p class="text-2xl font-bold">0 hrs</p>
+        <p class="text-sm text-gray-500">Average first response time</p>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Resolution Time</h3>
+            <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                <i class="fas fa-check-circle text-green-600"></i>
+            </div>
+        </div>
+        <p class="text-2xl font-bold">0 days</p>
+        <p class="text-sm text-gray-500">Average resolution time</p>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Satisfaction Rate</h3>
+            <div class="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                <i class="fas fa-star text-yellow-600"></i>
+            </div>
+        </div>
+        <p class="text-2xl font-bold">0%</p>
+        <p class="text-sm text-gray-500">Based on ticket feedback</p>
+    </div>
+</div> #}
+{% endblock %}
+
+{% block scripts %}
+// Tab switching
+const openTabBtn = document.getElementById('open-tab-btn');
+const inProgressTabBtn = document.getElementById('in-progress-tab-btn');
+const resolvedTabBtn = document.getElementById('resolved-tab-btn');
+const openTicketsTab = document.getElementById('open-tickets-tab');
+const inProgressTicketsTab = document.getElementById('in-progress-tickets-tab');
+const resolvedTicketsTab = document.getElementById('resolved-tickets-tab');
+
+// Switch to open tickets tab
+openTabBtn.addEventListener('click', function() {
+    // Update button styles
+    openTabBtn.classList.add('text-indigo-600', 'border-indigo-600');
+    openTabBtn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    inProgressTabBtn.classList.remove('text-indigo-600', 'border-indigo-600');
+    inProgressTabBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    resolvedTabBtn.classList.remove('text-indigo-600', 'border-indigo-600');
+    resolvedTabBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    // Show/hide tabs
+    openTicketsTab.classList.remove('hidden');
+    inProgressTicketsTab.classList.add('hidden');
+    resolvedTicketsTab.classList.add('hidden');
+});
+
+// Switch to in-progress tickets tab
+inProgressTabBtn.addEventListener('click', function() {
+    // Update button styles
+    inProgressTabBtn.classList.add('text-indigo-600', 'border-indigo-600');
+    inProgressTabBtn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    openTabBtn.classList.remove('text-indigo-600', 'border-indigo-600');
+    openTabBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    resolvedTabBtn.classList.remove('text-indigo-600', 'border-indigo-600');
+    resolvedTabBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    // Show/hide tabs
+    inProgressTicketsTab.classList.remove('hidden');
+    openTicketsTab.classList.add('hidden');
+    resolvedTicketsTab.classList.add('hidden');
+});
+
+// Switch to resolved tickets tab
+resolvedTabBtn.addEventListener('click', function() {
+    // Update button styles
+    resolvedTabBtn.classList.add('text-indigo-600', 'border-indigo-600');
+    resolvedTabBtn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    openTabBtn.classList.remove('text-indigo-600', 'border-indigo-600');
+    openTabBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    inProgressTabBtn.classList.remove('text-indigo-600', 'border-indigo-600');
+    inProgressTabBtn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    // Show/hide tabs
+    resolvedTicketsTab.classList.remove('hidden');
+    openTicketsTab.classList.add('hidden');
+    inProgressTicketsTab.classList.add('hidden');
+});
+
+// Search functionality
+const ticketSearch = document.getElementById('ticket-search');
+const ticketTypeFilter = document.getElementById('ticket-type-filter');
+const ticketSort = document.getElementById('ticket-sort');
+
+// This would be more robust in a real implementation
+if (ticketSearch) {
+    ticketSearch.addEventListener('input', function() {
+        // Filter the ticket table based on search input
+        console.log('Search tickets for:', this.value);
+    });
+}
+
+if (ticketTypeFilter) {
+    ticketTypeFilter.addEventListener('change', function() {
+        // Filter the ticket table based on ticket type
+        console.log('Filter tickets by type:', this.value);
+    });
+}
+
+if (ticketSort) {
+    ticketSort.addEventListener('change', function() {
+        // Sort the ticket table based on selected option
+        console.log('Sort tickets by:', this.value);
+    });
+}
+{% endblock %}

@@ -13,7 +13,7 @@
         <div class="hidden md:flex items-center space-x-8">
           {% if current_user.is_authenticated %}
             {% if current_user.is_admin %}
-              <a href="{{ url_for('admin.courts') }}" class="text-gray-600 hover:text-blue-600 transition-colors">Admin Dashboard</a>
+              <a href="{{ url_for('admin.dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors">Admin Dashboard</a>
             {% elif current_user.is_coach %}
               <a href="{{ url_for('coaches.dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors">Coach Dashboard</a>
             {% else %}
@@ -43,7 +43,7 @@
       <div id="mobile-menu" class="md:hidden hidden bg-white rounded-lg mt-4 shadow-lg p-6 space-y-4">
         {% if current_user.is_authenticated %}
           {% if current_user.is_admin %}
-            <a href="{{ url_for('admin.courts') }}" class="block text-gray-600 hover:text-blue-600 transition-colors">Admin Dashboard</a>
+            <a href="{{ url_for('admin.dashboard') }}" class="block text-gray-600 hover:text-blue-600 transition-colors">Admin Dashboard</a>
           {% elif current_user.is_coach %}
             <a href="{{ url_for('coaches.dashboard') }}" class="block text-gray-600 hover:text-blue-600 transition-colors">Coach Dashboard</a>
           {% else %}

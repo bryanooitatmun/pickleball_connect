@@ -1,0 +1,64 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Pickleball Connect - Add Court{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Add New Court</h1>
+    <p class="text-gray-600">Create a new court in the system</p>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6 max-w-3xl">
+    <form method="POST" action="{{ url_for('admin.add_court') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label for="name" class="block text-gray-700 font-medium mb-2">Court Name*</label>
+                <input type="text" id="name" name="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+            </div>
+            
+            <div>
+                <label for="number_of_courts" class="block text-gray-700 font-medium mb-2">Number of Courts</label>
+                <input type="number" id="number_of_courts" name="number_of_courts" min="1" value="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <label for="address" class="block text-gray-700 font-medium mb-2">Address</label>
+            <input type="text" id="address" name="address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div>
+                <label for="city" class="block text-gray-700 font-medium mb-2">City</label>
+                <input type="text" id="city" name="city" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div>
+                <label for="state" class="block text-gray-700 font-medium mb-2">State</label>
+                <input type="text" id="state" name="state" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div>
+                <label for="zip_code" class="block text-gray-700 font-medium mb-2">Zip Code</label>
+                <input type="text" id="zip_code" name="zip_code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <div class="flex items-center">
+                <input type="checkbox" id="indoor" name="indoor" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                <label for="indoor" class="ml-2 block text-gray-700">Indoor Court</label>
+            </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+            <a href="{{ url_for('admin.courts') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancel
+            </a>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                Add Court
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

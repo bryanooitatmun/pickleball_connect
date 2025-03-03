@@ -26,6 +26,7 @@ def create_app(config_class=Config):
     from app.routes.coaches import bp as coaches_bp
     from app.routes.students import bp as students_bp
     from app.routes.bookings import bp as bookings_bp
+    from app.routes.admin import bp as admin_bp
     from app.routes.api import bp as api_bp
 
     app.register_blueprint(api_bp)
@@ -34,6 +35,7 @@ def create_app(config_class=Config):
     app.register_blueprint(coaches_bp, url_prefix='/coach')
     app.register_blueprint(students_bp, url_prefix='/student')
     app.register_blueprint(bookings_bp, url_prefix='/booking')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
     
     # Ensure the upload directories exist
     os.makedirs(app.config['PROFILE_PICS_FOLDER'], exist_ok=True)

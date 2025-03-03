@@ -1,0 +1,365 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Pickleball Connect - Earnings Analytics{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Earnings Analytics</h1>
+    <p class="text-gray-600">View detailed earnings analytics across the platform</p>
+</div>
+
+<!-- Earnings Overview -->
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <h2 class="text-lg font-semibold mb-4">Earnings Overview</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-gray-500 text-sm font-medium mb-1">Total Revenue</h3>
+            <p class="text-2xl font-bold">${{ "%.2f"|format(total_earnings) }}</p>
+            <p class="text-sm text-gray-500">All time</p>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-gray-500 text-sm font-medium mb-1">This Month</h3>
+            <p class="text-2xl font-bold">${{ "%.2f"|format(this_month_earnings) }}</p>
+            <p class="text-sm text-gray-500">{{ monthly_earnings[-1].month if monthly_earnings else 'N/A' }}</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-gray-500 text-sm font-medium mb-1">Last Month</h3>
+            <p class="text-2xl font-bold">${{ "%.2f"|format(last_month_earnings) }}</p>
+            <p class="text-sm text-gray-500">{{ monthly_earnings[-2].month if monthly_earnings|length > 1 else 'N/A' }}</p>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-gray-500 text-sm font-medium mb-1">Average Per Month</h3>
+            {% set avg_monthly = total_earnings / 12 if total_earnings > 0 else 0 %}
+            <p class="text-2xl font-bold">${{ "%.2f"|format(avg_monthly) }}</p>
+            <p class="text-sm text-gray-500">Based on available data</p>
+        </div>
+    </div>
+    
+    <div class="h-80">
+        <canvas id="monthly-earnings-chart"></canvas>
+    </div>
+</div>
+
+<!-- Earnings by Court and Coach -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Earnings by Court -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="text-lg font-semibold mb-4">Earnings by Court</h2>
+        
+        <div class="h-64 mb-4">
+            <canvas id="court-earnings-chart"></canvas>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Court</th>
+                        <th class="py-2 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Earnings</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% if court_earnings %}
+                        {% for court in court_earnings %}
+                            <tr>
+                                <td class="py-2 px-4 text-sm font-medium text-gray-900">{{ court.name }}</td>
+                                <td class="py-2 px-4 text-sm text-gray-500 text-right">${{ "%.2f"|format(court.earnings) }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="2" class="py-4 px-4 text-center text-gray-500">No data available</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Earnings by Coach -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="text-lg font-semibold mb-4">Earnings by Coach</h2>
+        
+        <div class="h-64 mb-4">
+            <canvas id="coach-earnings-chart"></canvas>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coach</th>
+                        <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Earnings</th>
+                        <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">%</th>
+                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proportion</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% if coach_earnings %}
+                        {% for coach in coach_earnings %}
+                            <tr>
+                                <td class="px-3 py-2 text-sm font-medium text-gray-900">{{ coach.first_name }} {{ coach.last_name }}</td>
+                                <td class="px-3 py-2 text-sm text-gray-500 text-right">${{ "%.2f"|format(coach.earnings) }}</td>
+                                <td class="px-3 py-2 text-sm text-gray-500 text-right">{{ "%.1f"|format((coach.earnings / total_earnings) * 100 if total_earnings else 0) }}%</td>
+                                <td class="px-3 py-2">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="h-2.5 rounded-full" style="width: {{ (coach.earnings / total_earnings) * 100 if total_earnings else 0 }}%; background-color: {{ loop.cycle('rgba(79, 70, 229, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(239, 68, 68, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(217, 70, 239, 0.7)') }}"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="py-4 px-4 text-center text-gray-500">No data available</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Export Options -->
+<div class="bg-white rounded-xl shadow-sm p-6">
+    <h2 class="text-lg font-semibold mb-4">Export Earnings Data</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <div class="mb-3">
+                <i class="fas fa-file-csv text-indigo-600 text-3xl"></i>
+            </div>
+            <h3 class="font-medium mb-2">Export as CSV</h3>
+            <p class="text-sm text-gray-500 mb-4">Download all earnings data in CSV format</p>
+            <button id="export-csv-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 w-full">
+                Export CSV
+            </button>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <div class="mb-3">
+                <i class="fas fa-file-excel text-green-600 text-3xl"></i>
+            </div>
+            <h3 class="font-medium mb-2">Export as Excel</h3>
+            <p class="text-sm text-gray-500 mb-4">Download all earnings data in Excel format</p>
+            <button id="export-excel-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 w-full">
+                Export Excel
+            </button>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <div class="mb-3">
+                <i class="fas fa-file-pdf text-red-600 text-3xl"></i>
+            </div>
+            <h3 class="font-medium mb-2">Export as PDF</h3>
+            <p class="text-sm text-gray-500 mb-4">Download a PDF report of earnings data</p>
+            <button id="export-pdf-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 w-full">
+                Export PDF
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+// Chart colors
+const chartColors = [
+    'rgba(79, 70, 229, 0.7)',
+    'rgba(16, 185, 129, 0.7)',
+    'rgba(245, 158, 11, 0.7)',
+    'rgba(239, 68, 68, 0.7)',
+    'rgba(59, 130, 246, 0.7)',
+    'rgba(217, 70, 239, 0.7)',
+    'rgba(251, 113, 133, 0.7)',
+    'rgba(107, 114, 128, 0.7)'
+];
+
+// Monthly Earnings Chart
+const monthlyEarningsCanvas = document.getElementById('monthly-earnings-chart');
+if (monthlyEarningsCanvas) {
+    const labels = [
+        {% for item in monthly_earnings %}
+            '{{ item.month }}'{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    const data = [
+        {% for item in monthly_earnings %}
+            {{ item.earnings }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    new Chart(monthlyEarningsCanvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Monthly Earnings',
+                data: data,
+                backgroundColor: chartColors[0],
+                borderWidth: 0,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Court Earnings Chart
+const courtEarningsCanvas = document.getElementById('court-earnings-chart');
+if (courtEarningsCanvas) {
+    const rawData = [
+        {% for court in court_earnings %}
+            {
+                label: '{{ court.name }}',
+                value: {{ court.earnings }}
+            }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    // Sort by value (descending)
+    rawData.sort((a, b) => b.value - a.value);
+    
+    // Take top 8
+    const topCount = 8;
+    const topData = rawData.slice(0, topCount);
+    
+    // Calculate "Others" category if needed
+    let othersTotal = 0;
+    if (rawData.length > topCount) {
+        for (let i = topCount; i < rawData.length; i++) {
+            othersTotal += rawData[i].value;
+        }
+        topData.push({ label: 'Others', value: othersTotal });
+    }
+    
+    const labels = topData.map(item => item.label);
+    const data = topData.map(item => item.value);
+    
+    new Chart(courtEarningsCanvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: labels.map((_, i) => chartColors[i % chartColors.length]),
+                borderWidth: 0,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `$${value.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+// Coach Earnings Chart
+document.addEventListener('DOMContentLoaded', function() {
+    const listContainer = document.querySelector('.overflow-x-auto table tbody');
+    if (!listContainer) return;
+    
+    const coachData = [
+        {% for coach in coach_earnings %}
+            {
+                name: '{{ coach.first_name }} {{ coach.last_name }}',
+                amount: {{ coach.earnings }}
+            }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    // Sort by earnings (descending)
+    coachData.sort((a, b) => b.amount - a.amount);
+    
+    // Calculate the total
+    const totalEarnings = coachData.reduce((sum, coach) => sum + coach.amount, 0);
+    
+    // Clear container
+    listContainer.innerHTML = '';
+    
+    // Add rows for each coach
+    coachData.forEach((coach, index) => {
+        const percentage = totalEarnings > 0 ? (coach.amount / totalEarnings * 100) : 0;
+        const backgroundColor = chartColors[index % chartColors.length];
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${coach.name}</td>
+            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">$${coach.amount.toFixed(2)}</td>
+            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${percentage.toFixed(1)}%</td>
+            <td class="px-3 py-2 whitespace-nowrap">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="h-2.5 rounded-full" style="width: ${percentage}%; background-color: ${backgroundColor}"></div>
+                </div>
+            </td>
+        `;
+        listContainer.appendChild(row);
+    });
+});
+
+// Export buttons (placeholder functionality)
+document.getElementById('export-csv-btn').addEventListener('click', function() {
+    alert('Export CSV functionality would be implemented here.');
+});
+
+document.getElementById('export-excel-btn').addEventListener('click', function() {
+    alert('Export Excel functionality would be implemented here.');
+});
+
+document.getElementById('export-pdf-btn').addEventListener('click', function() {
+    alert('Export PDF functionality would be implemented here.');
+});
+{% endblock %}

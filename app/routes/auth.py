@@ -34,7 +34,7 @@ def login():
         
         # Determine redirect URL based on user type
         if user.is_admin:
-            redirect_url = url_for('admin.courts')
+            redirect_url = url_for('admin.dashboard')
         elif user.is_coach:
             redirect_url = url_for('coaches.dashboard')
         else:
@@ -61,7 +61,7 @@ def login():
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
             if user.is_admin:
-                next_page = url_for('admin.courts')
+                next_page = url_for('admin.dashboard')
             elif user.is_coach:
                 next_page = url_for('coaches.dashboard')
             else:

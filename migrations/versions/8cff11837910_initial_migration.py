@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 2ba5cf15308c
+Revision ID: 8cff11837910
 Revises: 
-Create Date: 2025-02-28 17:25:10.484090
+Create Date: 2025-03-03 00:29:52.347462
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '2ba5cf15308c'
+revision = '8cff11837910'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -42,6 +42,7 @@ def upgrade():
     sa.Column('phone', sa.String(length=20), nullable=True),
     sa.Column('dupr_rating', sa.Float(), nullable=True),
     sa.Column('bio', sa.Text(), nullable=True),
+    sa.Column('profile_picture', sa.String(length=255), nullable=True),
     sa.Column('is_coach', sa.Boolean(), nullable=True),
     sa.Column('is_admin', sa.Boolean(), nullable=True),
     sa.Column('is_temporary', sa.Boolean(), nullable=True),
@@ -58,6 +59,7 @@ def upgrade():
     sa.Column('years_experience', sa.Integer(), nullable=True),
     sa.Column('specialties', sa.String(length=256), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('phone', sa.String(length=20), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -70,6 +72,23 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['court_id'], ['court.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('support_ticket',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('subject', sa.String(length=128), nullable=False),
+    sa.Column('message', sa.Text(), nullable=False),
+    sa.Column('status', sa.String(length=20), nullable=True),
+    sa.Column('priority', sa.String(length=20), nullable=True),
+    sa.Column('assigned_to_id', sa.Integer(), nullable=True),
+    sa.Column('resolved_by_id', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('resolved_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['assigned_to_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['resolved_by_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('availability',
@@ -96,6 +115,15 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('coach_id', 'court_id', name='unique_coach_court')
     )
+    op.create_table('coach_image',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('coach_id', sa.Integer(), nullable=False),
+    sa.Column('image_path', sa.String(length=255), nullable=False),
+    sa.Column('description', sa.String(length=255), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['coach_id'], ['coach.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('pricing_plan',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('coach_id', sa.Integer(), nullable=False),
@@ -111,6 +139,16 @@ def upgrade():
     sa.Column('valid_from', sa.Date(), nullable=True),
     sa.Column('valid_to', sa.Date(), nullable=True),
     sa.ForeignKeyConstraint(['coach_id'], ['coach.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('ticket_response',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('ticket_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('message', sa.Text(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['ticket_id'], ['support_ticket.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('booking',
@@ -203,9 +241,12 @@ def downgrade():
     op.drop_table('booking_package_association')
     op.drop_table('booking_package')
     op.drop_table('booking')
+    op.drop_table('ticket_response')
     op.drop_table('pricing_plan')
+    op.drop_table('coach_image')
     op.drop_table('coach_court')
     op.drop_table('availability')
+    op.drop_table('support_ticket')
     op.drop_table('court_fee')
     op.drop_table('coach')
     op.drop_table('user')

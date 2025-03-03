@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pickleball Connect - Admin{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        .active-nav-link {
+            background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
+            border-left: 4px solid #4F46E5;
+            color: #4F46E5;
+            font-weight: 600;
+        }
+        .admin-content-container {
+            min-height: calc(100vh - 64px);
+        }
+    </style>
+    {% block extra_styles %}{% endblock %}
+</head>
+<body class="bg-gray-100">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('admin.dashboard') }}" class="flex items-center space-x-2">
+                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">A</span>
+                        </div>
+                        <span class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Admin Panel</span>
+                    </a>
+                    <span class="hidden md:inline-block text-gray-500">|</span>
+                    <span class="hidden md:inline-block text-gray-700 font-medium">Pickleball Connect</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('main.index') }}" class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg">
+                        <i class="fas fa-home mr-1"></i> Main Site
+                    </a>
+                    <div class="relative" id="profile-dropdown">
+                        <button id="profile-btn" class="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 transition-colors focus:outline-none">
+                            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold">
+                                {{ current_user.first_name[0] }}
+                            </div>
+                            <span class="hidden md:inline-block">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        <div id="profile-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-20 hidden">
+                            <a href="{{ url_for('admin.users', user_id=current_user.id) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-user mr-2"></i> My Profile
+                            </a>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="flex admin-content-container">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-sm hidden md:block">
+            <div class="p-6 space-y-6">
+                <div>
+<span class="text-xs text-gray-500 uppercase tracking-wider">Dashboard</span>
+                    <ul class="mt-3 space-y-1">
+                        <li>
+                            <a href="{{ url_for('admin.dashboard') }}" class="dashboard-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if request.endpoint == 'admin.dashboard' %}active-nav-link{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                                <i class="fas fa-tachometer-alt w-5"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wider">Manage</span>
+                    <ul class="mt-3 space-y-1">
+                        <li>
+                            <a href="{{ url_for('admin.courts') }}" class="courts-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if 'courts' in request.endpoint %}active-nav-link{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                                <i class="fas fa-map-marker-alt w-5"></i>
+                                <span>Courts</span>
+                            </a>
+                        </li>
+                        <li class='hidden'>
+                            <a href="{{ url_for('admin.users') }}" class="users-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if 'users' in request.endpoint %}active-nav-link{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                                <i class="fas fa-users w-5"></i>
+                                <span>Users</span>
+                            </a>
+                        </li>
+                        <li class='hidden'>
+                            <a href="{{ url_for('admin.coaches') }}" class="coaches-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if 'coaches' in request.endpoint %}active-nav-link{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                                <i class="fas fa-user-tie w-5"></i>
+                                <span>Coaches</span>
+                            </a>
+                        </li>
+                        <li class='hidden'>
+                            <a href="{{ url_for('admin.bookings') }}" class="bookings-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if 'bookings' in request.endpoint %}active-nav-link{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                                <i class="fas fa-calendar-alt w-5"></i>
+                                <span>Bookings</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wider">Analytics</span>
+                    <ul class="mt-3 space-y-1">
+                        <li>
+                            <a href="{{ url_for('admin.earnings') }}" class="earnings-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if 'earnings' in request.endpoint %}active-nav-link{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                                <i class="fas fa-chart-line w-5"></i>
+                                <span>Earnings</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wider">Support</span>
+                    <ul class="mt-3 space-y-1">
+                        <li>
+                            <a href="{{ url_for('admin.support_tickets') }}" class="support-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if 'support' in request.endpoint %}active-nav-link{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                                <i class="fas fa-ticket-alt w-5"></i>
+                                <span>Support Tickets</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wider">System</span>
+                    <ul class="mt-3 space-y-1">
+                        <li>
+                            <a href="{{ url_for('admin.database') }}" class="database-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if 'database' in request.endpoint %}active-nav-link{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                                <i class="fas fa-database w-5"></i>
+                                <span>Database</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 p-6">
+            <!-- Mobile Navigation -->
+            <div class="md:hidden mb-6">
+                <select id="mobile-nav" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="dashboard" {% if request.endpoint == 'admin.dashboard' %}selected{% endif %}>Dashboard</option>
+                    <option value="courts" {% if 'courts' in request.endpoint %}selected{% endif %}>Courts</option>
+                    <option value="users" {% if 'users' in request.endpoint %}selected{% endif %}>Users</option>
+                    <option value="coaches" {% if 'coaches' in request.endpoint %}selected{% endif %}>Coaches</option>
+                    <option value="bookings" {% if 'bookings' in request.endpoint %}selected{% endif %}>Bookings</option>
+                    <option value="earnings" {% if 'earnings' in request.endpoint %}selected{% endif %}>Earnings</option>
+                    <option value="support" {% if 'support' in request.endpoint %}selected{% endif %}>Support Tickets</option>
+                    <option value="database" {% if 'database' in request.endpoint %}selected{% endif %}>Database</option>
+                </select>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-4 {% if category == 'error' %}bg-red-100 text-red-700 border-red-200{% elif category == 'success' %}bg-green-100 text-green-700 border-green-200{% else %}bg-blue-100 text-blue-700 border-blue-200{% endif %} border rounded-lg">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-y-24 opacity-0 transition-all duration-300 hidden">
+        <div class="flex items-start space-x-3">
+            <div id="toast-icon" class="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded-full text-white"></div>
+            <div>
+                <h4 id="toast-title" class="font-semibold"></h4>
+                <p id="toast-message" class="text-sm text-gray-600"></p>
+            </div>
+            <button id="toast-close" class="text-gray-400 hover:text-gray-500">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Helper functions
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            // Set icon and color based on type
+            if (type === 'success') {
+                toastIcon.innerHTML = '<i class="fas fa-check"></i>';
+                toastIcon.classList.add('bg-green-500');
+                toastIcon.classList.remove('bg-red-500', 'bg-blue-500');
+            } else if (type === 'error') {
+                toastIcon.innerHTML = '<i class="fas fa-exclamation"></i>';
+                toastIcon.classList.add('bg-red-500');
+                toastIcon.classList.remove('bg-green-500', 'bg-blue-500');
+            } else if (type === 'info') {
+                toastIcon.innerHTML = '<i class="fas fa-info"></i>';
+                toastIcon.classList.add('bg-blue-500');
+                toastIcon.classList.remove('bg-green-500', 'bg-red-500');
+            }
+            
+            // Show toast
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-24', 'opacity-0');
+            }, 10);
+            
+            // Hide toast after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 300);
+            }, 5000);
+        }
+
+        // Profile dropdown
+        const profileBtn = document.getElementById('profile-btn');
+        const profileMenu = document.getElementById('profile-menu');
+
+        if (profileBtn && profileMenu) {
+            profileBtn.addEventListener('click', function() {
+                profileMenu.classList.toggle('hidden');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+                    profileMenu.classList.add('hidden');
+                }
+            });
+        }
+
+        // Mobile navigation
+        const mobileNav = document.getElementById('mobile-nav');
+        
+        if (mobileNav) {
+            mobileNav.addEventListener('change', function() {
+                const value = this.value;
+                let url = '';
+                
+                switch (value) {
+                    case 'dashboard':
+                        url = "{{ url_for('admin.dashboard') }}";
+                        break;
+                    case 'courts':
+                        url = "{{ url_for('admin.courts') }}";
+                        break;
+                    case 'users':
+                        url = "{{ url_for('admin.users') }}";
+                        break;
+                    case 'coaches':
+                        url = "{{ url_for('admin.coaches') }}";
+                        break;
+                    case 'bookings':
+                        url = "{{ url_for('admin.bookings') }}";
+                        break;
+                    case 'earnings':
+                        url = "{{ url_for('admin.earnings') }}";
+                        break;
+                    case 'support':
+                        url = "{{ url_for('admin.support_tickets') }}";
+                        break;
+                    case 'database':
+                        url = "{{ url_for('admin.database') }}";
+                        break;
+                }
+                
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        }
+
+        // Toast close button
+        const toastClose = document.getElementById('toast-close');
+        
+        if (toastClose) {
+            toastClose.addEventListener('click', function() {
+                const toast = document.getElementById('toast-notification');
+                toast.classList.add('translate-y-24', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 300);
+            });
+        }
+
+        {% block scripts %}{% endblock %}
+    </script>
+</body>
+</html>

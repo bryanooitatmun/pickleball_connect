@@ -74,12 +74,12 @@ def login():
 @bp.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('main.index'))
+    return redirect(url_for('coaches.index'))
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('coaches.index'))
     
     # Handle AJAX POST requests for registration
     if request.method == 'POST' and request.is_json:
@@ -267,6 +267,6 @@ def change_password():
         db.session.commit()
         
         flash('Your password has been updated')
-        return redirect(url_for('students.account') if not current_user.is_coach else url_for('coaches.account'))
+        return redirect(url_for('students.dashboard') if not current_user.is_coach else url_for('coaches.dashboard'))
     
     return render_template('auth/change_password.html', form=form)

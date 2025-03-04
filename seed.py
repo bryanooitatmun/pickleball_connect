@@ -90,7 +90,7 @@ def seed_database():
         admin.set_password("password123")
         
         # Create profile picture for admin
-        admin_profile_pic = f"static/uploads/profile_pics/{uuid.uuid4()}_admin_profile.jpeg"
+        admin_profile_pic = f"uploads/profile_pics/sample_profile.png"
         admin.profile_picture = admin_profile_pic
         db.session.add(admin)
         
@@ -107,7 +107,7 @@ def seed_database():
         john.set_password("password123")
         
         # Create profile picture for John
-        john_profile_pic = f"static/uploads/profile_pics/{uuid.uuid4()}_coach_john.jpeg"
+        john_profile_pic = f"uploads/profile_pics/sample_profile.png"
         john.profile_picture = john_profile_pic
         db.session.add(john)
         
@@ -123,7 +123,7 @@ def seed_database():
         jane.set_password("password123")
         
         # Create profile picture for Jane
-        jane_profile_pic = f"static/uploads/profile_pics/{uuid.uuid4()}_coach_jane.jpeg"
+        jane_profile_pic = f"uploads/profile_pics/sample_profile.png"
         jane.profile_picture = jane_profile_pic
         db.session.add(jane)
         
@@ -151,7 +151,7 @@ def seed_database():
             
             # 50% chance to have a profile picture
             if random.random() < 0.5:
-                student_profile_pic = f"static/uploads/profile_pics/{uuid.uuid4()}_{first.lower()}_profile.jpeg"
+                student_profile_pic = f"uploads/profile_pics/sample_profile.png"
                 student.profile_picture = student_profile_pic
             
             db.session.add(student)
@@ -188,7 +188,7 @@ def seed_database():
         # John's showcase images (3-6 images)
         john_image_count = random.randint(3, 6)
         for i in range(john_image_count):
-            image_path = f"static/uploads/showcase_images/{uuid.uuid4()}_john_showcase_{i+1}.jpeg"
+            image_path = f"uploads/showcase_images/sample_showcase.png"
             showcase_images.append(CoachImage(
                 coach_id=john_coach.id,
                 image_path=image_path,
@@ -199,7 +199,7 @@ def seed_database():
         # Jane's showcase images (3-6 images)
         jane_image_count = random.randint(3, 6)
         for i in range(jane_image_count):
-            image_path = f"static/uploads/showcase_images/{uuid.uuid4()}_jane_showcase_{i+1}.jpeg"
+            image_path = f"uploads/showcase_images/sample_showcase.png"
             showcase_images.append(CoachImage(
                 coach_id=jane_coach.id,
                 image_path=image_path,

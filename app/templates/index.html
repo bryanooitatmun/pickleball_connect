@@ -82,7 +82,7 @@
           <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Pickleball Connect</span>
         </a>
         
-        <!-- Desktop Menu -->
+        {# <!-- Desktop Menu -->
         <div class="hidden md:flex items-center space-x-8">
           <a href="#about" class="text-gray-600 hover:text-blue-600 transition-colors">About</a>
           <a href="#coaches" class="text-gray-600 hover:text-blue-600 transition-colors">Coaches</a>
@@ -100,11 +100,11 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
             </svg>
           </button>
-        </div>
+        </div> #}
       </div>
       
       <!-- Mobile Menu -->
-      <div id="mobile-menu" class="md:hidden hidden bg-white rounded-lg mt-4 shadow-lg p-6 space-y-4">
+      {# <div id="mobile-menu" class="md:hidden hidden bg-white rounded-lg mt-4 shadow-lg p-6 space-y-4">
         <a href="#about" class="block text-gray-600 hover:text-blue-600 transition-colors">About</a>
         <a href="#coaches" class="block text-gray-600 hover:text-blue-600 transition-colors">Coaches</a>
         <a href="#testimonials" class="block text-gray-600 hover:text-blue-600 transition-colors">Testimonials</a>
@@ -112,7 +112,7 @@
         <button class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
           Sign Up
         </button>
-      </div>
+      </div> #}
     </div>
   </nav>
 
@@ -460,13 +460,14 @@
   <!-- JavaScript -->
   <script>
     // Mobile menu toggle
+    /*
     const mobileMenuButton = document.getElementById('mobile-menu-button');
     const mobileMenu = document.getElementById('mobile-menu');
     
     mobileMenuButton.addEventListener('click', () => {
       mobileMenu.classList.toggle('hidden');
     });
-    
+    */
     // Scroll animations
     document.addEventListener('DOMContentLoaded', () => {
       const scrollSections = document.querySelectorAll('.scroll-section');

@@ -231,7 +231,7 @@
     <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-3/4 lg:w-3/4 p-6 scrollable-modal">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold text-gray-800">Schedule a Session</h2>
-        <div class="flex items-center space-x-4">
+        {# <div class="flex items-center space-x-4">
           <div class="text-sm font-medium bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
             Sessions: <span id="session-count">0</span>
           </div>
@@ -241,7 +241,7 @@
               Savings: $<span id="total-savings">0</span>
             </div>
           </div>
-        </div>
+        </div> #}
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -299,6 +299,19 @@
                 <div class="flex items-center space-x-1">
                   <div class="w-3 h-3 bg-gray-300 rounded-sm"></div>
                   <span>Unavailable</span>
+                </div>
+              </div>
+
+              <!-- Selected sessions info -->
+              <div class="flex items-center space-x-4 my-5">
+                <div class="text-sm font-medium bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                  Sessions: <span id="session-count">0</span>
+                </div>
+                <div>
+                  <span class="text-lg font-bold text-blue-600">Total: $<span id="current-total">0</span></span>
+                  <div id="savings-container" class="text-sm text-green-600 hidden">
+                    Savings: $<span id="total-savings">0</span>
+                  </div>
                 </div>
               </div>
 
@@ -1251,6 +1264,14 @@
 
       // Populate availability grid for selected date
       function populateAvailabilityGrid(date) {
+        // Define the hours to display in the grid
+        const hours = [
+          "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", 
+          "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", 
+          "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM",
+          "08:00 PM", "09:00 PM", "10:00 PM", "11:00 PM"
+        ];
+
         availabilityGrid.innerHTML = ""; // Clear previous slots
 
         // Update the selectedDate element with the correctly formatted date
@@ -1262,53 +1283,56 @@
           day: 'numeric'
         });
 
-        if (!allAvailabilities[date]) {
-          availabilityGrid.innerHTML = "<p class='text-center text-gray-500 py-4'>No availability data for this date.</p>";
-          return;
-        }
-
-        const availability = allAvailabilities[date];
-
-        if (availability.available.length === 0 && availability.booked.length === 0) {
-          availabilityGrid.innerHTML = "<p class='text-center text-gray-500 py-4'>No time slots available on this date.</p>";
-          return;
-        }
-
-        // Create a set of all times (both available and booked)
-        const allTimes = new Set();
-
-        availability.available.forEach(slot => allTimes.add(slot.time));
-        availability.booked.forEach(slot => allTimes.add(slot.time));
-
-        // Convert to sorted array
-        const timeSlots = Array.from(allTimes).sort((a, b) => {
-          return new Date(`2000/01/01 ${a}`) - new Date(`2000/01/01 ${b}`);
+        // Create a map of availability status for each hour
+        const hourStatus = {};
+        
+        // Initialize all hours as not available
+        hours.forEach(hour => {
+          hourStatus[hour] = { status: 'unavailable', slotId: null };
         });
-
-        // Create a time slot element for each time
-        timeSlots.forEach(time => {
+        
+        // If we have availability data for the selected date, update the status
+        if (allAvailabilities[date]) {
+          const availability = allAvailabilities[date];
+          
+          // Mark available slots
+          availability.available.forEach(slot => {
+            if (hours.includes(slot.time)) {
+              hourStatus[slot.time] = { status: 'available', slotId: slot.id };
+            }
+          });
+          
+          // Mark booked slots
+          availability.booked.forEach(slot => {
+            if (hours.includes(slot.time)) {
+              hourStatus[slot.time] = { status: 'booked', slotId: null };
+            }
+          });
+        }
+        
+        // Create a time slot element for each hour in our predefined hours array
+        hours.forEach(hour => {
           const timeSlot = document.createElement("div");
           timeSlot.className = "p-2 rounded-lg text-center text-sm"; // Default styling
-          timeSlot.textContent = time;
+          timeSlot.textContent = hour;
 
           // Find if this slot is in our selected slots
           const isSelected = selectedSlots.some(slot =>
-            slot.date === date && slot.time === time && slot.courtId === selectedCourtId
+            slot.date === date && slot.time === hour && slot.courtId === selectedCourtId
           );
 
-          // Find if this slot is available
-          const availableSlot = availability.available.find(slot => slot.time === time);
-          const isBooked = availability.booked.some(slot => slot.time === time);
+          const status = hourStatus[hour].status;
+          const slotId = hourStatus[hour].slotId;
 
           if (isSelected) {
             timeSlot.className += " bg-blue-500 text-white cursor-pointer";
-            timeSlot.addEventListener("click", () => removeSelectedSlot(date, time, selectedCourtId));
+            timeSlot.addEventListener("click", () => removeSelectedSlot(date, hour, selectedCourtId));
           }
-          else if (availableSlot) {
+          else if (status === 'available') {
             timeSlot.className += " bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer";
-            timeSlot.addEventListener("click", () => addSelectedSlot(date, time, availableSlot.id, selectedCourtId));
+            timeSlot.addEventListener("click", () => addSelectedSlot(date, hour, slotId, selectedCourtId));
           }
-          else if (isBooked) {
+          else if (status === 'booked') {
             timeSlot.className += " bg-orange-300 text-white cursor-not-allowed";
           }
           else {
@@ -1317,6 +1341,15 @@
 
           availabilityGrid.appendChild(timeSlot);
         });
+        
+        // Display a message if there's no data for this date
+        if (!allAvailabilities[date]) {
+          availabilityGrid.innerHTML = "<p class='text-center text-gray-500 py-4'>No availability data for this date.</p>";
+          return;
+        } else if (Object.values(hourStatus).every(status => status.status === 'unavailable')) {
+          availabilityGrid.innerHTML = "<p class='text-center text-gray-500 py-4'>No time slots available on this date.</p>";
+          return;
+        }
       }
 
       // Add a selected time slot

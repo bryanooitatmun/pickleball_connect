@@ -750,6 +750,11 @@
                   <option value="date-desc" selected>Date: Newest First</option>
                 </select>
               </div>
+              <div>
+                <button id="reset-upcoming-filters" type="button" class="text-blue-600 hover:text-blue-800">
+                  <i class="fas fa-times-circle mr-1"></i> Reset
+                </button>
+              </div>
             </div>
             
             <div id="upcoming-bookings-container">
@@ -776,6 +781,11 @@
                   <option value="date-desc" selected>Date: Newest First</option>
                 </select>
               </div>
+              <div>
+                <button id="reset-completed-filters" type="button" class="text-blue-600 hover:text-blue-800">
+                  <i class="fas fa-times-circle mr-1"></i> Reset
+                </button>
+              </div>
             </div>
             
             <div id="completed-bookings-container">
@@ -801,6 +811,11 @@
                   <option value="date-asc">Date: Oldest First</option>
                   <option value="date-desc" selected>Date: Newest First</option>
                 </select>
+              </div>
+              <div>
+                <button id="reset-cancelled-filters" type="button" class="text-blue-600 hover:text-blue-800">
+                  <i class="fas fa-times-circle mr-1"></i> Reset
+                </button>
               </div>
             </div>
             
@@ -914,6 +929,9 @@
                 <!-- Court options will be dynamically inserted here -->
               </select>
               <input type="date" id="availability-filter-date" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <button id="reset-availability-filters" type="button" class="text-blue-600 hover:text-blue-800">
+                <i class="fas fa-times-circle mr-1"></i> Reset
+              </button>
             </div>
           </div>
           
@@ -973,6 +991,11 @@
                 <option value="date-asc">Date: Oldest First</option>
                 <option value="date-desc" selected>Date: Newest First</option>
               </select>
+            </div>
+            <div>
+              <button id="reset-session-logs-filters" type="button" class="text-blue-600 hover:text-blue-800">
+                <i class="fas fa-times-circle mr-1"></i> Reset
+              </button>
             </div>
           </div>
           
@@ -2064,6 +2087,15 @@
       setupBookingTabs();
     });
 
+    // Store original data for filtering
+    let originalBookingsData = {
+      upcoming: [],
+      completed: [],
+      cancelled: []
+    };
+    let originalAvailabilityData = [];
+    let originalSessionLogsData = [];
+    
     // Load dashboard data
     async function loadDashboardData() {
       try {
@@ -2109,6 +2141,50 @@
         showToast('Error', 'Failed to load dashboard data. Please refresh the page.', 'error');
       }
     }
+
+    // Add event listeners for filter resets
+    function setupFilterResets() {
+      // Reset availability filters
+      document.getElementById('reset-availability-filters')?.addEventListener('click', function() {
+        const courtFilter = document.getElementById('availability-filter-court');
+        const dateFilter = document.getElementById('availability-filter-date');
+        
+        if (courtFilter) courtFilter.value = '';
+        if (dateFilter) dateFilter.value = '';
+        
+        displayAvailability(originalAvailabilityData);
+      });
+      
+      // Reset session logs filters
+      document.getElementById('reset-session-logs-filters')?.addEventListener('click', function() {
+        const searchInput = document.getElementById('session-logs-search');
+        const courtFilter = document.getElementById('session-logs-filter-court');
+        const sortSelect = document.getElementById('session-logs-sort');
+        
+        if (searchInput) searchInput.value = '';
+        if (courtFilter) courtFilter.value = '';
+        if (sortSelect) sortSelect.value = 'date-desc';
+        
+        displaySessionLogs(originalSessionLogsData);
+      });
+      
+      // Reset bookings filters
+      ['upcoming', 'completed', 'cancelled'].forEach(status => {
+        document.getElementById(`reset-${status}-filters`)?.addEventListener('click', function() {
+          const searchInput = document.getElementById(`${status}-search`);
+          const courtFilter = document.getElementById(`${status}-filter-court`);
+          const sortSelect = document.getElementById(`${status}-sort`);
+          
+          if (searchInput) searchInput.value = '';
+          if (courtFilter) courtFilter.value = '';
+          if (sortSelect) sortSelect.value = 'date-desc';
+          
+          displayBookings(originalBookingsData[status], status);
+        });
+      });
+    }
+
+
 
     // Setup form submit handlers
     function setupForms() {
@@ -2363,6 +2439,30 @@
           document.getElementById('custom-fields').classList.remove('hidden');
         }
       });
+
+      // Add availability filter event listeners
+      document.getElementById('availability-filter-court').addEventListener('change', function() {
+        filterAvailability();
+      });
+
+      document.getElementById('availability-filter-date').addEventListener('change', function() {
+        filterAvailability();
+      });
+
+      // Add session logs filter event listeners
+      document.getElementById('session-logs-search').addEventListener('input', function() {
+        filterSessionLogs();
+      });
+
+      document.getElementById('session-logs-filter-court').addEventListener('change', function() {
+        filterSessionLogs();
+      });
+
+      document.getElementById('session-logs-sort').addEventListener('change', function() {
+        filterSessionLogs();
+      });
+
+      setupFilterResets();
     }
 
     // Setup modal event handlers
@@ -2614,29 +2714,36 @@
       const courtId = courtFilter.value;
       const sortBy = sortSelect.value;
       
-      const bookingCards = Array.from(document.querySelectorAll(`#${status}-bookings-container > div`));
+      // If no filters and default sort, show original data
+      if (!search && !courtId && sortBy === 'date-desc') {
+        displayBookings(originalBookingsData[status], status);
+        return;
+      }
       
-      // Filter based on search and court
-      const filteredCards = bookingCards.filter(card => {
-        // Skip if it's the "no bookings" message
-        if (card.classList.contains('text-center')) return false;
-        
-        const studentName = card.querySelector('h3')?.textContent.toLowerCase() || '';
-        const courtName = card.querySelector('div:nth-child(4) > span')?.textContent.toLowerCase() || '';
-        
-        // Search filter
-        const matchesSearch = studentName.includes(search) || courtName.includes(search);
-        
-        // Court filter
-        const matchesCourt = !courtId || card.dataset.courtId === courtId;
-        
-        return matchesSearch && matchesCourt;
-      });
+      // Clone the original data to avoid modifying it
+      let filteredBookings = [...originalBookingsData[status]];
       
-      // Sort the filtered cards
-      filteredCards.sort((a, b) => {
-        const dateA = new Date(a.dataset.date || 0);
-        const dateB = new Date(b.dataset.date || 0);
+      // Apply search filter
+      if (search) {
+        filteredBookings = filteredBookings.filter(booking => {
+          const studentName = `${booking.student.first_name} ${booking.student.last_name}`.toLowerCase();
+          const courtName = booking.court.name.toLowerCase();
+          
+          return studentName.includes(search) || courtName.includes(search);
+        });
+      }
+      
+      // Apply court filter
+      if (courtId) {
+        filteredBookings = filteredBookings.filter(booking => {
+          return booking.court.id.toString() === courtId;
+        });
+      }
+      
+      // Apply sorting
+      filteredBookings.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
         
         if (sortBy === 'date-asc') {
           return dateA - dateB;
@@ -2645,26 +2752,251 @@
         }
       });
       
-      // Clear container
-      const container = document.getElementById(`${status}-bookings-container`);
-      if (!container) return;
-      
-      container.innerHTML = '';
-      
-      // Add filtered and sorted cards back to container
-      if (filteredCards.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-12 text-gray-500">
-            <p>No ${status} bookings found matching your filters</p>
-          </div>
-        `;
-      } else {
-        filteredCards.forEach(card => {
-          container.appendChild(card);
-        });
-      }
+      // Display the filtered bookings
+      displayBookings(filteredBookings, status);
     }
 
+    // Filter availability based on criteria
+    function filterAvailability() {
+      const courtFilter = document.getElementById('availability-filter-court');
+      const dateFilter = document.getElementById('availability-filter-date');
+      
+      if (!courtFilter || !dateFilter) return;
+      
+      const courtId = courtFilter.value;
+      const filterDate = dateFilter.value;
+      
+      // If no filters, show all data
+      if (!courtId && !filterDate) {
+        displayAvailability(originalAvailabilityData);
+        return;
+      }
+      
+      // Filter the original data
+      const filteredData = originalAvailabilityData.filter(slot => {
+        const matchesCourt = !courtId || slot.court.id.toString() === courtId;
+        const matchesDate = !filterDate || slot.date === filterDate;
+        
+        return matchesCourt && matchesDate;
+      });
+      
+      // Display the filtered data
+      displayAvailability(filteredData);
+    }
+    
+    // Display availability data
+    function displayAvailability(availability) {
+  const container = document.getElementById('availability-container');
+  
+  if (!availability || availability.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-12 text-gray-500">
+        <p>No availability slots added yet</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = '';
+  
+  // Group availability by date
+  const groupedByDate = {};
+  
+  availability.forEach(slot => {
+    const date = slot.date;
+    
+    if (!groupedByDate[date]) {
+      groupedByDate[date] = [];
+    }
+    
+    groupedByDate[date].push(slot);
+  });
+  
+  // Sort dates
+  const sortedDates = Object.keys(groupedByDate).sort();
+  
+  sortedDates.forEach(date => {
+    const dateHeader = document.createElement('div');
+    dateHeader.className = 'bg-gray-100 p-3 font-medium';
+    dateHeader.textContent = formatDate(date);
+    dateHeader.dataset.date = date; // Store the original date
+    container.appendChild(dateHeader);
+    
+    const slots = groupedByDate[date];
+    
+    // Sort slots by start time
+    slots.sort((a, b) => a.start_time.localeCompare(b.start_time));
+    
+    slots.forEach(slot => {
+      const slotItem = document.createElement('div');
+      slotItem.className = 'flex justify-between items-center p-3 border-b border-gray-200';
+      slotItem.dataset.courtId = slot.court.id;
+      slotItem.dataset.date = slot.date;
+      
+      // Format time
+      const startTime = formatTime(slot.start_time);
+      const endTime = formatTime(slot.end_time);
+      
+      slotItem.innerHTML = `
+        <div>
+          <span class="font-medium">${startTime} - ${endTime}</span>
+          <p class="text-gray-500 text-sm">${slot.court.name}</p>
+        </div>
+        <div class="flex items-center">
+          <span class="mr-3 ${slot.is_booked ? 'text-green-600' : 'text-gray-600'}">
+            ${slot.is_booked ? 'Booked' : 'Available'}
+          </span>
+          ${!slot.is_booked ? `
+            <button class="text-red-600 hover:text-red-700 delete-availability-btn" data-availability-id="${slot.id}">
+              <i class="fas fa-trash"></i>
+            </button>
+          ` : ''}
+        </div>
+      `;
+      
+      container.appendChild(slotItem);
+    });
+  });
+  
+  // Add event listeners for delete buttons
+  document.querySelectorAll('.delete-availability-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const availabilityId = this.getAttribute('data-availability-id');
+      document.getElementById('delete-availability-id').value = availabilityId;
+      document.getElementById('delete-availability-modal').classList.remove('hidden');
+    });
+  });
+}
+    
+    // Filter session logs
+    function filterSessionLogs() {
+      const searchInput = document.getElementById('session-logs-search');
+      const courtFilter = document.getElementById('session-logs-filter-court');
+      const sortSelect = document.getElementById('session-logs-sort');
+      
+      if (!searchInput || !courtFilter || !sortSelect) return;
+      
+      const search = searchInput.value.toLowerCase();
+      const courtId = courtFilter.value;
+      const sortBy = sortSelect.value;
+      
+      // If no filters and default sort, show original data
+      if (!search && !courtId && sortBy === 'date-desc') {
+        displaySessionLogs(originalSessionLogsData);
+        return;
+      }
+      
+      // Clone the original data to avoid modifying it
+      let filteredLogs = [...originalSessionLogsData];
+      
+      // Apply search filter
+      if (search) {
+        filteredLogs = filteredLogs.filter(log => {
+          const title = log.title?.toLowerCase() || '';
+          const studentName = `${log.student.first_name} ${log.student.last_name}`.toLowerCase();
+          const notes = log.notes?.toLowerCase() || '';
+          const courtName = log.booking.court.name?.toLowerCase() || '';
+          
+          return title.includes(search) || 
+                studentName.includes(search) || 
+                notes.includes(search) ||
+                courtName.includes(search);
+        });
+      }
+      
+      // Apply court filter
+      if (courtId) {
+        filteredLogs = filteredLogs.filter(log => {
+          return log.booking.court.id.toString() === courtId;
+        });
+      }
+      
+      // Apply sorting
+
+      filteredLogs.sort((a, b) => {
+        const dateA = new Date(a.booking.date);
+        const dateB = new Date(b.booking.date);
+        
+        if (sortBy === 'date-asc') {
+          return dateA - dateB;
+        } else {
+          return dateB - dateA;
+        }
+      });
+      // Display the filtered logs
+      displaySessionLogs(filteredLogs);
+    }
+   
+    // Display session logs
+    function displaySessionLogs(sessionLogs) {
+  const container = document.getElementById('session-logs-container');
+  
+  if (!sessionLogs || sessionLogs.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-12 text-gray-500">
+        <p>No session logs found</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = '';
+  
+  sessionLogs.forEach(log => {
+    const logCard = document.createElement('div');
+    logCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+    
+    // Format date
+    const logDate = formatDate(log.booking.date);
+    
+    logCard.innerHTML = `
+      <div class="flex justify-between">
+        <div>
+          <h3 class="font-semibold">${log.title}</h3>
+          <p class="text-gray-500 text-sm">Session with ${log.student.first_name} ${log.student.last_name}</p>
+        </div>
+        <div class="text-right">
+          <span class="text-gray-600">${logDate}</span>
+        </div>
+      </div>
+      
+      <div class="mt-2">
+        <span class="inline-block bg-gray-100 text-gray-700 rounded-lg px-2 py-1 text-xs">
+          <i class="fas fa-map-marker-alt mr-1"></i> ${log.booking.court.name}
+        </span>
+      </div>
+      
+      <div class="mt-3">
+        <h4 class="text-sm font-medium text-gray-700">Session Notes</h4>
+        <p class="text-gray-600 mt-1">${log.notes || 'No notes added'}</p>
+      </div>
+      
+      <div class="flex justify-end mt-4">
+        <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-log-id="${log.id}" data-booking-id="${log.booking_id}">
+          Edit Log
+        </button>
+      </div>
+    `;
+    
+    container.appendChild(logCard);
+  });
+  
+  // Add event listeners for edit buttons
+  document.querySelectorAll('.edit-log-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const logId = this.getAttribute('data-log-id');
+      const bookingId = this.getAttribute('data-booking-id');
+      
+      openSessionLogModal(bookingId, logId);
+    });
+  });
+  
+  // Update recent logs on dashboard
+  if (sessionLogs.length > 0) {
+    updateRecentLogsList(sessionLogs.slice(0, 3));
+  }
+}
+    
     // Populate profile form with coach data
     function populateProfileForm(coachData) {
       const user = coachData.user;
@@ -2814,14 +3146,42 @@
       try {
         // Load upcoming bookings
         const upcomingBookings = await getBookings('upcoming');
+
+        upcomingBookings.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          
+          return dateB - dateA;
+        });
+
+        originalBookingsData.upcoming = upcomingBookings;
         displayBookings(upcomingBookings, 'upcoming');
         
         // Load completed bookings
         const completedBookings = await getBookings('completed');
+
+        completedBookings.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          
+          return dateB - dateA;
+        });
+
+        originalBookingsData.completed = completedBookings;
+
         displayBookings(completedBookings, 'completed');
         
         // Load cancelled bookings
         const cancelledBookings = await getBookings('cancelled');
+
+        cancelledBookings.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          
+          return dateB - dateA;
+        });
+
+        originalBookingsData.cancelled = cancelledBookings;
         displayBookings(cancelledBookings, 'cancelled');
         
         // Update upcoming bookings on dashboard
@@ -2835,118 +3195,123 @@
 
     // Display bookings in the respective containers
     function displayBookings(bookings, status) {
-      const container = document.getElementById(`${status}-bookings-container`);
+  const container = document.getElementById(`${status}-bookings-container`);
+  
+  if (!bookings || bookings.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-12 text-gray-500">
+        <p>No ${status} bookings found</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = '';
+  
+  bookings.forEach(booking => {
+    const bookingCard = document.createElement('div');
+    bookingCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+    
+    // Add data attributes for DOM filtering if needed later
+    bookingCard.dataset.courtId = booking.court.id;
+    bookingCard.dataset.date = booking.date;
+    
+    // Format date and time
+    const bookingDate = formatDate(booking.date);
+    const startTime = formatTime(booking.start_time);
+    const endTime = formatTime(booking.end_time);
+    
+    let actionsHtml = '';
+    
+    if (status === 'upcoming') {
+      actionsHtml = `
+        <div class="flex space-x-2 mt-4">
+          <button class="bg-green-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-green-700 complete-session-btn" data-booking-id="${booking.id}">
+            Complete
+          </button>
+          <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-session-btn" data-booking-id="${booking.id}">
+            Cancel
+          </button>
+        </div>
+      `;
+    } else if (status === 'completed') {
+      const hasSessionLog = booking.session_log !== null;
       
-      if (bookings.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-12 text-gray-500">
-            <p>No ${status} bookings found</p>
-          </div>
-        `;
-        return;
-      }
-      
-      container.innerHTML = '';
-      
-      bookings.forEach(booking => {
-        const bookingCard = document.createElement('div');
-        bookingCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
-        
-        // Format date and time
-        const bookingDate = formatDate(booking.date);
-        const startTime = formatTime(booking.start_time);
-        const endTime = formatTime(booking.end_time);
-        
-        let actionsHtml = '';
-        
-        if (status === 'upcoming') {
-          actionsHtml = `
-            <div class="flex space-x-2 mt-4">
-              <button class="bg-green-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-green-700 complete-session-btn" data-booking-id="${booking.id}">
-                Complete
-              </button>
-              <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-session-btn" data-booking-id="${booking.id}">
-                Cancel
-              </button>
-            </div>
-          `;
-        } else if (status === 'completed') {
-          const hasSessionLog = booking.session_log !== null;
-          
-          actionsHtml = `
-            <div class="flex space-x-2 mt-4">
-              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-booking-id="${booking.id}" data-log-id="${hasSessionLog ? booking.session_log.id : ''}">
-                ${hasSessionLog ? 'Edit Log' : 'Add Log'}
-              </button>
-            </div>
-          `;
-        }
-        
-        bookingCard.innerHTML = `
-          <div class="flex justify-between">
-            <div>
-              <h3 class="font-semibold">${booking.student.first_name} ${booking.student.last_name}</h3>
-              <p class="text-gray-500 text-sm">Student</p>
-            </div>
-            <div class="text-right">
-              <span class="font-semibold">${formatCurrency(booking.price)}</span>
-              <p class="text-gray-500 text-sm">${booking.pricing_plan ? 'Discount Applied' : 'Regular Rate'}</p>
-            </div>
-          </div>
-          
-          <div class="flex items-center mt-3 text-gray-600">
-            <i class="fas fa-calendar-day mr-2"></i>
-            <span>${bookingDate}</span>
-          </div>
-          
-          <div class="flex items-center mt-1 text-gray-600">
-            <i class="fas fa-clock mr-2"></i>
-            <span>${startTime} - ${endTime}</span>
-          </div>
-          
-          <div class="flex items-center mt-1 text-gray-600">
-            <i class="fas fa-map-marker-alt mr-2"></i>
-            <span>${booking.court.name}</span>
-          </div>
-          
-          ${actionsHtml}
-        `;
-        
-        container.appendChild(bookingCard);
-      });
-      
-      // Add event listeners for action buttons
-      if (status === 'upcoming') {
-        // Complete session buttons
-        document.querySelectorAll('.complete-session-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const bookingId = this.getAttribute('data-booking-id');
-            document.getElementById('complete-booking-id').value = bookingId;
-            document.getElementById('complete-session-modal').classList.remove('hidden');
-          });
-        });
-        
-        // Cancel session buttons
-        document.querySelectorAll('.cancel-session-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const bookingId = this.getAttribute('data-booking-id');
-            document.getElementById('cancel-booking-id').value = bookingId;
-            document.getElementById('cancel-session-modal').classList.remove('hidden');
-          });
-        });
-      } else if (status === 'completed') {
-        // Edit log buttons
-        document.querySelectorAll('.edit-log-btn').forEach(btn => {
-          btn.addEventListener('click', async function() {
-            const bookingId = this.getAttribute('data-booking-id');
-            const logId = this.getAttribute('data-log-id');
-            
-            openSessionLogModal(bookingId, logId);
-          });
-        });
-      }
+      actionsHtml = `
+        <div class="flex space-x-2 mt-4">
+          <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-booking-id="${booking.id}" data-log-id="${hasSessionLog ? booking.session_log.id : ''}">
+            ${hasSessionLog ? 'Edit Log' : 'Add Log'}
+          </button>
+        </div>
+      `;
     }
-
+    
+    bookingCard.innerHTML = `
+      <div class="flex justify-between">
+        <div>
+          <h3 class="font-semibold">${booking.student.first_name} ${booking.student.last_name}</h3>
+          <p class="text-gray-500 text-sm">Student</p>
+        </div>
+        <div class="text-right">
+          <span class="font-semibold">${formatCurrency(booking.price)}</span>
+          <p class="text-gray-500 text-sm">${booking.pricing_plan ? 'Discount Applied' : 'Regular Rate'}</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center mt-3 text-gray-600">
+        <i class="fas fa-calendar-day mr-2"></i>
+        <span>${bookingDate}</span>
+      </div>
+      
+      <div class="flex items-center mt-1 text-gray-600">
+        <i class="fas fa-clock mr-2"></i>
+        <span>${startTime} - ${endTime}</span>
+      </div>
+      
+      <div class="flex items-center mt-1 text-gray-600">
+        <i class="fas fa-map-marker-alt mr-2"></i>
+        <span>${booking.court.name}</span>
+      </div>
+      
+      ${actionsHtml}
+    `;
+    
+    container.appendChild(bookingCard);
+  });
+  
+  // Add event listeners for action buttons
+  if (status === 'upcoming') {
+    // Complete session buttons
+    document.querySelectorAll('.complete-session-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const bookingId = this.getAttribute('data-booking-id');
+        document.getElementById('complete-booking-id').value = bookingId;
+        document.getElementById('complete-session-modal').classList.remove('hidden');
+      });
+    });
+    
+    // Cancel session buttons
+    document.querySelectorAll('.cancel-session-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const bookingId = this.getAttribute('data-booking-id');
+        document.getElementById('cancel-booking-id').value = bookingId;
+        document.getElementById('cancel-session-modal').classList.remove('hidden');
+      });
+    });
+  } else if (status === 'completed') {
+    // Edit log buttons
+    document.querySelectorAll('.edit-log-btn').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const bookingId = this.getAttribute('data-booking-id');
+        const logId = this.getAttribute('data-log-id');
+        
+        openSessionLogModal(bookingId, logId);
+      });
+    });
+  }
+}
+    
+    
     // Update upcoming bookings list on dashboard
     function updateUpcomingBookingsList(bookings) {
       const container = document.getElementById('upcoming-bookings-list');
@@ -2990,69 +3355,34 @@
       try {
         const sessionLogs = await getSessionLogs();
         
-        const container = document.getElementById('session-logs-container');
         
-        if (sessionLogs.length === 0) {
-          container.innerHTML = `
-            <div class="text-center py-12 text-gray-500">
-              <p>No session logs found</p>
-            </div>
-          `;
-          return;
-        }
-        
-        container.innerHTML = '';
-        
-        sessionLogs.forEach(log => {
-          const logCard = document.createElement('div');
-          logCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+        sessionLogs.sort((a, b) => {
+          const dateA = new Date(a.booking.date);
+          const dateB = new Date(b.booking.date);
           
-          // Format date
-          const logDate = formatDate(log.booking.date);
-          
-          logCard.innerHTML = `
-            <div class="flex justify-between">
-              <div>
-                <h3 class="font-semibold">${log.title}</h3>
-                <p class="text-gray-500 text-sm">Session with ${log.student.first_name} ${log.student.last_name}</p>
-              </div>
-              <div class="text-right">
-                <span class="text-gray-600">${logDate}</span>
-              </div>
-            </div>
-            
-            <div class="mt-3">
-              <h4 class="text-sm font-medium text-gray-700">Session Notes</h4>
-              <p class="text-gray-600 mt-1">${log.notes || 'No notes added'}</p>
-            </div>
-            
-            <div class="flex justify-end mt-4">
-              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-log-id="${log.id}" data-booking-id="${log.booking_id}">
-                Edit Log
-              </button>
-            </div>
-          `;
-          
-          container.appendChild(logCard);
+          return dateB - dateA;
         });
+
+        // Store the original data
+        originalSessionLogsData = sessionLogs;
         
-        // Add event listeners for edit buttons
-        document.querySelectorAll('.edit-log-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const logId = this.getAttribute('data-log-id');
-            const bookingId = this.getAttribute('data-booking-id');
-            
-            openSessionLogModal(bookingId, logId);
-          });
-        });
-        
-        // Update recent logs on dashboard
-        updateRecentLogsList(sessionLogs.slice(0, 3));
+        // Display the session logs
+        displaySessionLogs(sessionLogs);
         
       } catch (error) {
         console.error('Error loading session logs:', error);
         showToast('Error', 'Failed to load session logs.', 'error');
       }
+    }
+
+    function parseDisplayDateToISO(displayDate) {
+      // Handle various date formats
+      const date = new Date(displayDate);
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date:', displayDate);
+        return null;
+      }
+      return date.toISOString().split('T')[0];
     }
 
     // Update recent logs list on dashboard
@@ -3148,83 +3478,11 @@
       try {
         const availability = await getAvailability();
         
-        const container = document.getElementById('availability-container');
+        // Store the original data
+        originalAvailabilityData = availability;
         
-        if (availability.length === 0) {
-          container.innerHTML = `
-            <div class="text-center py-12 text-gray-500">
-              <p>No availability slots added yet</p>
-            </div>
-          `;
-          return;
-        }
-        
-        container.innerHTML = '';
-        
-        // Group availability by date
-        const groupedByDate = {};
-        
-        availability.forEach(slot => {
-          const date = slot.date;
-          
-          if (!groupedByDate[date]) {
-            groupedByDate[date] = [];
-          }
-          
-          groupedByDate[date].push(slot);
-        });
-        
-        // Sort dates
-        const sortedDates = Object.keys(groupedByDate).sort();
-        
-        sortedDates.forEach(date => {
-          const dateHeader = document.createElement('div');
-          dateHeader.className = 'bg-gray-100 p-3 font-medium';
-          dateHeader.textContent = formatDate(date);
-          container.appendChild(dateHeader);
-          
-          const slots = groupedByDate[date];
-          
-          // Sort slots by start time
-          slots.sort((a, b) => a.start_time.localeCompare(b.start_time));
-          
-          slots.forEach(slot => {
-            const slotItem = document.createElement('div');
-            slotItem.className = 'flex justify-between items-center p-3 border-b border-gray-200';
-            
-            // Format time
-            const startTime = formatTime(slot.start_time);
-            const endTime = formatTime(slot.end_time);
-            
-            slotItem.innerHTML = `
-              <div>
-                <span class="font-medium">${startTime} - ${endTime}</span>
-                <p class="text-gray-500 text-sm">${slot.court.name}</p>
-              </div>
-              <div class="flex items-center">
-                <span class="mr-3 ${slot.is_booked ? 'text-green-600' : 'text-gray-600'}">
-                  ${slot.is_booked ? 'Booked' : 'Available'}
-                </span>
-                ${!slot.is_booked ? `
-                  <button class="text-red-600 hover:text-red-700 delete-availability-btn" data-availability-id="${slot.id}">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                ` : ''}
-              </div>
-            `;
-            
-            container.appendChild(slotItem);
-          });
-        });
-        
-        // Add event listeners for delete buttons
-        document.querySelectorAll('.delete-availability-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const availabilityId = this.getAttribute('data-availability-id');
-            document.getElementById('delete-availability-id').value = availabilityId;
-            document.getElementById('delete-availability-modal').classList.remove('hidden');
-          });
-        });
+        // Display the availability
+        displayAvailability(availability);
         
       } catch (error) {
         console.error('Error loading availability:', error);
@@ -3734,8 +3992,8 @@
       });
     }
 
-  // Improved rating stars display
-  function updateRatingStars(rating, container) {
+    // Improved rating stars display
+    function updateRatingStars(rating, container) {
     container.innerHTML = '';
     
     const fullStars = Math.floor(rating);

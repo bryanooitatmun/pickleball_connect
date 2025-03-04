@@ -160,12 +160,12 @@
                 <span>My Bookings</span>
               </a>
             </li>
-            <li>
+            {# <li>
               <a href="#packages" class="packages-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-cubes w-5"></i>
                 <span>My Packages</span>
               </a>
-            </li>
+            </li> #}
             <li>
               <a href="#session-logs" class="session-logs-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-clipboard-list w-5"></i>
@@ -1615,7 +1615,7 @@
               <span class="text-sm font-medium">Specialties:</span>
               <span class="text-sm text-gray-600">${coach.specialties}</span>
             </div>
-            <a href="/coaches/${coach.id}" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+            <a href="/coach/coaches/${coach.id}" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transform hover:scale-105 transition-all">
               Book Session
             </a>
           </div>
@@ -1752,6 +1752,7 @@
         let actionsHtml = '';
         
         if (status === 'upcoming') {
+          /*
           actionsHtml = `
             <div class="flex space-x-2 mt-4">
               <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-booking-btn" data-booking-id="${booking.id}">
@@ -1759,7 +1760,10 @@
               </button>
             </div>
           `;
+          */
+          actionsHtml = ` `;
         } else if (status === 'completed' && booking.session_log) {
+          /*
           actionsHtml = `
             <div class="flex space-x-2 mt-4">
               <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 view-log-btn" data-log-id="${booking.session_log.id}">
@@ -1767,6 +1771,7 @@
               </button>
             </div>
           `;
+          */
         }
         
         // Add package info if from a package
@@ -2122,11 +2127,13 @@
     }
 
     // Filter session logs based on search and filters
-    function filterSessionLogs() {
+    async function filterSessionLogs() {
       const search = document.getElementById('session-logs-search').value.toLowerCase();
       const coachId = document.getElementById('session-logs-filter-coach').value;
       const sortBy = document.getElementById('session-logs-sort').value;
       
+      await loadSessionLogs();
+
       const logCards = Array.from(document.querySelectorAll('#session-logs-container > div'));
       
       // Filter based on search and coach

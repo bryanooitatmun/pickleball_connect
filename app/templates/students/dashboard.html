@@ -1054,6 +1054,12 @@
           }, 300);
         });
         
+        // Add reset buttons to the HTML
+        addResetButtons();
+        
+        // Setup filter reset event listeners
+        setupFilterResets();
+
         // Setup account links
         document.getElementById('view-profile-link').addEventListener('click', function(e) {
           e.preventDefault();
@@ -1067,6 +1073,9 @@
   
         // Load initial data
         loadDashboardData();
+
+        // Load court filters
+        loadCourtsFilter();
         
         // Setup form submit event listeners
         setupForms();
@@ -1077,7 +1086,16 @@
         // Initialize booking tabs
         setupBookingTabs();
       });
-  
+
+      // Store original data for filtering
+      let originalBookingsData = {
+        upcoming: [],
+        completed: [],
+        cancelled: []
+      };
+      let originalSessionLogsData = [];
+      let originalCoachesData = [];
+
       // Load dashboard data
       async function loadDashboardData() {
         try {
@@ -1111,7 +1129,403 @@
           showToast('Error', 'Failed to load dashboard data. Please refresh the page.', 'error');
         }
       }
-  
+
+      // Load bookings data
+      async function loadBookings() {
+        try {
+          // Load upcoming bookings
+          const upcomingBookings = await getBookings('upcoming');
+          upcomingBookings.sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            
+            return dateB - dateA;
+          });
+
+          originalBookingsData.upcoming = upcomingBookings;
+          displayBookings(upcomingBookings, 'upcoming');
+          
+          // Load completed bookings
+          const completedBookings = await getBookings('completed');
+          completedBookings.sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            
+            return dateB - dateA;
+          });
+
+          originalBookingsData.completed = completedBookings;
+          displayBookings(completedBookings, 'completed');
+          
+          // Load cancelled bookings
+          const cancelledBookings = await getBookings('cancelled');
+          cancelledBookings.sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            
+            return dateB - dateA;
+          });
+
+          originalBookingsData.cancelled = cancelledBookings;
+          displayBookings(cancelledBookings, 'cancelled');
+          
+          // Update upcoming bookings on dashboard
+          updateUpcomingBookingsList(upcomingBookings.slice(0, 3));
+          
+        } catch (error) {
+          console.error('Error loading bookings:', error);
+          showToast('Error', 'Failed to load bookings data.', 'error');
+        }
+      }
+
+      // Load session logs
+      async function loadSessionLogs() {
+        try {
+          const sessionLogs = await getSessionLogs();
+          sessionLogs.sort((a, b) => {
+            const dateA = new Date(a.booking.date);
+            const dateB = new Date(b.booking.date);
+            
+            return dateB - dateA;
+          });
+
+          // Store the original data
+          originalSessionLogsData = sessionLogs;
+          
+          // Display the session logs
+          displaySessionLogs(sessionLogs);
+          
+        } catch (error) {
+          console.error('Error loading session logs:', error);
+          showToast('Error', 'Failed to load session logs.', 'error');
+        }
+      }
+
+      // Load coaches
+      async function loadCoaches() {
+        try {
+          const coaches = await getCoaches();
+          
+          // Store the original data
+          originalCoachesData = coaches;
+          
+          // Populate coaches filter dropdowns
+          populateCoachFilters(coaches);
+          
+          // Populate featured coaches on dashboard
+          populateFeaturedCoaches(coaches);
+          
+          // Populate coaches list on Find Coaches tab
+          populateCoachesList(coaches);
+          
+        } catch (error) {
+          console.error('Error loading coaches:', error);
+          showToast('Error', 'Failed to load coaches data.', 'error');
+        }
+      }
+        
+      // Display bookings in the respective containers
+      function displayBookings(bookings, status) {
+        const container = document.getElementById(`${status}-bookings-container`);
+        
+        if (!bookings || bookings.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 text-gray-500">
+              <p>No ${status} bookings found</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = '';
+        
+        bookings.forEach(booking => {
+          const bookingCard = document.createElement('div');
+          bookingCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+          
+          // Format date and time
+          const bookingDate = formatDate(booking.date);
+          const startTime = formatTime(booking.start_time);
+          const endTime = formatTime(booking.end_time);
+          
+          let actionsHtml = '';
+          
+          if (status === 'upcoming') {
+            /*
+            actionsHtml = `
+              <div class="flex space-x-2 mt-4">
+                <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-booking-btn" data-booking-id="${booking.id}">
+                  Cancel
+                </button>
+              </div>
+            `;
+            */
+            actionsHtml = ``;
+          } else if (status === 'completed' && booking.session_log) {
+            /*
+            actionsHtml = `
+              <div class="flex space-x-2 mt-4">
+                <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 view-log-btn" data-log-id="${booking.session_log.id}">
+                  View Session Log
+                </button>
+              </div>
+            `;
+            */
+            actionsHtml = ``;
+          }
+          
+          // Add package info if from a package
+          let packageInfo = '';
+          if (booking.package) {
+            packageInfo = `
+              <div class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium mt-2">
+                Package Session: ${booking.package.name}
+              </div>
+            `;
+          }
+          
+          // Add discount info if discounted
+          let discountInfo = '';
+          if (booking.discount_amount || booking.discount_percentage) {
+            const discountText = booking.discount_percentage 
+              ? `${booking.discount_percentage}% discount` 
+              : `${booking.discount_amount} discount`;
+              
+            discountInfo = `
+              <div class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium mt-1">
+                ${discountText}
+              </div>
+            `;
+          }
+          
+          bookingCard.innerHTML = `
+            <div class="flex justify-between">
+              <div>
+                <h3 class="font-semibold">${booking.coach.user.first_name} ${booking.coach.user.last_name}</h3>
+                <p class="text-gray-500 text-sm">Coach</p>
+              </div>
+              <div class="text-right">
+                <span class="font-semibold">${formatCurrency(booking.price)}</span>
+                <p class="text-gray-500 text-sm">${packageInfo ? 'Package' : 'Regular Rate'}</p>
+                ${discountInfo}
+                ${packageInfo}
+              </div>
+            </div>
+            
+            <div class="flex items-center mt-3 text-gray-600">
+              <i class="fas fa-calendar-day mr-2"></i>
+              <span>${bookingDate}</span>
+            </div>
+            
+            <div class="flex items-center mt-1 text-gray-600">
+              <i class="fas fa-clock mr-2"></i>
+              <span>${startTime} - ${endTime}</span>
+            </div>
+            
+            <div class="flex items-center mt-1 text-gray-600">
+              <i class="fas fa-map-marker-alt mr-2"></i>
+              <span>${booking.court.name}</span>
+            </div>
+            
+            ${actionsHtml}
+          `;
+          
+          container.appendChild(bookingCard);
+        });
+        
+        // Add event listeners for action buttons
+        if (status === 'upcoming') {
+          // Cancel booking buttons
+          document.querySelectorAll('.cancel-booking-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              const bookingId = this.getAttribute('data-booking-id');
+              document.getElementById('cancel-booking-id').value = bookingId;
+              document.getElementById('cancel-booking-modal').classList.remove('hidden');
+            });
+          });
+        } else if (status === 'completed') {
+          // View log buttons
+          document.querySelectorAll('.view-log-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              const logId = this.getAttribute('data-log-id');
+              openSessionLogModal(logId);
+            });
+          });
+        }
+      }
+
+      // Display session logs
+      function displaySessionLogs(sessionLogs) {
+        const container = document.getElementById('session-logs-container');
+        
+        if (!sessionLogs || sessionLogs.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 text-gray-500">
+              <p>No session logs found</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = '';
+        
+        sessionLogs.forEach(log => {
+          const logCard = document.createElement('div');
+          logCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+          
+          // Format date
+          const logDate = formatDate(log.booking.date);
+          
+          logCard.innerHTML = `
+            <div class="flex justify-between">
+              <div>
+                <h3 class="font-semibold">${log.title}</h3>
+                <p class="text-gray-500 text-sm">Coach: ${log.coach.user.first_name} ${log.coach.user.last_name}</p>
+              </div>
+              <div class="text-right">
+                <span class="text-gray-600">${logDate}</span>
+              </div>
+            </div>
+            
+            <div class="mt-2">
+              <span class="inline-block bg-gray-100 text-gray-700 rounded-lg px-2 py-1 text-xs">
+                <i class="fas fa-map-marker-alt mr-1"></i> ${log.booking.court.name}
+              </span>
+            </div>
+            
+            <div class="mt-3">
+              <h4 class="text-sm font-medium text-gray-700">Session Notes</h4>
+              <p class="text-gray-600 mt-1">${log.notes || 'No notes added'}</p>
+            </div>
+            
+            ${log.student_notes ? `
+              <div class="mt-3">
+                <h4 class="text-sm font-medium text-gray-700">My Notes</h4>
+                <p class="text-gray-600 mt-1">${log.student_notes}</p>
+              </div>
+            ` : ''}
+            
+            <div class="flex justify-end mt-4">
+              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 view-log-btn" data-log-id="${log.id}">
+                View Details
+              </button>
+            </div>
+          `;
+          
+          container.appendChild(logCard);
+        });
+        
+        // Add event listeners for view buttons
+        document.querySelectorAll('.view-log-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const logId = this.getAttribute('data-log-id');
+            openSessionLogModal(logId);
+          });
+        });
+        
+        // Update recent logs on dashboard
+        if (sessionLogs.length > 0) {
+          updateRecentLogsList(sessionLogs.slice(0, 3));
+        }
+      }
+
+      // Display coaches in the coaches list
+      function populateCoachesList(coaches) {
+        const container = document.getElementById('coaches-list');
+        
+        if (!coaches || coaches.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 text-gray-500 col-span-3">
+              <p>No coaches available</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = '';
+        
+        coaches.forEach(coach => {
+          const coachCard = document.createElement('div');
+          coachCard.className = 'bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow';
+          coachCard.id = `coach-${coach.id}`;
+          coachCard.dataset.coachId = coach.id;
+          
+          // Compute average rating
+          const ratings = coach.ratings || [];
+          const avgRating = ratings.length > 0 
+            ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length 
+            : 0;
+          coachCard.dataset.rating = avgRating;
+          
+          // Generate stars
+          let starsHtml = '';
+          for (let i = 1; i <= 5; i++) {
+            if (i <= Math.floor(avgRating)) {
+              starsHtml += '<i class="fas fa-star text-yellow-400"></i>';
+            } else if (i === Math.ceil(avgRating) && avgRating % 1 > 0) {
+              starsHtml += '<i class="fas fa-star-half-alt text-yellow-400"></i>';
+            } else {
+              starsHtml += '<i class="far fa-star text-yellow-400"></i>';
+            }
+          }
+          
+          // Get coach courts
+          const courtNames = coach.courts.map(c => c.name).join(', ');
+          coachCard.dataset.courts = courtNames;
+          
+          // Store specialties for searching
+          coachCard.dataset.specialties = coach.specialties;
+          
+          coachCard.innerHTML = `
+            <div class="flex items-center mb-4">
+              <div class="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                <span class="text-blue-600 font-semibold text-xl">${coach.user.first_name.charAt(0)}</span>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold">${coach.user.first_name} ${coach.user.last_name}</h3>
+                <div class="flex items-center">
+                  <div class="flex mr-1">${starsHtml}</div>
+                  <span class="text-sm text-gray-500">(${ratings.length} reviews)</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-4">
+              <div class="flex items-center mb-1 text-gray-600">
+                <i class="fas fa-dollar-sign mr-2 w-5 text-center"></i>
+                <span>${formatCurrency(coach.hourly_rate)} per hour</span>
+              </div>
+              <div class="flex items-center mb-1 text-gray-600">
+                <i class="fas fa-map-marker-alt mr-2 w-5 text-center"></i>
+                <span>${courtNames}</span>
+              </div>
+              <div class="flex items-center mb-1 text-gray-600">
+                <i class="fas fa-medal mr-2 w-5 text-center"></i>
+                <span>DUPR Rating: ${coach.user.dupr_rating}</span>
+              </div>
+              <div class="flex items-center text-gray-600">
+                <i class="fas fa-award mr-2 w-5 text-center"></i>
+                <span>${coach.years_experience} years of coaching experience</span>
+              </div>
+            </div>
+            
+            <p class="text-gray-600 mb-4">${coach.biography.substring(0, 150)}...</p>
+            
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-sm font-medium">Specialties:</span>
+                <span class="text-sm text-gray-600">${coach.specialties}</span>
+              </div>
+              <a href="/coach/coaches/${coach.id}" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+                Book Session
+              </a>
+            </div>
+          `;
+          
+          container.appendChild(coachCard);
+        });
+      }
+
       // Setup form submit handlers
       function setupForms() {
         // Profile form
@@ -1396,26 +1810,6 @@
       document.getElementById('bio').value = studentData.bio || '';
     }
 
-    // Load coaches
-    async function loadCoaches() {
-      try {
-        const coaches = await getCoaches();
-        
-        // Populate coaches filter dropdowns
-        populateCoachFilters(coaches);
-        
-        // Populate featured coaches on dashboard
-        populateFeaturedCoaches(coaches);
-        
-        // Populate coaches list on Find Coaches tab
-        populateCoachesList(coaches);
-        
-      } catch (error) {
-        console.error('Error loading coaches:', error);
-        showToast('Error', 'Failed to load coaches data.', 'error');
-      }
-    }
-
     // Populate coach filters in various forms
     function populateCoachFilters(coaches) {
       // Booking filters
@@ -1534,100 +1928,6 @@
       });
     }
 
-    // Populate coaches list on Find Coaches tab
-    function populateCoachesList(coaches) {
-      const container = document.getElementById('coaches-list');
-      
-      if (coaches.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-12 text-gray-500 col-span-3">
-            <p>No coaches available</p>
-          </div>
-        `;
-        return;
-      }
-      
-      container.innerHTML = '';
-      
-      coaches.forEach(coach => {
-        const coachCard = document.createElement('div');
-        coachCard.className = 'bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow';
-        coachCard.id = `coach-${coach.id}`;
-        
-        // Compute average rating
-        const ratings = coach.ratings || [];
-        const avgRating = ratings.length > 0 
-          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length 
-          : 0;
-        
-        // Generate stars
-        let starsHtml = '';
-        for (let i = 1; i <= 5; i++) {
-          if (i <= Math.floor(avgRating)) {
-            starsHtml += '<i class="fas fa-star text-yellow-400"></i>';
-          } else if (i === Math.ceil(avgRating) && avgRating % 1 > 0) {
-            starsHtml += '<i class="fas fa-star-half-alt text-yellow-400"></i>';
-          } else {
-            starsHtml += '<i class="far fa-star text-yellow-400"></i>';
-          }
-        }
-        
-        // Get coach courts
-        const courtNames = coach.courts.map(c => c.name).join(', ');
-        
-        coachCard.innerHTML = `
-          <div class="flex items-center mb-4">
-            <div class="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-              <span class="text-blue-600 font-semibold text-xl">${coach.user.first_name.charAt(0)}</span>
-            </div>
-            <div>
-              <h3 class="text-xl font-semibold">${coach.user.first_name} ${coach.user.last_name}</h3>
-              <div class="flex items-center">
-                <div class="flex mr-1">${starsHtml}</div>
-                <span class="text-sm text-gray-500">(${ratings.length} reviews)</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="mb-4">
-            <div class="flex items-center mb-1 text-gray-600">
-              <i class="fas fa-dollar-sign mr-2 w-5 text-center"></i>
-              <span>${formatCurrency(coach.hourly_rate)} per hour</span>
-            </div>
-            <div class="flex items-center mb-1 text-gray-600">
-              <i class="fas fa-map-marker-alt mr-2 w-5 text-center"></i>
-              <span>${courtNames}</span>
-            </div>
-            <div class="flex items-center mb-1 text-gray-600">
-              <i class="fas fa-medal mr-2 w-5 text-center"></i>
-              <span>DUPR Rating: ${coach.user.dupr_rating}</span>
-            </div>
-            <div class="flex items-center text-gray-600">
-              <i class="fas fa-award mr-2 w-5 text-center"></i>
-              <span>${coach.years_experience} years of coaching experience</span>
-            </div>
-          </div>
-          
-          <p class="text-gray-600 mb-4">${coach.biography.substring(0, 150)}...</p>
-          
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="text-sm font-medium">Specialties:</span>
-              <span class="text-sm text-gray-600">${coach.specialties}</span>
-            </div>
-            <a href="/coach/coaches/${coach.id}" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transform hover:scale-105 transition-all">
-              Book Session
-            </a>
-          </div>
-        `;
-        
-        container.appendChild(coachCard);
-      });
-      
-      // Load courts for court filter
-      loadCourtsFilter();
-    }
-
     // Load courts filter
     async function loadCourtsFilter() {
       try {
@@ -1647,242 +1947,48 @@
       }
     }
 
-    // Filter coaches based on search and filters
-    function filterCoaches() {
-      const search = document.getElementById('coach-search').value.toLowerCase();
-      const courtId = document.getElementById('court-filter').value;
-      const ratingFilter = document.getElementById('rating-filter').value;
+    // Filter bookings based on search and filters
+    function filterBookings(status) {
+      const searchInput = document.getElementById(`${status}-search`);
+      const coachFilter = document.getElementById(`${status}-filter-coach`);
+      const sortSelect = document.getElementById(`${status}-sort`);
       
-      const coachCards = document.querySelectorAll('#coaches-list > div');
+      if (!searchInput || !coachFilter || !sortSelect) return;
       
-      coachCards.forEach(card => {
-        const coachName = card.querySelector('h3').textContent.toLowerCase();
-        const specialties = card.querySelector('div > span.text-gray-600').textContent.toLowerCase();
-        const courts = card.querySelector('div:nth-child(2) > div:nth-child(2) > span').textContent;
-        const ratingStars = card.querySelectorAll('.fa-star, .fa-star-half-alt').length;
-        
-        // Search filter
-        const matchesSearch = coachName.includes(search) || specialties.includes(search);
-        
-        // Court filter
-        const matchesCourt = !courtId || courts.includes(document.getElementById('court-filter').options[document.getElementById('court-filter').selectedIndex].text);
-        
-        // Rating filter
-        const matchesRating = !ratingFilter || ratingStars >= parseFloat(ratingFilter);
-        
-        if (matchesSearch && matchesCourt && matchesRating) {
-          card.classList.remove('hidden');
-        } else {
-          card.classList.add('hidden');
-        }
-      });
+      const search = searchInput.value.toLowerCase();
+      const coachId = coachFilter.value;
+      const sortBy = sortSelect.value;
       
-      // Check if any cards are visible
-      const visibleCards = document.querySelectorAll('#coaches-list > div:not(.hidden)');
-      
-      if (visibleCards.length === 0) {
-        const noResults = document.createElement('div');
-        noResults.className = 'text-center py-12 text-gray-500 col-span-3';
-        noResults.id = 'no-coaches-results';
-        noResults.innerHTML = '<p>No coaches found matching your filters</p>';
-        
-        const existingNoResults = document.getElementById('no-coaches-results');
-        if (!existingNoResults) {
-          document.getElementById('coaches-list').appendChild(noResults);
-        }
-      } else {
-        const existingNoResults = document.getElementById('no-coaches-results');
-        if (existingNoResults) {
-          existingNoResults.remove();
-        }
-      }
-    }
-
-    // Load bookings data
-    async function loadBookings() {
-      try {
-        // Load upcoming bookings
-        const upcomingBookings = await getBookings('upcoming');
-        displayBookings(upcomingBookings, 'upcoming');
-        
-        // Load completed bookings
-        const completedBookings = await getBookings('completed');
-        displayBookings(completedBookings, 'completed');
-        
-        // Load cancelled bookings
-        const cancelledBookings = await getBookings('cancelled');
-        displayBookings(cancelledBookings, 'cancelled');
-        
-        // Update upcoming bookings on dashboard
-        updateUpcomingBookingsList(upcomingBookings.slice(0, 3));
-        
-      } catch (error) {
-        console.error('Error loading bookings:', error);
-        showToast('Error', 'Failed to load bookings data.', 'error');
-      }
-    }
-
-    // Display bookings in the respective containers
-    function displayBookings(bookings, status) {
-      const container = document.getElementById(`${status}-bookings-container`);
-      
-      if (bookings.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-12 text-gray-500">
-            <p>No ${status} bookings found</p>
-          </div>
-        `;
+      // If no filters and default sort, show original data
+      if (!search && !coachId && sortBy === 'date-desc') {
+        displayBookings(originalBookingsData[status], status);
         return;
       }
       
-      container.innerHTML = '';
+      // Clone the original data to avoid modifying it
+      let filteredBookings = [...originalBookingsData[status]];
       
-      bookings.forEach(booking => {
-        const bookingCard = document.createElement('div');
-        bookingCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
-        bookingCard.dataset.coachId = booking.coach_id;
-        bookingCard.dataset.courtId = booking.court_id;
-        bookingCard.dataset.date = booking.date;
-        
-        // Format date and time
-        const bookingDate = formatDate(booking.date);
-        const startTime = formatTime(booking.start_time);
-        const endTime = formatTime(booking.end_time);
-        
-        let actionsHtml = '';
-        
-        if (status === 'upcoming') {
-          /*
-          actionsHtml = `
-            <div class="flex space-x-2 mt-4">
-              <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-booking-btn" data-booking-id="${booking.id}">
-                Cancel
-              </button>
-            </div>
-          `;
-          */
-          actionsHtml = ` `;
-        } else if (status === 'completed' && booking.session_log) {
-          /*
-          actionsHtml = `
-            <div class="flex space-x-2 mt-4">
-              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 view-log-btn" data-log-id="${booking.session_log.id}">
-                View Session Log
-              </button>
-            </div>
-          `;
-          */
-        }
-        
-        // Add package info if from a package
-        let packageInfo = '';
-        if (booking.package) {
-          packageInfo = `
-            <div class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium mt-2">
-              Package Session: ${booking.package.name}
-            </div>
-          `;
-        }
-        
-        // Add discount info if discounted
-        let discountInfo = '';
-        if (booking.discount_amount || booking.discount_percentage) {
-          const discountText = booking.discount_percentage 
-            ? `${booking.discount_percentage}% discount` 
-            : `${booking.discount_amount} discount`;
-            
-          discountInfo = `
-            <div class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium mt-1">
-              ${discountText}
-            </div>
-          `;
-        }
-        
-        bookingCard.innerHTML = `
-          <div class="flex justify-between">
-            <div>
-              <h3 class="font-semibold">${booking.coach.user.first_name} ${booking.coach.user.last_name}</h3>
-              <p class="text-gray-500 text-sm">Coach</p>
-            </div>
-            <div class="text-right">
-              <span class="font-semibold">${formatCurrency(booking.price)}</span>
-              <p class="text-gray-500 text-sm">${packageInfo ? 'Package' : 'Regular Rate'}</p>
-              ${discountInfo}
-              ${packageInfo}
-            </div>
-          </div>
+      // Apply search filter
+      if (search) {
+        filteredBookings = filteredBookings.filter(booking => {
+          const coachName = `${booking.coach.user.first_name} ${booking.coach.user.last_name}`.toLowerCase();
+          const courtName = booking.court.name.toLowerCase();
           
-          <div class="flex items-center mt-3 text-gray-600">
-            <i class="fas fa-calendar-day mr-2"></i>
-            <span>${bookingDate}</span>
-          </div>
-          
-          <div class="flex items-center mt-1 text-gray-600">
-            <i class="fas fa-clock mr-2"></i>
-            <span>${startTime} - ${endTime}</span>
-          </div>
-          
-          <div class="flex items-center mt-1 text-gray-600">
-            <i class="fas fa-map-marker-alt mr-2"></i>
-            <span>${booking.court.name}</span>
-          </div>
-          
-          ${actionsHtml}
-        `;
-        
-        container.appendChild(bookingCard);
-      });
-      
-      // Add event listeners for action buttons
-      if (status === 'upcoming') {
-        // Cancel booking buttons
-        document.querySelectorAll('.cancel-booking-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const bookingId = this.getAttribute('data-booking-id');
-            document.getElementById('cancel-booking-id').value = bookingId;
-            document.getElementById('cancel-booking-modal').classList.remove('hidden');
-          });
-        });
-      } else if (status === 'completed') {
-        // View log buttons
-        document.querySelectorAll('.view-log-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const logId = this.getAttribute('data-log-id');
-            openSessionLogModal(logId);
-          });
+          return coachName.includes(search) || courtName.includes(search);
         });
       }
-    }
-
-    // Filter bookings based on search and filters
-    function filterBookings(status) {
-      const search = document.getElementById(`${status}-search`).value.toLowerCase();
-      const coachId = document.getElementById(`${status}-filter-coach`).value;
-      const sortBy = document.getElementById(`${status}-sort`).value;
       
-      const bookingCards = Array.from(document.querySelectorAll(`#${status}-bookings-container > div`));
+      // Apply coach filter
+      if (coachId) {
+        filteredBookings = filteredBookings.filter(booking => {
+          return booking.coach_id.toString() === coachId;
+        });
+      }
       
-      // Filter based on search and coach
-      const filteredCards = bookingCards.filter(card => {
-        // Skip if it's the "no bookings" message
-        if (card.classList.contains('text-center')) return false;
-        
-        const coachName = card.querySelector('h3').textContent.toLowerCase();
-        const courtName = card.querySelector('div:nth-child(4) > span').textContent.toLowerCase();
-        
-        // Search filter
-        const matchesSearch = coachName.includes(search) || courtName.includes(search);
-        
-        // Coach filter
-        const matchesCoach = !coachId || card.dataset.coachId === coachId;
-        
-        return matchesSearch && matchesCoach;
-      });
-      
-      // Sort the filtered cards
-      filteredCards.sort((a, b) => {
-        const dateA = new Date(a.dataset.date);
-        const dateB = new Date(b.dataset.date);
+      // Apply sorting
+      filteredBookings.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
         
         if (sortBy === 'date-asc') {
           return dateA - dateB;
@@ -1891,24 +1997,198 @@
         }
       });
       
-      // Clear container
-      const container = document.getElementById(`${status}-bookings-container`);
-      container.innerHTML = '';
+      // Display the filtered bookings
+      displayBookings(filteredBookings, status);
+    }
+
+    // Filter session logs based on search and filters
+    function filterSessionLogs() {
+      const searchInput = document.getElementById('session-logs-search');
+      const coachFilter = document.getElementById('session-logs-filter-coach');
+      const sortSelect = document.getElementById('session-logs-sort');
       
-      // Add filtered and sorted cards back to container
-      if (filteredCards.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-12 text-gray-500">
-            <p>No ${status} bookings found matching your filters</p>
-          </div>
-        `;
-      } else {
-        filteredCards.forEach(card => {
-          container.appendChild(card);
+      if (!searchInput || !coachFilter || !sortSelect) return;
+      
+      const search = searchInput.value.toLowerCase();
+      const coachId = coachFilter.value;
+      const sortBy = sortSelect.value;
+      
+      // If no filters and default sort, show original data
+      if (!search && !coachId && sortBy === 'date-desc') {
+        displaySessionLogs(originalSessionLogsData);
+        return;
+      }
+      
+      // Clone the original data to avoid modifying it
+      let filteredLogs = [...originalSessionLogsData];
+      
+      // Apply search filter
+      if (search) {
+        filteredLogs = filteredLogs.filter(log => {
+          const title = log.title?.toLowerCase() || '';
+          const coachName = `${log.coach.user.first_name} ${log.coach.user.last_name}`.toLowerCase();
+          const notes = log.notes?.toLowerCase() || '';
+          const courtName = log.booking.court.name?.toLowerCase() || '';
+          
+          return title.includes(search) || 
+                coachName.includes(search) || 
+                notes.includes(search) ||
+                courtName.includes(search);
         });
+      }
+      
+      // Apply coach filter
+      if (coachId) {
+        filteredLogs = filteredLogs.filter(log => {
+          return log.coach_id.toString() === coachId;
+        });
+      }
+      
+      // Apply sorting
+      filteredLogs.sort((a, b) => {
+        const dateA = new Date(a.booking.date);
+        const dateB = new Date(b.booking.date);
+        
+        if (sortBy === 'date-asc') {
+          return dateA - dateB;
+        } else {
+          return dateB - dateA;
+        }
+      });
+      
+      // Display the filtered logs
+      displaySessionLogs(filteredLogs);
+    }
+
+    // Filter coaches based on search and filters
+    function filterCoaches() {
+      const search = document.getElementById('coach-search').value.toLowerCase();
+      const courtFilter = document.getElementById('court-filter').value;
+      const ratingFilter = parseFloat(document.getElementById('rating-filter').value || 0);
+      
+      // If no filters, show original data
+      if (!search && !courtFilter && !ratingFilter) {
+        populateCoachesList(originalCoachesData);
+        return;
+      }
+      
+      // Clone the original data to avoid modifying it
+      let filteredCoaches = [...originalCoachesData];
+      
+      // Apply search filter
+      if (search) {
+        filteredCoaches = filteredCoaches.filter(coach => {
+          const coachName = `${coach.user.first_name} ${coach.user.last_name}`.toLowerCase();
+          const specialties = coach.specialties.toLowerCase();
+          
+          return coachName.includes(search) || specialties.includes(search);
+        });
+      }
+      
+      // Apply court filter
+      if (courtFilter) {
+        filteredCoaches = filteredCoaches.filter(coach => {
+          return coach.courts.some(court => court.id.toString() === courtFilter);
+        });
+      }
+      
+      // Apply rating filter
+      if (ratingFilter) {
+        filteredCoaches = filteredCoaches.filter(coach => {
+          const ratings = coach.ratings || [];
+          if (ratings.length === 0) return false;
+          
+          const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+          return avgRating >= ratingFilter;
+        });
+      }
+      
+      // Display the filtered coaches
+      populateCoachesList(filteredCoaches);
+    }
+
+    // Add reset buttons to the HTML
+    function addResetButtons() {
+      // For bookings
+      ['upcoming', 'completed', 'cancelled'].forEach(status => {
+        const filterContainer = document.querySelector(`#${status}-bookings-tab .flex.items-center.space-x-3`);
+        if (filterContainer) {
+          const resetButton = document.createElement('button');
+          resetButton.id = `reset-${status}-filters`;
+          resetButton.className = 'text-blue-600 hover:text-blue-800';
+          resetButton.innerHTML = '<i class="fas fa-times-circle mr-1"></i> Reset';
+          filterContainer.appendChild(resetButton);
+        }
+      });
+      
+      // For session logs
+      const sessionLogsFilterContainer = document.querySelector('#session-logs-tab .flex.items-center.space-x-3');
+      if (sessionLogsFilterContainer) {
+        const resetButton = document.createElement('button');
+        resetButton.id = 'reset-session-logs-filters';
+        resetButton.className = 'text-blue-600 hover:text-blue-800';
+        resetButton.innerHTML = '<i class="fas fa-times-circle mr-1"></i> Reset';
+        sessionLogsFilterContainer.appendChild(resetButton);
+      }
+      
+      // For coaches
+      const coachesFilterContainer = document.querySelector('#coaches-tab .grid.grid-cols-1.md\\:grid-cols-3');
+      if (coachesFilterContainer) {
+        const resetButtonDiv = document.createElement('div');
+        resetButtonDiv.className = 'flex justify-end mt-4';
+        const resetButton = document.createElement('button');
+        resetButton.id = 'reset-coaches-filters';
+        resetButton.className = 'text-blue-600 hover:text-blue-800';
+        resetButton.innerHTML = '<i class="fas fa-times-circle mr-1"></i> Reset All Filters';
+        resetButtonDiv.appendChild(resetButton);
+        coachesFilterContainer.appendChild(resetButtonDiv);
       }
     }
 
+    // Setup filter resets
+    function setupFilterResets() {
+  // Add reset button event listeners for bookings
+  ['upcoming', 'completed', 'cancelled'].forEach(status => {
+    document.getElementById(`reset-${status}-filters`)?.addEventListener('click', function() {
+      const searchInput = document.getElementById(`${status}-search`);
+      const coachFilter = document.getElementById(`${status}-filter-coach`);
+      const sortSelect = document.getElementById(`${status}-sort`);
+      
+      if (searchInput) searchInput.value = '';
+      if (coachFilter) coachFilter.value = '';
+      if (sortSelect) sortSelect.value = 'date-desc';
+      
+      displayBookings(originalBookingsData[status], status);
+    });
+  });
+  
+  // Reset session logs filters
+  document.getElementById('reset-session-logs-filters')?.addEventListener('click', function() {
+    const searchInput = document.getElementById('session-logs-search');
+    const coachFilter = document.getElementById('session-logs-filter-coach');
+    const sortSelect = document.getElementById('session-logs-sort');
+    
+    if (searchInput) searchInput.value = '';
+    if (coachFilter) coachFilter.value = '';
+    if (sortSelect) sortSelect.value = 'date-desc';
+    
+    displaySessionLogs(originalSessionLogsData);
+  });
+  
+  // Reset coaches filters
+  document.getElementById('reset-coaches-filters')?.addEventListener('click', function() {
+    const searchInput = document.getElementById('coach-search');
+    const courtFilter = document.getElementById('court-filter');
+    const ratingFilter = document.getElementById('rating-filter');
+    
+    if (searchInput) searchInput.value = '';
+    if (courtFilter) courtFilter.value = '';
+    if (ratingFilter) ratingFilter.value = '';
+    
+    populateCoachesList(originalCoachesData);
+  });
+}
+    
     // Update upcoming bookings list on dashboard
     function updateUpcomingBookingsList(bookings) {
       const container = document.getElementById('upcoming-bookings-list');
@@ -2047,140 +2327,6 @@
         
         container.appendChild(packageCard);
       });
-    }
-
-    // Load session logs
-    async function loadSessionLogs() {
-      try {
-        const sessionLogs = await getSessionLogs();
-        
-        const container = document.getElementById('session-logs-container');
-        
-        if (sessionLogs.length === 0) {
-          container.innerHTML = `
-            <div class="text-center py-12 text-gray-500">
-              <p>No session logs found</p>
-            </div>
-          `;
-          return;
-        }
-        
-        container.innerHTML = '';
-        
-        sessionLogs.forEach(log => {
-          const logCard = document.createElement('div');
-          logCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
-          logCard.dataset.logId = log.id;
-          logCard.dataset.coachId = log.coach_id;
-          
-          // Format date
-          const logDate = formatDate(log.booking.date);
-          
-          logCard.innerHTML = `
-            <div class="flex justify-between">
-              <div>
-                <h3 class="font-semibold">${log.title}</h3>
-                <p class="text-gray-500 text-sm">Coach: ${log.coach.user.first_name} ${log.coach.user.last_name}</p>
-              </div>
-              <div class="text-right">
-                <span class="text-gray-600">${logDate}</span>
-              </div>
-            </div>
-            
-            <div class="mt-3">
-              <h4 class="text-sm font-medium text-gray-700">Session Notes</h4>
-              <p class="text-gray-600 mt-1">${log.notes || 'No notes added'}</p>
-            </div>
-            
-            ${log.student_notes ? `
-              <div class="mt-3">
-                <h4 class="text-sm font-medium text-gray-700">My Notes</h4>
-                <p class="text-gray-600 mt-1">${log.student_notes}</p>
-              </div>
-            ` : ''}
-            
-            <div class="flex justify-end mt-4">
-              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 view-log-btn" data-log-id="${log.id}">
-                View Details
-              </button>
-            </div>
-          `;
-          
-          container.appendChild(logCard);
-        });
-        
-        // Add event listeners for view buttons
-        document.querySelectorAll('.view-log-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const logId = this.getAttribute('data-log-id');
-            openSessionLogModal(logId);
-          });
-        });
-        
-        // Update recent logs on dashboard
-        updateRecentLogsList(sessionLogs.slice(0, 3));
-        
-      } catch (error) {
-        console.error('Error loading session logs:', error);
-        showToast('Error', 'Failed to load session logs.', 'error');
-      }
-    }
-
-    // Filter session logs based on search and filters
-    async function filterSessionLogs() {
-      const search = document.getElementById('session-logs-search').value.toLowerCase();
-      const coachId = document.getElementById('session-logs-filter-coach').value;
-      const sortBy = document.getElementById('session-logs-sort').value;
-      
-      await loadSessionLogs();
-
-      const logCards = Array.from(document.querySelectorAll('#session-logs-container > div'));
-      
-      // Filter based on search and coach
-      const filteredCards = logCards.filter(card => {
-        // Skip if it's the "no logs" message
-        if (card.classList.contains('text-center')) return false;
-        
-        const title = card.querySelector('h3').textContent.toLowerCase();
-        const coachName = card.querySelector('p').textContent.toLowerCase();
-        
-        // Search filter
-        const matchesSearch = title.includes(search) || coachName.includes(search);
-        
-        // Coach filter
-        const matchesCoach = !coachId || card.dataset.coachId === coachId;
-        
-        return matchesSearch && matchesCoach;
-      });
-      
-      // Sort the filtered cards
-      filteredCards.sort((a, b) => {
-        const dateA = new Date(a.querySelector('.text-right > span').textContent);
-        const dateB = new Date(b.querySelector('.text-right > span').textContent);
-        
-        if (sortBy === 'date-asc') {
-          return dateA - dateB;
-        } else {
-          return dateB - dateA;
-        }
-      });
-      
-      // Clear container
-      const container = document.getElementById('session-logs-container');
-      container.innerHTML = '';
-      
-      // Add filtered and sorted cards back to container
-      if (filteredCards.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-12 text-gray-500">
-            <p>No session logs found matching your filters</p>
-          </div>
-        `;
-      } else {
-        filteredCards.forEach(card => {
-          container.appendChild(card);
-        });
-      }
     }
 
     // Update recent logs list on dashboard

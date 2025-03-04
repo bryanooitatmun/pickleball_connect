@@ -3355,7 +3355,6 @@
       try {
         const sessionLogs = await getSessionLogs();
         
-        
         sessionLogs.sort((a, b) => {
           const dateA = new Date(a.booking.date);
           const dateB = new Date(b.booking.date);

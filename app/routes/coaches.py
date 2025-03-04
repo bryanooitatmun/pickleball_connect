@@ -277,7 +277,8 @@ def dashboard():
         showcase_images_count=showcase_images_count,
         upcoming_bookings=upcoming_bookings,
         recent_logs=recent_logs,
-        total_earnings=total_earnings
+        total_earnings=total_earnings,
+        now=datetime.now()
     )
 
 # @bp.route('/coach/account', methods=['GET', 'POST'])

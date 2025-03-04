@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 0ff7585f8574
+Revision ID: 0e2fd56d0751
 Revises: 
-Create Date: 2025-03-04 15:24:31.740591
+Create Date: 2025-03-04 20:10:55.860102
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '0ff7585f8574'
+revision = '0e2fd56d0751'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -104,6 +104,17 @@ def upgrade():
     sa.ForeignKeyConstraint(['court_id'], ['court.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('coach_id', 'date', 'start_time', name='unique_coach_timeslot')
+    )
+    op.create_table('availability_template',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('coach_id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('settings', sa.JSON(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['coach_id'], ['coach.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('coach_court',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -245,6 +256,7 @@ def downgrade():
     op.drop_table('pricing_plan')
     op.drop_table('coach_image')
     op.drop_table('coach_court')
+    op.drop_table('availability_template')
     op.drop_table('availability')
     op.drop_table('support_ticket')
     op.drop_table('court_fee')

@@ -6,7 +6,7 @@ from app import db
 from app.models.coach import Coach, CoachImage
 from app.models.user import User
 from app.models.court import Court, CoachCourt
-from app.models.booking import Availability, Booking
+from app.models.booking import Availability, Booking, AvailabilityTemplate
 from app.models.session_log import SessionLog
 from app.models.rating import CoachRating
 from app.models.pricing import PricingPlan  # Add missing import for PricingPlan
@@ -319,6 +319,295 @@ def delete_availability():
     try:
         db.session.delete(availability)
         db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/availability/add-bulk', methods=['POST'])
+@login_required
+def add_bulk_availability():
+    """API endpoint to add multiple availability slots at once"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    slots = data.get('slots', [])
+    
+    if not slots:
+        return jsonify({'error': 'No slots provided'}), 400
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    created_slots = []
+    errors = []
+    
+    # Start a transaction
+    try:
+        for slot_data in slots:
+            try:
+                # Parse date and times
+                date_obj = datetime.strptime(slot_data['date'], '%Y-%m-%d').date()
+                start_time = datetime.strptime(slot_data['start_time'], '%H:%M').time()
+                end_time = datetime.strptime(slot_data['end_time'], '%H:%M').time()
+                
+                # Create availability record
+                availability = Availability(
+                    coach_id=coach.id,
+                    court_id=slot_data['court_id'],
+                    date=date_obj,
+                    start_time=start_time,
+                    end_time=end_time,
+                    is_booked=False
+                )
+                
+                db.session.add(availability)
+                created_slots.append(availability)
+            except Exception as e:
+                errors.append(f"Error creating slot {slot_data['date']} {slot_data['start_time']}-{slot_data['end_time']}: {str(e)}")
+        
+        # Only commit if there were no errors
+        if not errors:
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'created_count': len(created_slots)
+            })
+        else:
+            # Rollback if there were any errors
+            db.session.rollback()
+            return jsonify({
+                'error': 'Some slots could not be created',
+                'errors': errors
+            }), 400
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Add these routes to app/routes/api.py
+
+@bp.route('/coach/availability/templates', methods=['GET'])
+@login_required
+def get_availability_templates():
+    """API endpoint to get a coach's saved availability templates"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    templates = AvailabilityTemplate.query.filter_by(coach_id=coach.id).order_by(AvailabilityTemplate.created_at.desc()).all()
+    
+    result = []
+    for template in templates:
+        result.append({
+            'id': template.id,
+            'name': template.name,
+            'description': template.description,
+            'settings': template.settings,
+            'created_at': template.created_at.isoformat()
+        })
+    
+    return jsonify(result)
+
+@bp.route('/coach/availability/templates/save', methods=['POST'])
+@login_required
+def save_availability_template():
+    """API endpoint to save an availability template"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Validate required fields
+    if not all(k in data for k in ['name', 'settings']):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    # Validate settings
+    settings = data.get('settings')
+    required_settings = ['days', 'courts', 'start_time', 'end_time', 'duration']
+    
+    if not all(k in settings for k in required_settings):
+        return jsonify({'error': 'Missing required settings'}), 400
+    
+    # Create template
+    template = AvailabilityTemplate(
+        coach_id=coach.id,
+        name=data.get('name'),
+        description=data.get('description'),
+        settings=settings
+    )
+    
+    try:
+        db.session.add(template)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'id': template.id
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/availability/templates/apply', methods=['POST'])
+@login_required
+def apply_availability_template():
+    """API endpoint to apply a template to create availability slots"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Validate required fields
+    if not all(k in data for k in ['template_id', 'start_date', 'end_date']):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    # Get template
+    template = AvailabilityTemplate.query.filter_by(
+        id=data.get('template_id'),
+        coach_id=coach.id
+    ).first_or_404()
+    
+    # Parse dates
+    try:
+        start_date = datetime.strptime(data.get('start_date'), '%Y-%m-%d').date()
+        end_date = datetime.strptime(data.get('end_date'), '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format'}), 400
+    
+    if start_date > end_date:
+        return jsonify({'error': 'Start date must be before or equal to end date'}), 400
+    
+    if start_date < datetime.now().date():
+        return jsonify({'error': 'Start date cannot be in the past'}), 400
+    
+    # Extract template settings
+    settings = template.settings
+    selected_days = settings.get('days', [])
+    courts = settings.get('courts', [])
+    start_time = settings.get('start_time')
+    end_time = settings.get('end_time')
+    duration_minutes = settings.get('duration')
+    
+    # Get increment (if stored in settings, otherwise default to duration)
+    increment = settings.get('increment')
+    if increment == 'duration':
+        increment = duration_minutes
+    else:
+        increment = int(increment)
+    
+    created_slots = []
+    errors = []
+    
+    # Start transaction
+    try:
+        # For each day in the date range
+        current_date = start_date
+        while current_date <= end_date:
+            day_of_week = current_date.weekday()  # 0 = Monday, 6 = Sunday
+            
+            # Convert to the same format as stored in template
+            if day_of_week == 6:  # Sunday in Python is 6, but in JS it's 0
+                template_day = 0
+            else:
+                template_day = day_of_week + 1  # Adjust to match JS day numbering
+            
+            # Check if this day of week is selected in the template
+            if template_day in selected_days:
+                # For each court
+                for court in courts:
+                    court_id = court.get('id')
+                    
+                    # Parse start and end times
+                    start_time_obj = datetime.strptime(start_time, '%H:%M').time()
+                    end_time_obj = datetime.strptime(end_time, '%H:%M').time()
+                    
+                    # Calculate start and end times in minutes for easier processing
+                    start_minutes = start_time_obj.hour * 60 + start_time_obj.minute
+                    end_minutes = end_time_obj.hour * 60 + end_time_obj.minute
+                    
+                    # Create slots based on duration and increment
+                    for time_minutes in range(start_minutes, end_minutes - duration_minutes + 1, increment):
+                        slot_start_time = time(hour=time_minutes // 60, minute=time_minutes % 60)
+                        slot_end_time = time(hour=(time_minutes + duration_minutes) // 60, minute=(time_minutes + duration_minutes) % 60)
+                        
+                        # Check for overlapping slots
+                        overlapping = Availability.query.filter(
+                            Availability.coach_id == coach.id,
+                            Availability.court_id == court_id,
+                            Availability.date == current_date,
+                            Availability.start_time < slot_end_time,
+                            Availability.end_time > slot_start_time
+                        ).first()
+                        
+                        if overlapping:
+                            errors.append(f"Overlapping slot: {current_date.isoformat()} {slot_start_time}-{slot_end_time}")
+                            continue
+                        
+                        # Create availability record
+                        availability = Availability(
+                            coach_id=coach.id,
+                            court_id=court_id,
+                            date=current_date,
+                            start_time=slot_start_time,
+                            end_time=slot_end_time,
+                            is_booked=False
+                        )
+                        
+                        db.session.add(availability)
+                        created_slots.append(availability)
+            
+            # Move to next day
+            current_date += timedelta(days=1)
+        
+        # Commit if any slots were created
+        if created_slots:
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'created_count': len(created_slots),
+                'errors': errors if errors else None
+            })
+        elif errors:
+            return jsonify({
+                'error': 'Could not create any slots',
+                'errors': errors
+            }), 400
+        else:
+            return jsonify({
+                'error': 'No slots created. Check that template contains valid days within the selected date range.'
+            }), 400
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/availability/templates/delete', methods=['POST'])
+@login_required
+def delete_availability_template():
+    """API endpoint to delete an availability template"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    template_id = data.get('template_id')
+    if not template_id:
+        return jsonify({'error': 'Template ID is required'}), 400
+    
+    template = AvailabilityTemplate.query.filter_by(
+        id=template_id,
+        coach_id=coach.id
+    ).first_or_404()
+    
+    try:
+        db.session.delete(template)
+        db.session.commit()
+        
         return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
@@ -991,6 +1280,18 @@ def request_entity_too_large(error):
         'message': 'File too large. Maximum size is 16MB.'
     }), 413
 
+@bp.errorhandler(400)
+@bp.errorhandler(404)
+@bp.errorhandler(500)
+def handle_api_error(error):
+    """Return JSON instead of HTML for API errors"""
+    if request.path.startswith('/api/'):
+        return jsonify({
+            'error': str(error),
+            'message': error.description if hasattr(error, 'description') else str(error)
+        }), error.code
+    return error
+    
 @bp.route('/coach/update-showcase-images', methods=['POST'])
 @login_required
 def update_showcase_images():

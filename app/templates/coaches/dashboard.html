@@ -888,7 +888,7 @@
 
         <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="font-semibold">Add Availability</h3>
+            <h3 class="font-semibold">Add Single Availability</h3>
           </div>
           
           <form id="availability-form" class="mb-6">
@@ -918,27 +918,220 @@
             </button>
           </form>
           
-          <hr class="my-6">
-          
-          <h3 class="font-semibold mb-4">My Availability</h3>
-          
-          <div class="mb-4 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <select id="availability-filter-court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All Courts</option>
-                <!-- Court options will be dynamically inserted here -->
-              </select>
-              <input type="date" id="availability-filter-date" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <button id="reset-availability-filters" type="button" class="text-blue-600 hover:text-blue-800">
-                <i class="fas fa-times-circle mr-1"></i> Reset
+          <div class="bg-white rounded-xl shadow-sm py-6 mb-6">
+            <h3 class="font-semibold mb-4">Bulk Add Availability</h3>
+            
+            <form id="bulk-availability-form">
+              <!-- Date Range Selection -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                  <label class="block text-gray-700 font-medium mb-2">Date Range*</label>
+                  <div class="flex space-x-2">
+                    <input type="date" id="bulk-start-date" name="start_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required min="" />
+                    <span class="flex items-center">to</span>
+                    <input type="date" id="bulk-end-date" name="end_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required min="" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="block text-gray-700 font-medium mb-2">Courts*</label>
+                  <select id="bulk-courts" name="courts" multiple class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
+                    <!-- Courts will be populated dynamically -->
+                  </select>
+                  <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                </div>
+                
+                <div>
+                  <label class="block text-gray-700 font-medium mb-2">Session Duration</label>
+                  <select id="bulk-duration" name="duration" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <option value="60">1 hour</option>
+                    <option value="90">1.5 hours</option>
+                    <option value="120">2 hours</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Custom Duration (shown when custom is selected) -->
+              <div id="custom-duration-container" class="hidden mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label class="block text-gray-700 font-medium mb-2">Duration (minutes)*</label>
+                    <input type="number" id="custom-duration" name="custom_duration" min="30" step="15" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="60" />
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Days of Week and Time Range Selection -->
+              <div class="mb-6">
+                <label class="block text-gray-700 font-medium mb-2">Days of Week*</label>
+                <div class="flex flex-wrap gap-2">
+                  <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="checkbox" name="days[]" value="1" class="mr-2"> Monday
+                  </label>
+                  <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="checkbox" name="days[]" value="2" class="mr-2"> Tuesday
+                  </label>
+                  <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="checkbox" name="days[]" value="3" class="mr-2"> Wednesday
+                  </label>
+                  <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="checkbox" name="days[]" value="4" class="mr-2"> Thursday
+                  </label>
+                  <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="checkbox" name="days[]" value="5" class="mr-2"> Friday
+                  </label>
+                  <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="checkbox" name="days[]" value="6" class="mr-2"> Saturday
+                  </label>
+                  <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="checkbox" name="days[]" value="0" class="mr-2"> Sunday
+                  </label>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label class="block text-gray-700 font-medium mb-2">Time Range*</label>
+                  <div class="flex space-x-2 items-center">
+                    <input type="time" id="bulk-start-time" name="start_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required />
+                    <span>to</span>
+                    <input type="time" id="bulk-end-time" name="end_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required />
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="block text-gray-700 font-medium mb-2">Time Slot Increment</label>
+                  <select id="bulk-increment" name="increment" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <option value="60">Every hour</option>
+                    <option value="30">Every 30 minutes</option>
+                    <option value="15">Every 15 minutes</option>
+                    <option value="duration">Based on session duration</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Preview Button and Result Area -->
+              <div class="mb-6">
+                <button type="button" id="preview-availability-btn" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-medium hover:bg-gray-300 mr-2">
+                  Preview Slots
+                </button>
+                <span id="preview-count" class="text-gray-600 hidden">This will create <span id="slot-count" class="font-medium">0</span> availability slots.</span>
+              </div>
+              
+              <div id="preview-container" class="mb-6 hidden">
+                <h4 class="font-medium mb-2">Preview</h4>
+                <div id="preview-slots" class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4"></div>
+              </div>
+              
+              <div class="flex space-x-3">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
+                  Create All Slots
+                </button>
+                <button type="reset" class="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 focus:outline-none">
+                  Reset
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm py-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">My Templates</h3>
+              <button id="create-template-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+                <i class="fas fa-plus mr-2"></i> Create Template
+              </button>
+            </div>
+            
+            <div id="templates-container" class="space-y-4">
+              <!-- Templates will be listed here -->
+              <div class="text-center py-6 text-gray-500">
+                <p>No templates created yet</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm py-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Availability Calendar</h3>
+              <div class="flex space-x-2">
+                <button id="prev-month-btn" class="text-gray-600 hover:text-gray-800">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <span id="calendar-month-year" class="text-gray-700">April 2025</span>
+                <button id="next-month-btn" class="text-gray-600 hover:text-gray-800">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div id="availability-calendar" class="mb-4">
+              <!-- Calendar will be rendered here -->
+            </div>
+            
+            <div class="text-right">
+              <button id="toggle-calendar-view" class="text-blue-600 hover:text-blue-800 text-sm">
+                Switch to Week View
               </button>
             </div>
           </div>
+
+          <!-- Template Modal -->
+          <div id="template-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+            <div class="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full mx-4">
+              <div class="flex justify-between items-center mb-4">
+                <h3 id="template-modal-title" class="text-lg font-semibold">Save As Template</h3>
+                <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-template-modal">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <form id="template-form">
+                <div class="mb-4">
+                  <label for="template-name" class="block text-gray-700 font-medium mb-2">Template Name*</label>
+                  <input type="text" id="template-name" name="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required placeholder="e.g., Regular Weekday Schedule">
+                </div>
+                
+                <div class="mb-4">
+                  <label for="template-description" class="block text-gray-700 font-medium mb-2">Description</label>
+                  <textarea id="template-description" name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Optional description of when to use this template"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                  <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-template-modal">
+                    Cancel
+                  </button>
+                  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+                    Save Template
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <hr class="my-6">
           
-          <div id="availability-container" class="border border-gray-200 rounded-lg overflow-hidden">
-            <!-- Availability items will be dynamically inserted here -->
-            <div class="text-center py-12 text-gray-500">
-              <p>No availability slots added yet</p>
+          <div class="hidden">
+            <h3 class="font-semibold mb-4">My Availability</h3>
+            
+            <div class="mb-4 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <select id="availability-filter-court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">All Courts</option>
+                  <!-- Court options will be dynamically inserted here -->
+                </select>
+                <input type="date" id="availability-filter-date" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="reset-availability-filters" type="button" class="text-blue-600 hover:text-blue-800">
+                  <i class="fas fa-times-circle mr-1"></i> Reset
+                </button>
+              </div>
+            </div>
+            
+            <div id="availability-container" class="border border-gray-200 rounded-lg overflow-hidden">
+              <!-- Availability items will be dynamically inserted here -->
+              <div class="text-center py-12 text-gray-500">
+                <p>No availability slots added yet</p>
+              </div>
             </div>
           </div>
         </div>
@@ -1004,48 +1197,6 @@
             <div class="text-center py-12 text-gray-500">
               <p>No session logs found</p>
             </div>
-          </div>
-        </div>
-
-        <!-- Session Log Modal -->
-        <div id="session-log-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
-          <div class="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4">
-            <div class="flex justify-between items-center mb-4">
-              <h3 id="session-log-modal-title" class="text-lg font-semibold">Session Log Details</h3>
-              <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-session-log-modal">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            
-            <form id="session-log-form">
-              <input type="hidden" id="session-log-id" name="log_id" value="">
-              <input type="hidden" id="session-log-booking-id" name="booking_id" value="">
-              
-              <div class="mb-4">
-                <label for="session-log-title" class="block text-gray-700 font-medium mb-2">Session Title*</label>
-                <input type="text" id="session-log-title" name="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-              </div>
-              
-              <div class="mb-4">
-                <label for="session-log-notes" class="block text-gray-700 font-medium mb-2">Session Notes (Visible to Student)*</label>
-                <textarea id="session-log-notes" name="notes" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
-              </div>
-              
-              <div class="mb-6">
-                <label for="session-log-coach-notes" class="block text-gray-700 font-medium mb-2">Private Coach Notes</label>
-                <textarea id="session-log-coach-notes" name="coach_notes" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                <p class="text-sm text-gray-500 mt-1">These notes are only visible to you</p>
-              </div>
-              
-              <div class="flex justify-end space-x-3">
-                <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-session-log-modal">
-                  Cancel
-                </button>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
-                  Save
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       </div>
@@ -1447,6 +1598,48 @@
         </div>
       </div>
 
+      <!-- Session Log Modal -->
+      <div id="session-log-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 id="session-log-modal-title" class="text-lg font-semibold">Session Log Details</h3>
+            <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-session-log-modal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <form id="session-log-form">
+            <input type="hidden" id="session-log-id" name="log_id" value="">
+            <input type="hidden" id="session-log-booking-id" name="booking_id" value="">
+            
+            <div class="mb-4">
+              <label for="session-log-title" class="block text-gray-700 font-medium mb-2">Session Title*</label>
+              <input type="text" id="session-log-title" name="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            
+            <div class="mb-4">
+              <label for="session-log-notes" class="block text-gray-700 font-medium mb-2">Session Notes (Visible to Student)*</label>
+              <textarea id="session-log-notes" name="notes" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+            </div>
+            
+            <div class="mb-6">
+              <label for="session-log-coach-notes" class="block text-gray-700 font-medium mb-2">Private Coach Notes</label>
+              <textarea id="session-log-coach-notes" name="coach_notes" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              <p class="text-sm text-gray-500 mt-1">These notes are only visible to you</p>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+              <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-session-log-modal">
+                Cancel
+              </button>
+              <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1542,17 +1735,21 @@
           }
         });
         
+        // Get the response data whether it succeeded or failed
+        const data = await response.json();
+        
+        // If response is not ok, throw an error with the actual error message from the server
         if (!response.ok) {
-          throw new Error(`API Error: ${response.statusText}`);
+          // Use the error message from the response if available
+          throw new Error(data.error || response.statusText);
         }
         
-        return await response.json();
+        return data;
       } catch (error) {
         console.error('API Error:', error);
         throw error;
-      }
+      } 
     }
-
     async function getCoachProfile() {
       return fetchAPI('/coach/profile');
     }
@@ -2135,6 +2332,9 @@
         
         // Update dashboard stats
         updateDashboardStats();
+
+        const currentDate = new Date();
+        generateCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
         
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -2984,6 +3184,7 @@
   // Add event listeners for edit buttons
   document.querySelectorAll('.edit-log-btn').forEach(btn => {
     btn.addEventListener('click', function() {
+      console.log('test');
       const logId = this.getAttribute('data-log-id');
       const bookingId = this.getAttribute('data-booking-id');
       
@@ -3302,6 +3503,7 @@
     // Edit log buttons
     document.querySelectorAll('.edit-log-btn').forEach(btn => {
       btn.addEventListener('click', async function() {
+        console.log('test');
         const bookingId = this.getAttribute('data-booking-id');
         const logId = this.getAttribute('data-log-id');
         
@@ -3617,6 +3819,187 @@
         showToast('Error', 'Failed to load earnings data.', 'error');
       }
     }
+
+    // Example API endpoint implementation
+    async function addBulkAvailability(bulkData) {
+      return fetchAPI('/coach/availability/add-bulk', {
+        method: 'POST',
+        body: JSON.stringify(bulkData)
+      });
+    }
+
+    // Example template management
+    async function saveAvailabilityTemplate(templateData) {
+      return fetchAPI('/coach/availability/templates/save', {
+        method: 'POST',
+        body: JSON.stringify(templateData)
+      });
+    }
+
+    async function loadAvailabilityTemplates() {
+      return fetchAPI('/coach/availability/templates');
+    }
+
+    async function applyTemplate(templateId, dateRange) {
+      return fetchAPI('/coach/availability/templates/apply', {
+        method: 'POST',
+        body: JSON.stringify({
+          template_id: templateId,
+          start_date: dateRange.start,
+          end_date: dateRange.end
+        })
+      });
+    }
+
+    // Calculate and preview availability slots
+    function calculateAvailabilitySlots() {
+      const startDate = new Date(document.getElementById('bulk-start-date').value);
+      const endDate = new Date(document.getElementById('bulk-end-date').value);
+      const selectedDays = Array.from(document.querySelectorAll('input[name="days[]"]:checked')).map(cb => parseInt(cb.value));
+      const startTime = document.getElementById('bulk-start-time').value;
+      const endTime = document.getElementById('bulk-end-time').value;
+      const increment = parseInt(document.getElementById('bulk-increment').value);
+      const duration = document.getElementById('bulk-duration').value === 'custom' 
+        ? parseInt(document.getElementById('custom-duration').value) 
+        : parseInt(document.getElementById('bulk-duration').value);
+      
+      // Selected courts
+      const courts = Array.from(document.getElementById('bulk-courts').selectedOptions).map(option => ({
+        id: option.value,
+        name: option.textContent
+      }));
+      
+      const slots = [];
+      
+      // Convert start/end times to minutes since midnight for easier calculation
+      const startMinutes = timeStringToMinutes(startTime);
+      const endMinutes = timeStringToMinutes(endTime);
+      
+      // Generate slots
+      for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+        const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        
+        // Skip if this day of week is not selected
+        if (!selectedDays.includes(dayOfWeek)) continue;
+        
+        // For each court
+        for (const court of courts) {
+          // Generate time slots
+          for (let timeMinutes = startMinutes; timeMinutes + duration <= endMinutes; timeMinutes += increment) {
+            const slotStartTime = minutesToTimeString(timeMinutes);
+            const slotEndTime = minutesToTimeString(timeMinutes + duration);
+            
+            slots.push({
+              date: date.toISOString().split('T')[0],
+              court_id: court.id,
+              court_name: court.name,
+              start_time: slotStartTime,
+              end_time: slotEndTime
+            });
+          }
+        }
+      }
+      
+      return slots;
+    }
+
+    // Helper functions
+    function timeStringToMinutes(timeString) {
+      const [hours, minutes] = timeString.split(':').map(part => parseInt(part));
+      return hours * 60 + minutes;
+    }
+
+    function minutesToTimeString(minutes) {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    }
+
+    // Event listeners
+    document.getElementById('preview-availability-btn').addEventListener('click', function() {
+      const slots = calculateAvailabilitySlots();
+      const previewContainer = document.getElementById('preview-container');
+      const previewSlots = document.getElementById('preview-slots');
+      const slotCount = document.getElementById('slot-count');
+      const previewCount = document.getElementById('preview-count');
+      
+      // Update count
+      slotCount.textContent = slots.length;
+      previewCount.classList.remove('hidden');
+      
+      if (slots.length === 0) {
+        previewContainer.classList.add('hidden');
+        return;
+      }
+      
+      // Show preview
+      previewContainer.classList.remove('hidden');
+      previewSlots.innerHTML = '';
+      
+      // Group by date
+      const slotsByDate = {};
+      slots.forEach(slot => {
+        if (!slotsByDate[slot.date]) {
+          slotsByDate[slot.date] = [];
+        }
+        slotsByDate[slot.date].push(slot);
+      });
+      
+      // Create preview items
+      for (const [date, dateSlots] of Object.entries(slotsByDate)) {
+        const dateHeader = document.createElement('div');
+        dateHeader.className = 'font-medium mb-2 mt-4';
+        dateHeader.textContent = formatDate(date);
+        previewSlots.appendChild(dateHeader);
+        
+        for (const slot of dateSlots) {
+          const slotItem = document.createElement('div');
+          slotItem.className = 'text-sm mb-1 ml-4';
+          slotItem.textContent = `${slot.court_name}: ${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`;
+          previewSlots.appendChild(slotItem);
+        }
+      }
+    });
+
+    // Handle form submission
+    document.getElementById('bulk-availability-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const slots = calculateAvailabilitySlots();
+      if (slots.length === 0) {
+        showToast('Error', 'No availability slots to create. Please check your settings.', 'error');
+        return;
+      }
+      
+      try {
+        showLoading(this);
+        const response = await addBulkAvailability({ slots });
+        hideLoading(this);
+        
+        showToast('Success', `Created ${slots.length} availability slots successfully.`, 'success');
+        this.reset();
+        
+        // Hide preview
+        document.getElementById('preview-container').classList.add('hidden');
+        document.getElementById('preview-count').classList.add('hidden');
+        
+        // Reload availability view
+        loadAvailability();
+      } catch (error) {
+        hideLoading(this);
+        showToast('Error', `Failed to create availability slots: ${error.message}`, 'error');
+      }
+    });
+
+    // Show/hide custom duration field
+    document.getElementById('bulk-duration').addEventListener('change', function() {
+      const customDurationContainer = document.getElementById('custom-duration-container');
+      if (this.value === 'custom') {
+        customDurationContainer.classList.remove('hidden');
+      } else {
+        customDurationContainer.classList.add('hidden');
+      }
+    });
 
     // Create earnings chart
     function createEarningsChart(monthlyData) {
@@ -4050,4 +4433,5 @@
     }
   });
   </script>
+  <script src="{{ url_for('static', filename='js/bulk_availability.js') }}"></script>
 {% endblock %}

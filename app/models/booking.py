@@ -52,3 +52,21 @@ class Booking(db.Model):
     court = db.relationship('Court')
     session_log = db.relationship('SessionLog', backref='booking', uselist=False)
     pricing_plan = db.relationship('PricingPlan')
+
+class AvailabilityTemplate(db.Model):
+    """Model for saved availability templates"""
+    __tablename__ = 'availability_template'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    coach_id = db.Column(db.Integer, db.ForeignKey('coach.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    settings = db.Column(db.JSON, nullable=False)  # Store template settings as JSON
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    coach = db.relationship('Coach', backref=db.backref('availability_templates', lazy=True))
+    
+    def __repr__(self):
+        return f'<AvailabilityTemplate {self.name}>'

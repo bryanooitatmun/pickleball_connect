@@ -54,6 +54,40 @@ class Booking(db.Model):
     session_log = db.relationship('SessionLog', backref='booking', uselist=False)
     pricing_plan = db.relationship('PricingPlan')
 
+    def mark_completed(self):
+        """Mark booking as completed and award connect points"""
+        if self.status != 'completed':
+            self.status = 'completed'
+            
+            # Increment coach's completed sessions count
+            if self.coach:
+                self.coach.sessions_completed += 1
+            
+            db.session.commit()
+        
+        # Award connect points
+        try:
+            from app.models.connect_points import ConnectPoints
+            ConnectPoints.award_booking_points(self.id)
+        except Exception as e:
+            # Log error but don't stop booking completion
+            from flask import current_app
+            current_app.logger.error(f"Error awarding connect points: {str(e)}")
+        
+        return self
+
+    def get_connect_points(self):
+        """Get connect points awarded for this booking"""
+        from app.models.connect_points import ConnectPoints
+        points = ConnectPoints.query.filter_by(
+            booking_id=self.id, 
+            transaction_type='booking_reward'
+        ).first()
+        
+        return points
+        
+
+
 class AvailabilityTemplate(db.Model):
     """Model for saved availability templates"""
     __tablename__ = 'availability_template'

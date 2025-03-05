@@ -945,8 +945,17 @@ def api_complete_session():
         db.session.add(session_log)
     
     try:
-        db.session.commit()
-        return jsonify({'success': True})
+        # Award Connect Points after the booking is successfully completed
+        from app.models.connect_points import ConnectPoints
+        points_transaction = ConnectPoints.award_booking_points(booking_id)
+        
+        # Get the number of points awarded
+        points_awarded = points_transaction.points if points_transaction else 0
+        
+        return jsonify({
+            'success': True,
+            'connect_points_awarded': points_awarded
+        })
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
@@ -995,18 +1004,13 @@ def complete_session(booking_id):
     # Get booking and verify it belongs to this coach
     booking = Booking.query.filter_by(id=booking_id, coach_id=coach.id, status='upcoming').first_or_404()
     
-    # Mark the booking as completed
-    booking.status = 'completed'
-    
-    # Increment the coach's sessions count
-    coach.sessions_completed += 1
+    # Update booking as complete and update states such as points, no. of sessions etc.
+    booking.mark_completed()
     
     db.session.commit()
     
     flash('Session marked as completed')
     return redirect(url_for('coaches.session_detail', booking_id=booking_id))
-
-
 
 
 @bp.route('/courts')
@@ -1343,7 +1347,6 @@ def update_showcase_images():
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error updating images: {str(e)}'}), 500
 
-# Add these routes to app/routes/api.py
 
 @bp.route('/coach/confirm-venue', methods=['POST'])
 @login_required

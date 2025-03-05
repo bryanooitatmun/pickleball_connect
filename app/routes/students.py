@@ -36,6 +36,28 @@ def dashboard():
         completed_bookings=completed_bookings
     )
 
+@bp.route('/connect-points')
+@login_required
+def connect_points():
+    """Student Connect Points page"""
+    if current_user.is_coach:
+        return redirect(url_for('coaches.dashboard'))
+    
+    # Get balance and recent transactions (for initial page load)
+    from app.models.connect_points import ConnectPoints
+    
+    points_balance = ConnectPoints.get_user_balance(current_user.id)
+    
+    # Get recent transactions
+    recent_transactions = ConnectPoints.query.filter_by(user_id=current_user.id) \
+        .order_by(ConnectPoints.created_at.desc()).limit(5).all()
+    
+    return render_template(
+        'students/connect_points.html',
+        points_balance=points_balance,
+        recent_transactions=recent_transactions
+    )
+    
 @bp.route('/api/student/has-previous-bookings/<int:coach_id>', methods=['GET'])
 @login_required
 def has_previous_bookings(coach_id):

@@ -1750,8 +1750,8 @@ def get_student_session_logs():
             'booking_id': log.booking_id,
             'coach_id': log.coach_id,
             'title': log.title,
-            'notes': log.notes,
-            'student_notes': log.notes,  # Assuming there's a student_notes field
+            'coach_notes': log.coach_notes,
+            'notes': log.notes,  # Assuming there's a student_notes field
             'created_at': log.created_at.isoformat(),
             'updated_at': log.updated_at.isoformat() if log.updated_at else None,
             'coach': {
@@ -1795,8 +1795,8 @@ def get_student_session_log(log_id):
         'booking_id': session_log.booking_id,
         'coach_id': session_log.coach_id,
         'title': session_log.title,
-        'notes': session_log.notes,
-        'student_notes': session_log.notes,  # Assuming there's a student_notes field
+        'coach_notes': session_log.coach_notes,
+        'notes': session_log.notes,  # Assuming there's a student_notes field
         'created_at': session_log.created_at.isoformat(),
         'updated_at': session_log.updated_at.isoformat() if session_log.updated_at else None,
         'coach': {

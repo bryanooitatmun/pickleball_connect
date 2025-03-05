@@ -583,253 +583,255 @@
           </div>
         </div>
   
-        <!-- Packages Tab -->
-        <div id="packages-tab" class="tab-content">
-          <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">My Packages</h1>
-            <p class="text-gray-600">View and manage your purchased lesson packages</p>
-          </div>
-  
-          <!-- Active Packages -->
-          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <h3 class="font-semibold mb-4">Active Packages</h3>
-            
-            <div id="active-packages-container">
-              <!-- Active packages will be dynamically inserted here -->
-              <div class="text-center py-12 text-gray-500">
-                <p>No active packages found</p>
-              </div>
-            </div>
-          </div>
-  
-          <!-- Expired Packages -->
-          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <h3 class="font-semibold mb-4">Expired Packages</h3>
-            
-            <div id="expired-packages-container">
-              <!-- Expired packages will be dynamically inserted here -->
-              <div class="text-center py-12 text-gray-500">
-                <p>No expired packages found</p>
-              </div>
-            </div>
-          </div>
+      <!-- Packages Tab -->
+      <div id="packages-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">My Packages</h1>
+          <p class="text-gray-600">View and manage your purchased lesson packages</p>
         </div>
-  
-        <!-- Session Logs Tab -->
-        <div id="session-logs-tab" class="tab-content">
-          <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Session Logs</h1>
-            <p class="text-gray-600">View notes and progress from your coaching sessions</p>
-          </div>
-  
-          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <div class="mb-4 flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <input type="text" id="session-logs-search" placeholder="Search by coach or title" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <select id="session-logs-filter-coach" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="">All Coaches</option>
-                  <!-- Coach options will be dynamically inserted here -->
-                </select>
-              </div>
-              
-              <div>
-                <select id="session-logs-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="date-asc">Date: Oldest First</option>
-                  <option value="date-desc" selected>Date: Newest First</option>
-                </select>
-              </div>
-            </div>
-            
-            <div id="session-logs-container">
-              <!-- Session logs will be dynamically inserted here -->
-              <div class="text-center py-12 text-gray-500">
-                <p>No session logs found</p>
-              </div>
-            </div>
-          </div>
-  
-          <!-- Session Log Modal -->
-          <div id="session-log-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
-            <div class="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4">
-              <div class="flex justify-between items-center mb-4">
-                <h3 id="session-log-modal-title" class="text-lg font-semibold">Session Log Details</h3>
-                <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-session-log-modal">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-              
-              <div class="mb-6">
-                <div class="flex justify-between mb-4">
-                  <div>
-                    <h4 class="font-medium" id="log-coach-name">Coach Name</h4>
-                    <p class="text-gray-500 text-sm" id="log-date">Date</p>
-                  </div>
-                  <div>
-                    <p class="text-gray-600" id="log-court">Court Name</p>
-                  </div>
-                </div>
-                
-                <div class="mb-4">
-                  <h4 class="text-sm font-medium text-gray-700 mb-2">Session Notes</h4>
-                  <div id="log-notes" class="p-4 bg-gray-50 rounded-lg">
-                    Notes will appear here
-                  </div>
-                </div>
-                
-                <div class="mb-4">
-                  <h4 class="text-sm font-medium text-gray-700 mb-2">My Notes</h4>
-                  <textarea id="student-notes" name="student_notes" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Add your personal notes about this session..."></textarea>
-                  <p class="text-sm text-gray-500 mt-1">These notes are only visible to you</p>
-                </div>
-              </div>
-              
-              <div class="flex justify-end space-x-3">
-                <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-session-log-modal">
-                  Close
-                </button>
-                <button id="save-student-notes-btn" type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
-                  Save Notes
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-  
-        <!-- Help Center Tab -->
-        <div id="help-tab" class="tab-content">
-          <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Help Center</h1>
-            <p class="text-gray-600">Find answers to common questions and get support</p>
-          </div>
-  
-          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <h3 class="font-semibold mb-6">Frequently Asked Questions</h3>
-            
-            <div class="space-y-4">
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
-                  <span>How do I book a session with a coach?</span>
-                  <i class="fas fa-chevron-down transform transition-transform"></i>
-                </button>
-                <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
-                  <p>To book a coaching session:</p>
-                  <ol class="list-decimal ml-5 mt-2 space-y-2">
-                    <li>Go to the "Find Coaches" tab in your dashboard</li>
-                    <li>Browse the available coaches and click on one to view their profile</li>
-                    <li>Click the "Book Session" button on the coach's profile</li>
-                    <li>Select an available date, time slot, and court</li>
-                    <li>Review any available pricing plans or discounts</li>
-                    <li>Confirm your booking</li>
-                  </ol>
-                  <p class="mt-2">You'll receive a confirmation email with the details of your booking.</p>
-                </div>
-              </div>
-              
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
-                  <span>How do I cancel a booking?</span>
-                  <i class="fas fa-chevron-down transform transition-transform"></i>
-                </button>
-                <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
-                  <p>To cancel a booking:</p>
-                  <ol class="list-decimal ml-5 mt-2 space-y-2">
-                    <li>Go to the "My Bookings" tab in your dashboard</li>
-                    <li>Find the booking you wish to cancel in the "Upcoming" tab</li>
-                    <li>Click the "Cancel" button on the booking card</li>
-                    <li>Confirm your cancellation in the dialog that appears</li>
-                  </ol>
-                  <p class="mt-2">Please note that cancellation policies may apply. Typically, cancellations made less than 24 hours before the session start time may still be charged.</p>
-                </div>
-              </div>
-              
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
-                  <span>What are session packages?</span>
-                  <i class="fas fa-chevron-down transform transition-transform"></i>
-                </button>
-                <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
-                  <p>Session packages are bundles of multiple coaching sessions purchased at a discounted rate.</p>
-                  <ul class="list-disc ml-5 mt-2 space-y-2">
-                    <li>Packages typically offer a 10-15% discount compared to booking individual sessions</li>
-                    <li>When you book a session, you'll see available package options from the coach</li>
-                    <li>Packages usually have an expiration date (typically 3 months from purchase)</li>
-                    <li>You can view your active packages in the "My Packages" tab</li>
-                    <li>When booking a session with a coach where you have an active package, you'll have the option to use a session from your package</li>
-                  </ul>
-                </div>
-              </div>
-              
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
-                  <span>What are session logs?</span>
-                  <i class="fas fa-chevron-down transform transition-transform"></i>
-                </button>
-                <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
-                  <p>Session logs are records of your completed coaching sessions:</p>
-                  <ul class="list-disc ml-5 mt-2 space-y-2">
-                    <li>After a session is completed, your coach will create a session log</li>
-                    <li>The log includes notes from your coach about what you worked on and your progress</li>
-                    <li>You can view all your session logs in the "Session Logs" tab</li>
-                    <li>You can add your own private notes to each session log to track your progress</li>
-                    <li>Session logs are a great way to track your improvement over time</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-  
-          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <h3 class="font-semibold mb-6">Contact Support</h3>
-            
-            <form id="support-form">
-              <div class="mb-4">
-                <label for="support-subject" class="block text-gray-700 font-medium mb-2">Subject*</label>
-                <input type="text" id="support-subject" name="subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-              </div>
-              
-              <div class="mb-4">
-                <label for="support-message" class="block text-gray-700 font-medium mb-2">Message*</label>
-                <textarea id="support-message" name="message" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
-              </div>
-              
-              <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
-                Submit
-              </button>
-            </form>
-          </div>
-        </div>
-        <!-- Calendar Tab -->
-        <div id="calendar-tab" class="tab-content">
-          <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Calendar View</h1>
-            <p class="text-gray-600">See all your bookings in a calendar format</p>
-          </div>
 
-          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="font-semibold">Bookings Calendar</h3>
-              <div class="flex space-x-2">
-                <button id="cal-prev-month-btn" class="text-gray-600 hover:text-gray-800">
-                  <i class="fas fa-chevron-left"></i>
-                </button>
-                <span id="cal-month-year" class="text-gray-700">April 2025</span>
-                <button id="cal-next-month-btn" class="text-gray-600 hover:text-gray-800">
-                  <i class="fas fa-chevron-right"></i>
-                </button>
-              </div>
-            </div>
-            
-            <div id="bookings-calendar" class="mb-4">
-              <!-- Calendar will be rendered here -->
-            </div>
-            
-            <div class="text-right">
-              <button id="toggle-cal-view" class="text-blue-600 hover:text-blue-800 text-sm">
-                Switch to Week View
-              </button>
+        <!-- Active Packages -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="font-semibold mb-4">Active Packages</h3>
+          
+          <div id="active-packages-container">
+            <!-- Active packages will be dynamically inserted here -->
+            <div class="text-center py-12 text-gray-500">
+              <p>No active packages found</p>
             </div>
           </div>
         </div>
+
+        <!-- Expired Packages -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="font-semibold mb-4">Expired Packages</h3>
+          
+          <div id="expired-packages-container">
+            <!-- Expired packages will be dynamically inserted here -->
+            <div class="text-center py-12 text-gray-500">
+              <p>No expired packages found</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session Logs Tab -->
+      <div id="session-logs-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Session Logs</h1>
+          <p class="text-gray-600">View notes and progress from your coaching sessions</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="mb-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <input type="text" id="session-logs-search" placeholder="Search by coach or title" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <select id="session-logs-filter-coach" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Coaches</option>
+                <!-- Coach options will be dynamically inserted here -->
+              </select>
+            </div>
+            
+            <div>
+              <select id="session-logs-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="date-asc">Date: Oldest First</option>
+                <option value="date-desc" selected>Date: Newest First</option>
+              </select>
+            </div>
+          </div>
+          
+          <div id="session-logs-container">
+            <!-- Session logs will be dynamically inserted here -->
+            <div class="text-center py-12 text-gray-500">
+              <p>No session logs found</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Help Center Tab -->
+      <div id="help-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Help Center</h1>
+          <p class="text-gray-600">Find answers to common questions and get support</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="font-semibold mb-6">Frequently Asked Questions</h3>
+          
+          <div class="space-y-4">
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                <span>How do I book a session with a coach?</span>
+                <i class="fas fa-chevron-down transform transition-transform"></i>
+              </button>
+              <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <p>To book a coaching session:</p>
+                <ol class="list-decimal ml-5 mt-2 space-y-2">
+                  <li>Go to the "Find Coaches" tab in your dashboard</li>
+                  <li>Browse the available coaches and click on one to view their profile</li>
+                  <li>Click the "Book Session" button on the coach's profile</li>
+                  <li>Select an available date, time slot, and court</li>
+                  <li>Review any available pricing plans or discounts</li>
+                  <li>Confirm your booking</li>
+                </ol>
+                <p class="mt-2">You'll receive a confirmation email with the details of your booking.</p>
+              </div>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                <span>How do I cancel a booking?</span>
+                <i class="fas fa-chevron-down transform transition-transform"></i>
+              </button>
+              <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <p>To cancel a booking:</p>
+                <ol class="list-decimal ml-5 mt-2 space-y-2">
+                  <li>Go to the "My Bookings" tab in your dashboard</li>
+                  <li>Find the booking you wish to cancel in the "Upcoming" tab</li>
+                  <li>Click the "Cancel" button on the booking card</li>
+                  <li>Confirm your cancellation in the dialog that appears</li>
+                </ol>
+                <p class="mt-2">Please note that cancellation policies may apply. Typically, cancellations made less than 24 hours before the session start time may still be charged.</p>
+              </div>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                <span>What are session packages?</span>
+                <i class="fas fa-chevron-down transform transition-transform"></i>
+              </button>
+              <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <p>Session packages are bundles of multiple coaching sessions purchased at a discounted rate.</p>
+                <ul class="list-disc ml-5 mt-2 space-y-2">
+                  <li>Packages typically offer a 10-15% discount compared to booking individual sessions</li>
+                  <li>When you book a session, you'll see available package options from the coach</li>
+                  <li>Packages usually have an expiration date (typically 3 months from purchase)</li>
+                  <li>You can view your active packages in the "My Packages" tab</li>
+                  <li>When booking a session with a coach where you have an active package, you'll have the option to use a session from your package</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <button class="faq-toggle w-full text-left px-6 py-4 font-medium flex items-center justify-between focus:outline-none">
+                <span>What are session logs?</span>
+                <i class="fas fa-chevron-down transform transition-transform"></i>
+              </button>
+              <div class="faq-content hidden px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <p>Session logs are records of your completed coaching sessions:</p>
+                <ul class="list-disc ml-5 mt-2 space-y-2">
+                  <li>After a session is completed, your coach will create a session log</li>
+                  <li>The log includes notes from your coach about what you worked on and your progress</li>
+                  <li>You can view all your session logs in the "Session Logs" tab</li>
+                  <li>You can add your own private notes to each session log to track your progress</li>
+                  <li>Session logs are a great way to track your improvement over time</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="font-semibold mb-6">Contact Support</h3>
+          
+          <form id="support-form">
+            <div class="mb-4">
+              <label for="support-subject" class="block text-gray-700 font-medium mb-2">Subject*</label>
+              <input type="text" id="support-subject" name="subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            
+            <div class="mb-4">
+              <label for="support-message" class="block text-gray-700 font-medium mb-2">Message*</label>
+              <textarea id="support-message" name="message" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+            </div>
+            
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
+              Submit
+            </button>
+          </form>
+        </div>
+      </div>
+      <!-- Calendar Tab -->
+      <div id="calendar-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Calendar View</h1>
+          <p class="text-gray-600">See all your bookings in a calendar format</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Bookings Calendar</h3>
+            <div class="flex space-x-2">
+              <button id="cal-prev-month-btn" class="text-gray-600 hover:text-gray-800">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span id="cal-month-year" class="text-gray-700">April 2025</span>
+              <button id="cal-next-month-btn" class="text-gray-600 hover:text-gray-800">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div id="bookings-calendar" class="mb-4">
+            <!-- Calendar will be rendered here -->
+          </div>
+          
+          <div class="text-right">
+            <button id="toggle-cal-view" class="text-blue-600 hover:text-blue-800 text-sm">
+              Switch to Week View
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session Log Modal -->
+      <div id="session-log-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 id="session-log-modal-title" class="text-lg font-semibold">Session Log Details</h3>
+            <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-session-log-modal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <div class="mb-6">
+            <div class="flex justify-between mb-4">
+              <div>
+                <h4 class="font-medium" id="log-coach-name">Coach Name</h4>
+                <p class="text-gray-500 text-sm" id="log-date">Date</p>
+              </div>
+              <div>
+                <p class="text-gray-600" id="log-court">Court Name</p>
+              </div>
+            </div>
+            
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-700 mb-2">Coaches Notes</h4>
+              <div id="log-notes" class="p-4 bg-gray-50 rounded-lg">
+                Notes will appear here
+              </div>
+            </div>
+            
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-700 mb-2">My Notes</h4>
+              <textarea id="student-notes" name="student_notes" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Add your personal notes about this session..."></textarea>
+              <p class="text-sm text-gray-500 mt-1">These notes are only visible to you</p>
+            </div>
+          </div>
+          
+          <div class="flex justify-end space-x-3">
+            <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-session-log-modal">
+              Close
+            </button>
+            <button id="save-student-notes-btn" type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+              Save Notes
+            </button>
+          </div>
+        </div>
+      </div>
+      
       </div>
   </div>
   
@@ -914,6 +916,7 @@
   
       // API call functions
       const API_BASE_URL = '/api';
+      const IS_COACH = false;
   
       async function fetchAPI(endpoint, options = {}) {
         try {
@@ -1186,7 +1189,11 @@
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
             
-            return dateB - dateA;
+            if (document.getElementById(`upcoming-sort`).value === 'date-asc') {
+              return dateA - dateB;
+            } else {
+              return dateB - dateA;
+            }
           });
 
           originalBookingsData.upcoming = upcomingBookings;
@@ -1198,7 +1205,11 @@
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
             
-            return dateB - dateA;
+            if (document.getElementById(`completed-sort`).value === 'date-asc') {
+              return dateA - dateB;
+            } else {
+              return dateB - dateA;
+            }
           });
 
           originalBookingsData.completed = completedBookings;
@@ -1210,7 +1221,11 @@
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
             
-            return dateB - dateA;
+            if (document.getElementById(`cancelled-sort`).value === 'date-asc') {
+              return dateA - dateB;
+            } else {
+              return dateB - dateA;
+            }
           });
 
           originalBookingsData.cancelled = cancelledBookings;
@@ -1439,9 +1454,14 @@
                 <i class="fas fa-map-marker-alt mr-1"></i> ${log.booking.court.name}
               </span>
             </div>
-            
+
             <div class="mt-3">
-              <h4 class="text-sm font-medium text-gray-700">Session Notes</h4>
+              <h4 class="text-sm font-medium text-gray-700">Coaches Notes</h4>
+              <p class="text-gray-600 mt-1">${log.coach_notes || 'No notes added'}</p>
+            </div>      
+
+            <div class="mt-3">
+              <h4 class="text-sm font-medium text-gray-700">My Notes</h4>
               <p class="text-gray-600 mt-1">${log.notes || 'No notes added'}</p>
             </div>
             
@@ -2430,8 +2450,8 @@
         document.getElementById('log-coach-name').textContent = `${logData.coach.user.first_name} ${logData.coach.user.last_name}`;
         document.getElementById('log-date').textContent = `${logDate}, ${startTime} - ${endTime}`;
         document.getElementById('log-court').textContent = logData.booking.court.name;
-        document.getElementById('log-notes').textContent = logData.notes || 'No coach notes for this session.';
-        document.getElementById('student-notes').value = logData.student_notes || '';
+        document.getElementById('log-notes').textContent = logData.coach_notes || 'No coach notes for this session.';
+        document.getElementById('student-notes').value = logData.notes || '';
         
         // Show modal
         modal.classList.remove('hidden');

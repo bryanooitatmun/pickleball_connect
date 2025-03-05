@@ -1,0 +1,191 @@
+<!-- app/templates/coaches/partials/_styles.html -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.active-nav-link {
+  background: linear-gradient(90deg, rgba(65, 88, 208, 0.15) 0%, rgba(200, 80, 192, 0.15) 100%);
+  border-left: 4px solid #4158D0;
+  color: #4158D0;
+  font-weight: 600;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.loading {
+  position: relative;
+}
+
+.loading:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.loading:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  margin-top: -25px;
+  margin-left: -25px;
+  border-radius: 50%;
+  border: 5px solid rgba(65, 88, 208, 0.2);
+  border-top-color: #4158D0;
+  animation: spin 1s linear infinite;
+  z-index: 20;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Image management styles */
+.image-preview {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+}
+
+.profile-image-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.profile-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+  cursor: pointer;
+}
+
+.profile-image-container:hover .profile-image-overlay {
+  opacity: 1;
+}
+
+.showcase-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.showcase-image-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+
+.showcase-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.showcase-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.showcase-image-item:hover .showcase-image-overlay {
+  opacity: 1;
+}
+
+.image-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  aspect-ratio: 1;
+  transition: all 0.2s;
+}
+
+.add-image-placeholder:hover {
+  background-color: #e5e7eb;
+}
+
+.remove-image {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.showcase-image-item:hover .remove-image {
+  opacity: 1;
+}
+
+[data-deleted="true"] img {
+  filter: grayscale(100%);
+  opacity: 0.5;
+}
+</style>

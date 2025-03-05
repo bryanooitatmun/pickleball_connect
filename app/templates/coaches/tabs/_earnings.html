@@ -1,0 +1,105 @@
+<!-- app/templates/coaches/tabs/_earnings.html -->
+<div id="earnings-tab" class="tab-content">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Earnings</h1>
+    <p class="text-gray-600">Track your coaching income and earnings analytics</p>
+  </div>
+
+  <!-- Earnings Overview -->
+  <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <h3 class="font-semibold mb-6">Earnings Summary</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div class="bg-gray-50 rounded-lg p-4">
+        <h4 class="text-gray-500 text-sm font-medium mb-1">Total Earnings</h4>
+        <p id="total-earnings-value" class="text-2xl font-bold">$0.00</p>
+        <p class="text-sm text-gray-500">All time</p>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-4">
+        <h4 class="text-gray-500 text-sm font-medium mb-1">Monthly Average</h4>
+        <p id="monthly-average" class="text-2xl font-bold">$0.00</p>
+        <p class="text-sm text-gray-500">Per month</p>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-4">
+        <h4 class="text-gray-500 text-sm font-medium mb-1">This Month</h4>
+        <p id="this-month-earnings" class="text-2xl font-bold">$0.00</p>
+        <p id="this-month-comparison" class="text-sm text-green-600">+0% vs. last month</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Earnings Chart -->
+  <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="font-semibold">Earnings Over Time</h3>
+      <select id="earnings-time-period" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="6">Last 6 Months</option>
+        <option value="12" selected>Last 12 Months</option>
+        <option value="24">Last 24 Months</option>
+      </select>
+    </div>
+    
+    <div class="h-80">
+      <canvas id="earnings-detailed-chart"></canvas>
+    </div>
+  </div>
+  
+  <!-- Earnings by Court -->
+  <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <h3 class="font-semibold mb-6">Earnings by Court</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="h-64">
+        <canvas id="earnings-by-court-chart"></canvas>
+      </div>
+      <div id="earnings-by-court-list" class="space-y-4">
+        <!-- Court earnings will be dynamically inserted here -->
+        <div class="text-center py-6 text-gray-500">
+          <p>No earnings data available</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Earnings Breakdown -->
+  <div class="bg-white rounded-xl shadow-sm p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="font-semibold">Earnings Breakdown</h3>
+      <div>
+        <select id="earnings-breakdown-period" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="this-month">This Month</option>
+          <option value="last-month">Last Month</option>
+          <option value="this-year" selected>This Year</option>
+          <option value="all-time">All Time</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="border-b border-gray-200">
+            <th class="px-4 py-3 font-medium">Type</th>
+            <th class="px-4 py-3 font-medium">Sessions</th>
+            <th class="px-4 py-3 font-medium">Earnings</th>
+            <th class="px-4 py-3 font-medium">% of Total</th>
+          </tr>
+        </thead>
+        <tbody id="earnings-breakdown-body">
+          <!-- Earnings breakdown will be dynamically inserted here -->
+          <tr>
+            <td colspan="4" class="px-4 py-6 text-center text-gray-500">No earnings data available</td>
+          </tr>
+        </tbody>
+        <tfoot class="font-medium">
+          <tr class="border-t border-gray-200">
+            <td class="px-4 py-3">Total</td>
+            <td id="earnings-breakdown-total-sessions" class="px-4 py-3">0</td>
+            <td id="earnings-breakdown-total-amount" class="px-4 py-3">$0.00</td>
+            <td class="px-4 py-3">100%</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>

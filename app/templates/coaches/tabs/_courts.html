@@ -1,0 +1,23 @@
+<!-- app/templates/coaches/tabs/_courts.html -->
+<div id="courts-tab" class="tab-content">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">My Courts</h1>
+    <p class="text-gray-600">Manage the courts where you provide coaching</p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold">My Courts</h3>
+      <button id="add-court-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none">
+        <i class="fas fa-plus mr-2"></i> Add Court
+      </button>
+    </div>
+    
+    <div id="my-courts-list" class="space-y-4">
+      <!-- Court items will be dynamically inserted here -->
+      <div class="text-center py-6 text-gray-500">
+        <p>No courts added yet</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,38 @@
+<!-- app/templates/coaches/tabs/_session_logs.html -->
+<div id="session-logs-tab" class="tab-content">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Session Logs</h1>
+    <p class="text-gray-600">Track and manage your coaching session logs</p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <div class="mb-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <input type="text" id="session-logs-search" placeholder="Search by student or title" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select id="session-logs-filter-court" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">All Courts</option>
+          <!-- Court options will be dynamically inserted here -->
+        </select>
+      </div>
+      
+      <div>
+        <select id="session-logs-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="date-asc">Date: Oldest First</option>
+          <option value="date-desc" selected>Date: Newest First</option>
+        </select>
+      </div>
+      <div>
+        <button id="reset-session-logs-filters" type="button" class="text-blue-600 hover:text-blue-800">
+          <i class="fas fa-times-circle mr-1"></i> Reset
+        </button>
+      </div>
+    </div>
+    
+    <div id="session-logs-container">
+      <!-- Session logs will be dynamically inserted here -->
+      <div class="text-center py-12 text-gray-500">
+        <p>No session logs found</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,85 @@
+<!-- app/templates/coaches/dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Pickleball Connect - Coach Dashboard{% endblock %}
+
+{% block extra_styles %}
+{% include 'coaches/partials/_styles.html' %}
+{% endblock %}
+
+{% block content %}
+  <!-- Navbar -->
+  {% include 'coaches/partials/_navbar.html' %}
+
+  <!-- Main Content -->
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    {% include 'coaches/partials/_sidebar.html' %}
+
+    <!-- Main Content Area -->
+    <div class="flex-1 p-6">
+      <!-- Mobile Navigation -->
+      <div class="md:hidden mb-6">
+        <select id="mobile-nav" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="dashboard">Dashboard</option>
+          <option value="profile">My Profile</option>
+          <option value="courts">My Courts</option>
+          <option value="bookings">Bookings</option>
+          <option value="availability">Availability</option>
+          <option value="session-logs">Session Logs</option>
+          <option value="pricing">Pricing Plans</option>
+          <option value="earnings">Earnings</option>
+          <option value="help">Help Center</option>
+        </select>
+      </div>
+
+      <!-- Dashboard Tab -->
+      {% include 'coaches/tabs/_dashboard.html' %}
+
+      <!-- Profile Tab -->
+      {% include 'coaches/tabs/_profile.html' %}
+
+      <!-- Courts Tab -->
+      {% include 'coaches/tabs/_courts.html' %}
+
+      <!-- Calendar Tab -->
+      {% include 'coaches/tabs/_calendar.html' %}
+
+      <!-- Bookings Tab -->
+      {% include 'coaches/tabs/_bookings.html' %}
+
+      <!-- Availability Tab -->
+      {% include 'coaches/tabs/_availability.html' %}
+
+      <!-- Session Logs Tab -->
+      {% include 'coaches/tabs/_session_logs.html' %}
+
+      <!-- Pricing Tab -->
+      {% include 'coaches/tabs/_pricing.html' %}
+
+      <!-- Earnings Tab -->
+      {% include 'coaches/tabs/_earnings.html' %}
+
+      <!-- Help Tab -->
+      {% include 'coaches/tabs/_help.html' %}
+    </div>
+  </div>
+
+  <!-- All Modals -->
+  {% include 'coaches/partials/_modals.html' %}
+
+  <!-- Toast Notification -->
+  {% include 'coaches/partials/_toast.html' %}
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+<!-- Main Dashboard JS (which imports all the module JS files) -->
+<script type="module" src="{{ url_for('static', filename='js/coach/dashboard.js') }}"></script>
+
+<!-- Existing Scripts -->
+<script src="{{ url_for('static', filename='js/bulk_availability.js') }}"></script>
+<script src="{{ url_for('static', filename='js/booking_calendar.js') }}"></script>
+{% endblock %}

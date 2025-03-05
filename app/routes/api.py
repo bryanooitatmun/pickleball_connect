@@ -779,7 +779,8 @@ def get_coach_bookings(status):
             'court': {
                 'id': booking.court_id,
                 'name': booking.court.name
-            }
+            },
+            'venue_confirmed': booking.venue_confirmed
         }
         
         # Add session log if it exists
@@ -1291,7 +1292,7 @@ def handle_api_error(error):
             'message': error.description if hasattr(error, 'description') else str(error)
         }), error.code
     return error
-    
+
 @bp.route('/coach/update-showcase-images', methods=['POST'])
 @login_required
 def update_showcase_images():
@@ -1342,6 +1343,104 @@ def update_showcase_images():
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error updating images: {str(e)}'}), 500
 
+# Add these routes to app/routes/api.py
+
+@bp.route('/coach/confirm-venue', methods=['POST'])
+@login_required
+def confirm_venue():
+    """API endpoint for a coach to confirm venue booking"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    booking_id = data.get('booking_id')
+    
+    if not booking_id:
+        return jsonify({'error': 'Booking ID is required'}), 400
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first()
+    
+    # Get booking and verify it belongs to this coach
+    booking = Booking.query.filter_by(
+        id=booking_id, 
+        coach_id=coach.id,
+        status='upcoming'
+    ).first_or_404()
+    
+    # Update booking status to 'venue_confirmed'
+    booking.venue_confirmed = True
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/defer-booking', methods=['POST'])
+@login_required
+def defer_booking():
+    """API endpoint for a coach to reschedule a booking"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    
+    # Validate required fields
+    if not all(key in data for key in ['booking_id', 'date', 'start_time', 'end_time', 'court_id']):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first()
+    
+    # Get booking and verify it belongs to this coach
+    booking = Booking.query.filter_by(
+        id=data.get('booking_id'), 
+        coach_id=coach.id,
+        status='upcoming'
+    ).first_or_404()
+    
+    try:
+        # Parse date and times
+        new_date = datetime.strptime(data.get('date'), '%Y-%m-%d').date()
+        new_start_time = datetime.strptime(data.get('start_time'), '%H:%M').time()
+        new_end_time = datetime.strptime(data.get('end_time'), '%H:%M').time()
+        new_court_id = data.get('court_id')
+        reason = data.get('reason', '')
+        
+        # Check if date is in the future
+        if new_date < datetime.now().date():
+            return jsonify({'error': 'Cannot reschedule to a past date'}), 400
+        
+        # Check if end time is after start time
+        if new_start_time >= new_end_time:
+            return jsonify({'error': 'End time must be after start time'}), 400
+        
+        # Store original values for notification
+        original_date = booking.date
+        original_start_time = booking.start_time
+        original_court_id = booking.court_id
+        
+        # Update booking with new schedule
+        booking.date = new_date
+        booking.start_time = new_start_time
+        booking.end_time = new_end_time
+        booking.court_id = new_court_id
+        booking.venue_confirmed = False  # Reset venue confirmation
+        
+        # Add reschedule history if needed
+        # This would be a good addition to track booking changes
+        
+        db.session.commit()
+        
+        # Here you would typically send an email notification to the student
+        # about the rescheduled session
+        
+        return jsonify({'success': True})
+    except ValueError as e:
+        return jsonify({'error': f'Invalid date or time format: {str(e)}'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @bp.route('/student/profile', methods=['GET'])
 @login_required

@@ -1,3 +1,5 @@
+let currentCalendarView = 'month'; // Track current view state globally
+
 // Add these API functions to your existing API calls
 async function addBulkAvailability(bulkData) {
     return fetchAPI('/coach/availability/add-bulk', {
@@ -132,7 +134,7 @@ async function saveAvailabilityTemplate(templateData) {
   }
   
   // Function to generate calendar view
-  function generateCalendarView(month, year, availabilityData) {
+  function generateAvailabilityCalendarView(month, year, availabilityData) {
     const calendarContainer = document.getElementById('availability-calendar');
     calendarContainer.innerHTML = '';
     
@@ -465,7 +467,7 @@ function initBulkAvailability() {
         const calendarContainer = document.getElementById('availability-calendar');
         if (calendarContainer.innerHTML !== '') {
           const currentDate = new Date();
-          generateCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
+          generateAvailabilityCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
         }
         
       } catch (error) {
@@ -532,82 +534,138 @@ function initBulkAvailability() {
       }
     });
     
+    // Helper function to convert month short name to number (0-based index)
+    function getMonthNumberFromShortName(shortName) {
+        const months = {
+        'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+        'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+        };
+        return months[shortName] || 0;
+    }
+
     // Calendar navigation buttons
     document.getElementById('prev-month-btn').addEventListener('click', async function() {
-      const monthYearText = document.getElementById('calendar-month-year').textContent;
-      const [monthName, year] = monthYearText.split(' ');
-      
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      const monthIndex = monthNames.indexOf(monthName);
-      
-      let newMonth = monthIndex - 1;
-      let newYear = parseInt(year);
-      
-      if (newMonth < 0) {
-        newMonth = 11;
-        newYear -= 1;
-      }
-      
-      generateCalendarView(newMonth, newYear, await getAvailability());
+        if (currentCalendarView === 'month') {
+        // Existing month navigation code
+        const monthYearText = document.getElementById('calendar-month-year').textContent;
+        const [monthName, year] = monthYearText.split(' ');
+        
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthIndex = monthNames.indexOf(monthName);
+        
+        let newMonth = monthIndex - 1;
+        let newYear = parseInt(year);
+        
+        if (newMonth < 0) {
+            newMonth = 11;
+            newYear -= 1;
+        }
+        
+        generateAvailabilityCalendarView(newMonth, newYear, await getAvailability());
+        } else {
+        // New week navigation code
+        const dateRangeText = document.getElementById('calendar-month-year').textContent;
+        const startDateStr = dateRangeText.split(' - ')[0];
+        
+        // Parse the start date
+        const dateParts = startDateStr.split(' ');
+        const month = getMonthNumberFromShortName(dateParts[0]);
+        const day = parseInt(dateParts[1]);
+        const year = new Date().getFullYear(); // Assuming current year if not in the string
+        
+        // Create date object and go back 7 days
+        const currentStartDate = new Date(year, month, day);
+        currentStartDate.setDate(currentStartDate.getDate() - 7);
+        
+        // Generate new week view
+        generateAvailabilityWeekView(await getAvailability(), currentStartDate);
+        }
     });
     
     document.getElementById('next-month-btn').addEventListener('click', async function() {
-      const monthYearText = document.getElementById('calendar-month-year').textContent;
-      const [monthName, year] = monthYearText.split(' ');
-      
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      const monthIndex = monthNames.indexOf(monthName);
-      
-      let newMonth = monthIndex + 1;
-      let newYear = parseInt(year);
-      
-      if (newMonth > 11) {
-        newMonth = 0;
-        newYear += 1;
-      }
-      
-      generateCalendarView(newMonth, newYear, await getAvailability());
+        if (currentCalendarView === 'month') {
+        // Existing month navigation code
+        const monthYearText = document.getElementById('calendar-month-year').textContent;
+        const [monthName, year] = monthYearText.split(' ');
+        
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthIndex = monthNames.indexOf(monthName);
+        
+        let newMonth = monthIndex + 1;
+        let newYear = parseInt(year);
+        
+        if (newMonth > 11) {
+            newMonth = 0;
+            newYear += 1;
+        }
+        
+        generateAvailabilityCalendarView(newMonth, newYear, await getAvailability());
+        } else {
+        // New week navigation code
+        const dateRangeText = document.getElementById('calendar-month-year').textContent;
+        const startDateStr = dateRangeText.split(' - ')[0];
+        
+        // Parse the start date
+        const dateParts = startDateStr.split(' ');
+        const month = getMonthNumberFromShortName(dateParts[0]);
+        const day = parseInt(dateParts[1]);
+        const year = new Date().getFullYear(); // Assuming current year if not in the string
+        
+        // Create date object and go forward 7 days
+        const currentStartDate = new Date(year, month, day);
+        currentStartDate.setDate(currentStartDate.getDate() + 7);
+        
+        // Generate new week view
+        generateAvailabilityWeekView(await getAvailability(), currentStartDate);
+        }
     });
     
     // Toggle between month and week view
     document.getElementById('toggle-calendar-view').addEventListener('click', async function() {
-      const calendarContainer = document.getElementById('availability-calendar');
-      const currentView = this.textContent.includes('Week') ? 'month' : 'week';
+        const calendarContainer = document.getElementById('availability-calendar');
+
+        currentCalendarView = currentCalendarView === 'month' ? 'week' : 'month';
       
-      if (currentView === 'month') {
-        this.textContent = 'Switch to Month View';
-        // Generate week view
-        generateWeekView(await getAvailability());
-      } else {
-        this.textContent = 'Switch to Week View';
-        // Generate month view
-        const currentDate = new Date();
-        generateCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
-      }
+        if (currentCalendarView === 'week') {
+            this.textContent = 'Switch to Month View';
+            // Generate week view
+            generateAvailabilityWeekView(await getAvailability());
+          } else {
+            this.textContent = 'Switch to Week View';
+            // Generate month view
+            const currentDate = new Date();
+            generateAvailabilityCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
+          }
     });
     
     // Initialize calendar view with current month
     document.getElementById('availability-calendar').addEventListener('click', async function() {
       if (this.innerHTML === '') {
         const currentDate = new Date();
-        generateCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
+        generateAvailabilityCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
       }
     });
   }
   
   // Function to generate week view
-  function generateWeekView(availabilityData) {
+  function generateAvailabilityWeekView(availabilityData, customStartDate = null) {
     const calendarContainer = document.getElementById('availability-calendar');
     calendarContainer.innerHTML = '';
     
     // Get current week
     const today = new Date();
-    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    
-    // Calculate start of week (Sunday)
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - currentDay);
-    
+
+      // Use custom start date if provided, otherwise use start of current week
+    let startOfWeek;
+
+    if (customStartDate) {
+        startOfWeek = new Date(customStartDate);
+    } else {
+        const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - currentDay);
+    }
+
     // Calculate end of week (Saturday)
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
@@ -1046,16 +1104,3 @@ function initBulkAvailability() {
     }
   }
   
-  // Update document ready function to initialize bulk availability
-  document.addEventListener('DOMContentLoaded', function() {
-    // Call original setup functions from the existing code
-    setupForms();
-    setupModals();
-    setupBookingTabs();
-    
-    // Initialize bulk availability functionality
-    initBulkAvailability();
-    
-    // Load templates
-    loadAndDisplayTemplates();
-  });

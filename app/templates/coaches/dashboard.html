@@ -284,6 +284,12 @@
               </a>
             </li>
             <li>
+              <a href="#calendar" class="calendar-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-calendar-week w-5"></i>
+                <span>Calendar View</span>
+              </a>
+            </li>
+            <li>
               <a href="#bookings" class="bookings-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-calendar-alt w-5"></i>
                 <span>Bookings</span>
@@ -631,7 +637,7 @@
         </div>
       </div>
 
-      <!-- Other tabs from the original dashboard.html -->
+      <!-- Courts Tab -->
       <div id="courts-tab" class="tab-content">
         <div class="mb-6">
           <h1 class="text-2xl font-bold text-gray-800">My Courts</h1>
@@ -707,6 +713,39 @@
                 Remove
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar Tab -->
+      <div id="calendar-tab" class="tab-content">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Calendar View</h1>
+          <p class="text-gray-600">See all your bookings in a calendar format</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Bookings Calendar</h3>
+            <div class="flex space-x-2">
+              <button id="cal-prev-month-btn" class="text-gray-600 hover:text-gray-800">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span id="cal-month-year" class="text-gray-700">April 2025</span>
+              <button id="cal-next-month-btn" class="text-gray-600 hover:text-gray-800">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div id="bookings-calendar" class="mb-4">
+            <!-- Calendar will be rendered here -->
+          </div>
+          
+          <div class="text-right">
+            <button id="toggle-cal-view" class="text-blue-600 hover:text-blue-800 text-sm">
+              Switch to Week View
+            </button>
           </div>
         </div>
       </div>
@@ -828,55 +867,6 @@
           </div>
         </div>
 
-        <!-- Complete Session Modal -->
-        <div id="complete-session-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
-          <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold">Complete Session</h3>
-              <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-complete-session-modal">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            
-            <p class="mb-6">Are you sure you want to mark this session as completed? A session log will be created for you to add notes.</p>
-            
-            <input type="hidden" id="complete-booking-id" value="">
-            
-            <div class="flex justify-end space-x-3">
-              <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-complete-session-modal">
-                Cancel
-              </button>
-              <button id="confirm-complete-session-btn" type="button" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 focus:outline-none">
-                Complete Session
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Cancel Session Modal -->
-        <div id="cancel-session-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
-          <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold">Cancel Session</h3>
-              <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-cancel-session-modal">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            
-            <p class="mb-6">Are you sure you want to cancel this session? This action cannot be undone.</p>
-            
-            <input type="hidden" id="cancel-booking-id" value="">
-            
-            <div class="flex justify-end space-x-3">
-              <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-cancel-session-modal">
-                Back
-              </button>
-              <button id="confirm-cancel-session-btn" type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
-                Cancel Session
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Availability Tab -->
@@ -1640,6 +1630,137 @@
         </div>
       </div>
 
+      <!-- Confirm Venue Modal -->
+      <div id="confirm-venue-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Confirm Venue Booking</h3>
+            <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-confirm-venue-modal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <p class="mb-6">Have you confirmed the booking with the venue? This confirms you have booked the court using the court fee paid by the student.</p>
+          
+          <input type="hidden" id="confirm-venue-booking-id" value="">
+          
+          <div class="flex justify-end space-x-3">
+            <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-confirm-venue-modal">
+              Not Yet
+            </button>
+            <button id="confirm-venue-btn" type="button" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 focus:outline-none">
+              Yes, Venue Confirmed
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Defer Booking Modal -->
+      <div id="defer-booking-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Reschedule Session</h3>
+            <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-defer-booking-modal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <p class="mb-4">Please select a new date, time, and court for this session:</p>
+          
+          <form id="defer-booking-form">
+            <input type="hidden" id="defer-booking-id" name="booking_id" value="">
+            
+            <div class="mb-4">
+              <label for="defer-date" class="block text-gray-700 font-medium mb-2">New Date*</label>
+              <input type="date" id="defer-date" name="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required min="">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label for="defer-start-time" class="block text-gray-700 font-medium mb-2">New Start Time*</label>
+                <input type="time" id="defer-start-time" name="start_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+              <div>
+                <label for="defer-end-time" class="block text-gray-700 font-medium mb-2">New End Time*</label>
+                <input type="time" id="defer-end-time" name="end_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+            </div>
+            
+            <div class="mb-6">
+              <label for="defer-court" class="block text-gray-700 font-medium mb-2">New Court*</label>
+              <select id="defer-court" name="court_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <option value="">Select a court</option>
+                <!-- Courts will be populated dynamically -->
+              </select>
+            </div>
+            
+            <div class="mb-4">
+              <label for="defer-reason" class="block text-gray-700 font-medium mb-2">Reason for Rescheduling</label>
+              <textarea id="defer-reason" name="reason" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Please provide a reason for rescheduling this session..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+              <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-defer-booking-modal">
+                Cancel
+              </button>
+              <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+                Reschedule Session
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>      
+    
+      <!-- Complete Session Modal -->
+      <div id="complete-session-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Complete Session</h3>
+            <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-complete-session-modal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <p class="mb-6">Are you sure you want to mark this session as completed? A session log will be created for you to add notes.</p>
+          
+          <input type="hidden" id="complete-booking-id" value="">
+          
+          <div class="flex justify-end space-x-3">
+            <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-complete-session-modal">
+              Cancel
+            </button>
+            <button id="confirm-complete-session-btn" type="button" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 focus:outline-none">
+              Complete Session
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cancel Session Modal -->
+      <div id="cancel-session-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Cancel Session</h3>
+            <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-cancel-session-modal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <p class="mb-6">Are you sure you want to cancel this session? This action cannot be undone.</p>
+          
+          <input type="hidden" id="cancel-booking-id" value="">
+          
+          <div class="flex justify-end space-x-3">
+            <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-cancel-session-modal">
+              Back
+            </button>
+            <button id="confirm-cancel-session-btn" type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
+              Cancel Session
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1659,7 +1780,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
 <script>
     // Helper functions
     function formatDate(dateString) {
@@ -1724,6 +1845,7 @@
 
     // API call functions
     const API_BASE_URL = '/api';
+    const IS_COACH = true;
 
     async function fetchAPI(endpoint, options = {}) {
       try {
@@ -2282,6 +2404,21 @@
 
       // Setup booking tabs
       setupBookingTabs();
+
+      // Initialize bulk availability functionality
+      initBulkAvailability();
+      
+      // Load templates
+      loadAndDisplayTemplates();
+
+      // Initialize calendar view
+      initCalendarView();
+      
+      // Add event listener to make calendar tab active if clicked
+      document.querySelector('.calendar-tab')?.addEventListener('click', function() {
+        loadCalendarView();
+      });
+      
     });
 
     // Store original data for filtering
@@ -2334,7 +2471,7 @@
         updateDashboardStats();
 
         const currentDate = new Date();
-        generateCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
+        generateAvailabilityCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
         
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -2383,8 +2520,6 @@
         });
       });
     }
-
-
 
     // Setup form submit handlers
     function setupForms() {
@@ -2734,6 +2869,10 @@
           showToast('Success', 'Session marked as completed.', 'success');
           loadBookings();
           updateDashboardStats();
+
+          // Reload bookings data and update calendar
+          await loadCalendarView();
+
         } catch (error) {
           showToast('Error', 'Failed to complete session. Please try again.', 'error');
         }
@@ -2754,11 +2893,72 @@
           await cancelSession(bookingId);
           showToast('Success', 'Session cancelled successfully.', 'success');
           loadBookings();
+          // Reload bookings data and update calendar
+          await loadCalendarView();
+
         } catch (error) {
           showToast('Error', 'Failed to cancel session. Please try again.', 'error');
         }
       });
       
+    // Confirm venue modal
+    document.querySelectorAll('.close-confirm-venue-modal').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.getElementById('confirm-venue-modal').classList.add('hidden');
+      });
+    });
+    
+    document.getElementById('confirm-venue-btn').addEventListener('click', async function() {
+      const bookingId = document.getElementById('confirm-venue-booking-id').value;
+      
+      try {
+        document.getElementById('confirm-venue-modal').classList.add('hidden');
+        await confirmVenueBooking(bookingId);
+        showToast('Success', 'Venue booking confirmed successfully.', 'success');
+        loadBookings();
+        // Reload bookings data and update calendar
+        await loadCalendarView();
+      } catch (error) {
+        showToast('Error', 'Failed to confirm venue booking. Please try again.', 'error');
+      }
+    });
+    
+    // Defer booking modal
+    document.querySelectorAll('.close-defer-booking-modal').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.getElementById('defer-booking-modal').classList.add('hidden');
+      });
+    });
+    
+    document.getElementById('defer-booking-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      const deferData = {
+        booking_id: formData.get('booking_id'),
+        date: formData.get('date'),
+        start_time: formData.get('start_time'),
+        end_time: formData.get('end_time'),
+        court_id: formData.get('court_id'),
+        reason: formData.get('reason')
+      };
+      
+      try {
+        showLoading(this);
+        await deferBooking(deferData);
+        hideLoading(this);
+        
+        document.getElementById('defer-booking-modal').classList.add('hidden');
+        showToast('Success', 'Session rescheduled successfully.', 'success');
+        loadBookings();
+        // Reload bookings data and update calendar
+        await loadCalendarView();
+      } catch (error) {
+        hideLoading(this);
+        showToast('Error', 'Failed to reschedule session. Please try again.', 'error');
+      }
+    });
+
       // Session log modal
       document.querySelectorAll('.close-session-log-modal').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -2785,6 +2985,52 @@
           showToast('Error', 'Failed to delete pricing plan. Please try again.', 'error');
         }
       });
+    }
+
+    // Function to show complete booking modal
+    function showCompleteBookingModal(bookingId) {
+        document.getElementById('complete-booking-id').value = bookingId;
+        document.getElementById('complete-session-modal').classList.remove('hidden');
+      }
+  
+    // Function to show confirm venue modal
+    function showConfirmVenueModal(bookingId) {
+      document.getElementById('confirm-venue-booking-id').value = bookingId;
+      document.getElementById('confirm-venue-modal').classList.remove('hidden');
+    }
+  
+    // Function to show defer (reschedule) booking modal
+    function showDeferBookingModal(bookingId) {
+      // Set the booking ID
+      document.getElementById('defer-booking-id').value = bookingId;
+      
+      // Set min date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('defer-date').min = today;
+      document.getElementById('defer-date').value = today;
+      
+      // Clear other fields
+      document.getElementById('defer-start-time').value = '';
+      document.getElementById('defer-end-time').value = '';
+      document.getElementById('defer-reason').value = '';
+      
+      // Populate courts dropdown
+      getCourts().then(courts => {
+        const deferCourt = document.getElementById('defer-court');
+        deferCourt.innerHTML = '<option value="">Select a court</option>';
+        
+        courts.forEach(court => {
+          const option = document.createElement('option');
+          option.value = court.id;
+          option.textContent = court.name;
+          deferCourt.appendChild(option);
+        });
+      }).catch(error => {
+        console.error('Error loading courts:', error);
+      });
+      
+      // Show the modal
+      document.getElementById('defer-booking-modal').classList.remove('hidden');
     }
 
     function setupBookingTabs() {
@@ -3129,74 +3375,79 @@
    
     // Display session logs
     function displaySessionLogs(sessionLogs) {
-  const container = document.getElementById('session-logs-container');
-  
-  if (!sessionLogs || sessionLogs.length === 0) {
-    container.innerHTML = `
-      <div class="text-center py-12 text-gray-500">
-        <p>No session logs found</p>
-      </div>
-    `;
-    return;
-  }
-  
-  container.innerHTML = '';
-  
-  sessionLogs.forEach(log => {
-    const logCard = document.createElement('div');
-    logCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
-    
-    // Format date
-    const logDate = formatDate(log.booking.date);
-    
-    logCard.innerHTML = `
-      <div class="flex justify-between">
-        <div>
-          <h3 class="font-semibold">${log.title}</h3>
-          <p class="text-gray-500 text-sm">Session with ${log.student.first_name} ${log.student.last_name}</p>
-        </div>
-        <div class="text-right">
-          <span class="text-gray-600">${logDate}</span>
-        </div>
-      </div>
+      const container = document.getElementById('session-logs-container');
       
-      <div class="mt-2">
-        <span class="inline-block bg-gray-100 text-gray-700 rounded-lg px-2 py-1 text-xs">
-          <i class="fas fa-map-marker-alt mr-1"></i> ${log.booking.court.name}
-        </span>
-      </div>
+      if (!sessionLogs || sessionLogs.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <p>No session logs found</p>
+          </div>
+        `;
+        return;
+      }
       
-      <div class="mt-3">
-        <h4 class="text-sm font-medium text-gray-700">Session Notes</h4>
-        <p class="text-gray-600 mt-1">${log.notes || 'No notes added'}</p>
-      </div>
+      container.innerHTML = '';
       
-      <div class="flex justify-end mt-4">
-        <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-log-id="${log.id}" data-booking-id="${log.booking_id}">
-          Edit Log
-        </button>
-      </div>
-    `;
-    
-    container.appendChild(logCard);
-  });
-  
-  // Add event listeners for edit buttons
-  document.querySelectorAll('.edit-log-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      console.log('test');
-      const logId = this.getAttribute('data-log-id');
-      const bookingId = this.getAttribute('data-booking-id');
+      sessionLogs.forEach(log => {
+        const logCard = document.createElement('div');
+        logCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+        
+        // Format date
+        const logDate = formatDate(log.booking.date);
+        
+        logCard.innerHTML = `
+          <div class="flex justify-between">
+            <div>
+              <h3 class="font-semibold">${log.title}</h3>
+              <p class="text-gray-500 text-sm">Session with ${log.student.first_name} ${log.student.last_name}</p>
+            </div>
+            <div class="text-right">
+              <span class="text-gray-600">${logDate}</span>
+            </div>
+          </div>
+          
+          <div class="mt-2">
+            <span class="inline-block bg-gray-100 text-gray-700 rounded-lg px-2 py-1 text-xs">
+              <i class="fas fa-map-marker-alt mr-1"></i> ${log.booking.court.name}
+            </span>
+          </div>
+          
+          <div class="mt-3">
+            <h4 class="text-sm font-medium text-gray-700">Public Notes</h4>
+            <p class="text-gray-600 mt-1">${log.notes || 'No notes added'}</p>
+          </div>
+
+          <div class="mt-3">
+            <h4 class="text-sm font-medium text-gray-700">Private Coach Notes</h4>
+            <p class="text-gray-600 mt-1">${log.coach_notes || 'No notes added'}</p>
+          </div>          
+          
+          <div class="flex justify-end mt-4">
+            <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-log-id="${log.id}" data-booking-id="${log.booking_id}">
+              Edit Log
+            </button>
+          </div>
+        `;
+        
+        container.appendChild(logCard);
+      });
       
-      openSessionLogModal(bookingId, logId);
-    });
-  });
-  
-  // Update recent logs on dashboard
-  if (sessionLogs.length > 0) {
-    updateRecentLogsList(sessionLogs.slice(0, 3));
-  }
-}
+      // Add event listeners for edit buttons
+      document.querySelectorAll('.edit-log-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          console.log('test');
+          const logId = this.getAttribute('data-log-id');
+          const bookingId = this.getAttribute('data-booking-id');
+          
+          openSessionLogModal(bookingId, logId);
+        });
+      });
+      
+      // Update recent logs on dashboard
+      if (sessionLogs.length > 0) {
+        updateRecentLogsList(sessionLogs.slice(0, 3));
+      }
+    }
     
     // Populate profile form with coach data
     function populateProfileForm(coachData) {
@@ -3352,7 +3603,11 @@
           const dateA = new Date(a.date);
           const dateB = new Date(b.date);
           
-          return dateB - dateA;
+          if (document.getElementById(`upcoming-sort`).value === 'date-asc') {
+            return dateA - dateB;
+          } else {
+            return dateB - dateA;
+          }
         });
 
         originalBookingsData.upcoming = upcomingBookings;
@@ -3365,7 +3620,11 @@
           const dateA = new Date(a.date);
           const dateB = new Date(b.date);
           
-          return dateB - dateA;
+          if (document.getElementById(`completed-sort`).value === 'date-asc') {
+            return dateA - dateB;
+          } else {
+            return dateB - dateA;
+          }
         });
 
         originalBookingsData.completed = completedBookings;
@@ -3379,7 +3638,11 @@
           const dateA = new Date(a.date);
           const dateB = new Date(b.date);
           
-          return dateB - dateA;
+          if (document.getElementById(`cancelled-sort`).value === 'date-asc') {
+            return dateA - dateB;
+          } else {
+            return dateB - dateA;
+          }
         });
 
         originalBookingsData.cancelled = cancelledBookings;
@@ -3396,122 +3659,154 @@
 
     // Display bookings in the respective containers
     function displayBookings(bookings, status) {
-  const container = document.getElementById(`${status}-bookings-container`);
-  
-  if (!bookings || bookings.length === 0) {
-    container.innerHTML = `
-      <div class="text-center py-12 text-gray-500">
-        <p>No ${status} bookings found</p>
-      </div>
-    `;
-    return;
-  }
-  
-  container.innerHTML = '';
-  
-  bookings.forEach(booking => {
-    const bookingCard = document.createElement('div');
-    bookingCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
-    
-    // Add data attributes for DOM filtering if needed later
-    bookingCard.dataset.courtId = booking.court.id;
-    bookingCard.dataset.date = booking.date;
-    
-    // Format date and time
-    const bookingDate = formatDate(booking.date);
-    const startTime = formatTime(booking.start_time);
-    const endTime = formatTime(booking.end_time);
-    
-    let actionsHtml = '';
-    
-    if (status === 'upcoming') {
-      actionsHtml = `
-        <div class="flex space-x-2 mt-4">
-          <button class="bg-green-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-green-700 complete-session-btn" data-booking-id="${booking.id}">
-            Complete
-          </button>
-          <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-session-btn" data-booking-id="${booking.id}">
-            Cancel
-          </button>
-        </div>
-      `;
-    } else if (status === 'completed') {
-      const hasSessionLog = booking.session_log !== null;
+      const container = document.getElementById(`${status}-bookings-container`);
       
-      actionsHtml = `
-        <div class="flex space-x-2 mt-4">
-          <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-booking-id="${booking.id}" data-log-id="${hasSessionLog ? booking.session_log.id : ''}">
-            ${hasSessionLog ? 'Edit Log' : 'Add Log'}
-          </button>
-        </div>
-      `;
-    }
-    
-    bookingCard.innerHTML = `
-      <div class="flex justify-between">
-        <div>
-          <h3 class="font-semibold">${booking.student.first_name} ${booking.student.last_name}</h3>
-          <p class="text-gray-500 text-sm">Student</p>
-        </div>
-        <div class="text-right">
-          <span class="font-semibold">${formatCurrency(booking.price)}</span>
-          <p class="text-gray-500 text-sm">${booking.pricing_plan ? 'Discount Applied' : 'Regular Rate'}</p>
-        </div>
-      </div>
+      if (!bookings || bookings.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <p>No ${status} bookings found</p>
+          </div>
+        `;
+        return;
+      }
       
-      <div class="flex items-center mt-3 text-gray-600">
-        <i class="fas fa-calendar-day mr-2"></i>
-        <span>${bookingDate}</span>
-      </div>
+      container.innerHTML = '';
       
-      <div class="flex items-center mt-1 text-gray-600">
-        <i class="fas fa-clock mr-2"></i>
-        <span>${startTime} - ${endTime}</span>
-      </div>
-      
-      <div class="flex items-center mt-1 text-gray-600">
-        <i class="fas fa-map-marker-alt mr-2"></i>
-        <span>${booking.court.name}</span>
-      </div>
-      
-      ${actionsHtml}
-    `;
-    
-    container.appendChild(bookingCard);
-  });
-  
-  // Add event listeners for action buttons
-  if (status === 'upcoming') {
-    // Complete session buttons
-    document.querySelectorAll('.complete-session-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const bookingId = this.getAttribute('data-booking-id');
-        document.getElementById('complete-booking-id').value = bookingId;
-        document.getElementById('complete-session-modal').classList.remove('hidden');
-      });
-    });
-    
-    // Cancel session buttons
-    document.querySelectorAll('.cancel-session-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const bookingId = this.getAttribute('data-booking-id');
-        document.getElementById('cancel-booking-id').value = bookingId;
-        document.getElementById('cancel-session-modal').classList.remove('hidden');
-      });
-    });
-  } else if (status === 'completed') {
-    // Edit log buttons
-    document.querySelectorAll('.edit-log-btn').forEach(btn => {
-      btn.addEventListener('click', async function() {
-        console.log('test');
-        const bookingId = this.getAttribute('data-booking-id');
-        const logId = this.getAttribute('data-log-id');
+      bookings.forEach(booking => {
+        const bookingCard = document.createElement('div');
+        bookingCard.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
         
-        openSessionLogModal(bookingId, logId);
+        // Add data attributes for DOM filtering if needed later
+        bookingCard.dataset.courtId = booking.court.id;
+        bookingCard.dataset.date = booking.date;
+        
+        // Format date and time
+        const bookingDate = formatDate(booking.date);
+        const startTime = formatTime(booking.start_time);
+        const endTime = formatTime(booking.end_time);
+        
+        // Handle venue confirmation status
+        let venueStatusHtml = '';
+        if (status === 'upcoming') {
+          if (IS_COACH) {
+            venueStatusHtml = booking.venue_confirmed ? 
+              `<div class="mt-3 px-3 py-1.5 rounded-md bg-green-100 border border-green-300 text-green-700 text-sm"><i class="fas fa-check-circle mr-1"></i> Venue Confirmed</div>` : 
+              `<button class="mt-3 px-3 py-1.5 rounded-md bg-red-100 border border-red-300 text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm font-medium flex items-center space-x-1.5 transition-colors confirm-venue-btn" data-booking-id="${booking.id}">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                <span>Please Book and Confirm Venue</span>
+              </button>`;
+          }
+        }
+
+        let actionsHtml = '';
+        
+        if (status === 'upcoming') {
+          actionsHtml = `
+            <div class="flex flex-wrap gap-2 mt-4">
+              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 complete-session-btn" data-booking-id="${booking.id}">
+                <i class="fas fa-check-circle mr-1"></i> Complete
+              </button>
+              <button class="bg-yellow-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-yellow-700 reschedule-session-btn" data-booking-id="${booking.id}">
+                <i class="fas fa-clock mr-1"></i> Reschedule
+              </button>
+              <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-session-btn" data-booking-id="${booking.id}">
+                <i class="fas fa-times-circle mr-1"></i> Cancel
+              </button>
+            </div>
+          `;
+        } 
+        else if (status === 'completed') {
+          const hasSessionLog = booking.session_log !== null;
+          
+          actionsHtml = `
+            <div class="flex space-x-2 mt-4">
+              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-booking-id="${booking.id}" data-log-id="${hasSessionLog ? booking.session_log.id : ''}">
+                <i class="fas fa-clipboard-list mr-1"></i> ${hasSessionLog ? 'Edit Log' : 'Add Log'}
+              </button>
+            </div>
+          `;
+        }
+        
+        bookingCard.innerHTML = `
+          <div class="flex justify-between">
+            <div>
+              <h3 class="font-semibold">${booking.student.first_name} ${booking.student.last_name}</h3>
+              <p class="text-gray-500 text-sm">Student</p>
+            </div>
+            <div class="text-right">
+              <span class="font-semibold">${formatCurrency(booking.price)}</span>
+              <p class="text-gray-500 text-sm">${booking.pricing_plan ? 'Discount Applied' : 'Regular Rate'}</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center mt-3 text-gray-600">
+            <i class="fas fa-calendar-day mr-2"></i>
+            <span>${bookingDate}</span>
+          </div>
+          
+          <div class="flex items-center mt-1 text-gray-600">
+            <i class="fas fa-clock mr-2"></i>
+            <span>${startTime} - ${endTime}</span>
+          </div>
+          
+          <div class="flex items-center mt-1 text-gray-600">
+            <i class="fas fa-map-marker-alt mr-2"></i>
+            <span>${booking.court.name}</span>
+          </div>
+          
+          ${venueStatusHtml}
+          ${actionsHtml}
+        `;
+        
+        container.appendChild(bookingCard);
       });
-    });
-  }
-}
+      
+      // Add event listeners for action buttons
+      if (status === 'upcoming') {
+        // Venue confirmation buttons
+        document.querySelectorAll('.confirm-venue-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const bookingId = this.getAttribute('data-booking-id');
+            showConfirmVenueModal(bookingId);
+          });
+        });
+
+        // Complete session buttons
+        document.querySelectorAll('.complete-session-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const bookingId = this.getAttribute('data-booking-id');
+            showCompleteBookingModal(bookingId);
+          });
+        });
+            
+        // Reschedule session buttons
+        document.querySelectorAll('.reschedule-session-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const bookingId = this.getAttribute('data-booking-id');
+            showDeferBookingModal(bookingId);
+          });
+        });
+        
+        // Cancel session buttons
+        document.querySelectorAll('.cancel-session-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const bookingId = this.getAttribute('data-booking-id');
+            document.getElementById('cancel-booking-id').value = bookingId;
+            document.getElementById('cancel-session-modal').classList.remove('hidden');
+          });
+        });
+      } else if (status === 'completed') {
+        // Edit log buttons
+        document.querySelectorAll('.edit-log-btn').forEach(btn => {
+          btn.addEventListener('click', async function() {
+            const bookingId = this.getAttribute('data-booking-id');
+            const logId = this.getAttribute('data-log-id');
+            
+            openSessionLogModal(bookingId, logId);
+          });
+        });
+      }
+    }
     
     
     // Update upcoming bookings list on dashboard
@@ -3561,7 +3856,11 @@
           const dateA = new Date(a.booking.date);
           const dateB = new Date(b.booking.date);
           
-          return dateB - dateA;
+          if (document.getElementById(`session-logs-sort`).value === 'date-asc') {
+            return dateA - dateB;
+          } else {
+            return dateB - dateA;
+          }
         });
 
         // Store the original data
@@ -4433,5 +4732,7 @@
     }
   });
   </script>
-  <script src="{{ url_for('static', filename='js/bulk_availability.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/bulk_availability.js') }}"></script>
+<script src="{{ url_for('static', filename='js/booking_calendar.js') }}"></script>
 {% endblock %}

@@ -35,6 +35,7 @@ class Booking(db.Model):
     court_fee = db.Column(db.Float, nullable=False, default=0.0)  # Court fee component
     coach_fee = db.Column(db.Float, nullable=False)               # Coach fee component
     status = db.Column(db.String(20), default='upcoming')  # 'upcoming', 'completed', 'cancelled'
+    venue_confirmed = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Track applied discount if any

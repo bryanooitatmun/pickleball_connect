@@ -125,6 +125,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
 // API endpoints
 const getFeeEndpoint = "{{ url_for('admin.get_court_fees', court_id=court.id) }}";
 const addFeeEndpoint = "{{ url_for('admin.add_court_fee', court_id=court.id) }}";
@@ -417,4 +418,5 @@ deleteFeeModal.addEventListener('click', function(e) {
         this.classList.add('hidden');
     }
 });
+</script>
 {% endblock %}

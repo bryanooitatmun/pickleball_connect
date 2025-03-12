@@ -110,6 +110,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
 // Handle delete court modal
 const deleteCourtBtns = document.querySelectorAll('.delete-court-btn');
 const deleteCourtModal = document.getElementById('delete-court-modal');
@@ -140,4 +141,5 @@ deleteCourtModal.addEventListener('click', function(e) {
         this.classList.add('hidden');
     }
 });
+</script>
 {% endblock %}

@@ -37,13 +37,41 @@ def seed_database():
         db.session.query(Coach).delete()
         db.session.query(Court).delete()
         db.session.query(User).delete()
+        db.session.query(PaymentProof).delete()
+        db.session.query(Notification).delete()
+        db.session.query(CoachTag).delete()
+        db.session.query(Tag).delete()
+        db.session.query(AcademyCoach).delete()
+        db.session.query(AcademyManager).delete()
+        db.session.query(Academy).delete()
         db.session.commit()
         
         # Create courts
         courts = [
-            Court(name="City Park Courts", address="123 Park Ave", city="New York", state="NY", zip_code="10001"),
-            Court(name="Downtown Club", address="456 Main St", city="New York", state="NY", zip_code="10002"),
-            Court(name="Riverside Courts", address="789 River Rd", city="New York", state="NY", zip_code="10003")
+            Court(
+                name="City Park Courts", 
+                address="123 Park Ave", 
+                city="New York", 
+                state="NY", 
+                zip_code="10001",
+                booking_link="https://www.courtsite.my/centre/NZX%20Sports%20Arena/clqyw67mx00f207dh8vncjsrg/select?categoryId=clc8tlc5bbt2p6ogmj1xm2h3a"
+            ),
+            Court(
+                name="Downtown Club", 
+                address="456 Main St", 
+                city="New York", 
+                state="NY", 
+                zip_code="10002",
+                booking_link="https://www.courtsite.my/centre/NZX%20Sports%20Arena/clqyw67mx00f207dh8vncjsrg/select?categoryId=clc8tlc5bbt2p6ogmj1xm2h3a"
+            ),
+            Court(
+                name="Riverside Courts", 
+                address="789 River Rd", 
+                city="New York", 
+                state="NY", 
+                zip_code="10003",
+                booking_link="https://www.courtsite.my/centre/NZX%20Sports%20Arena/clqyw67mx00f207dh8vncjsrg/select?categoryId=clc8tlc5bbt2p6ogmj1xm2h3a"
+            )
         ]
         
         db.session.add_all(courts)
@@ -126,6 +154,26 @@ def seed_database():
         jane_profile_pic = f"uploads/profile_pics/sample_profile.png"
         jane.profile_picture = jane_profile_pic
         db.session.add(jane)
+
+        michael = User(
+            first_name="Michael",
+            last_name="Johnson",
+            email="michael@example.com",
+            is_coach=True,
+            is_academy_manager=True,  # This coach is also an academy manager
+            dupr_rating=5.7,
+            location="New York, NY",
+            bio="Michael is a professional pickleball player and coach specializing in doubles strategy."
+        )
+        michael.set_password("password123")
+        
+        # Create profile picture for Michael
+        michael_profile_pic = f"uploads/profile_pics/sample_profile.png"
+        michael.profile_picture = michael_profile_pic
+        db.session.add(michael)
+        
+        # Update admin to be an academy manager as well
+        admin.is_academy_manager = True
         
         # Regular students (5 students)
         students = []
@@ -180,6 +228,16 @@ def seed_database():
         )
         db.session.add(jane_coach)
         
+        michael_coach = Coach(
+            user_id=michael.id,
+            hourly_rate=75.0,
+            sessions_completed=200,
+            biography="Michael is a professional pickleball player who has competed nationally. He specializes in doubles strategy and advanced shot placement.",
+            years_experience=10,
+            specialties="Doubles Strategy, Competition Preparation, Shot Placement"
+        )
+        db.session.add(michael_coach)
+
         db.session.commit()
         
         # Create coach showcase images
@@ -207,6 +265,16 @@ def seed_database():
                 created_at=datetime.now() - timedelta(days=random.randint(1, 30))
             ))
         
+        michael_image_count = random.randint(3, 6)
+        for i in range(michael_image_count):
+            image_path = f"uploads/showcase_images/sample_showcase.png"
+            showcase_images.append(CoachImage(
+                coach_id=michael_coach.id,
+                image_path=image_path,
+                description=f"Coach Michael demonstrating {random.choice(['advanced serves', 'tournament play', 'doubles strategy', 'volley technique', 'third shot drops'])}",
+                created_at=datetime.now() - timedelta(days=random.randint(1, 30))
+            ))
+
         db.session.add_all(showcase_images)
         db.session.commit()
         
@@ -214,9 +282,103 @@ def seed_database():
         for court in courts:
             db.session.add(CoachCourt(coach_id=john_coach.id, court_id=court.id))
             db.session.add(CoachCourt(coach_id=jane_coach.id, court_id=court.id))
+            db.session.add(CoachCourt(coach_id=michael_coach.id, court_id=court.id))
         
         db.session.commit()
         
+        # Create coach profile tags
+        tags = [
+            Tag(name="Beginner Friendly"),
+            Tag(name="Advanced Techniques"),
+            Tag(name="Tournament Preparation"),
+            Tag(name="Doubles Strategy"),
+            Tag(name="Singles Strategy"),
+            Tag(name="Youth Coaching"),
+            Tag(name="Senior Training"),
+            Tag(name="Drill-Focused"),
+            Tag(name="Game-Based Learning"),
+            Tag(name="Video Analysis"),
+            Tag(name="Mental Game"),
+            Tag(name="Footwork Specialist"),
+            Tag(name="Serve & Return")
+        ]
+        db.session.add_all(tags)
+        db.session.commit()
+
+        # Associate tags with coaches
+        # John's tags
+        db.session.add_all([
+            CoachTag(coach_id=john_coach.id, tag_id=tags[0].id),  # Beginner Friendly
+            CoachTag(coach_id=john_coach.id, tag_id=tags[3].id),  # Doubles Strategy
+            CoachTag(coach_id=john_coach.id, tag_id=tags[7].id),  # Drill-Focused
+            CoachTag(coach_id=john_coach.id, tag_id=tags[12].id)  # Serve & Return
+        ])
+        
+        # Jane's tags
+        db.session.add_all([
+            CoachTag(coach_id=jane_coach.id, tag_id=tags[1].id),  # Advanced Techniques
+            CoachTag(coach_id=jane_coach.id, tag_id=tags[2].id),  # Tournament Preparation
+            CoachTag(coach_id=jane_coach.id, tag_id=tags[8].id),  # Game-Based Learning
+            CoachTag(coach_id=jane_coach.id, tag_id=tags[10].id)  # Mental Game
+        ])
+        
+        # Michael's tags
+        db.session.add_all([
+            CoachTag(coach_id=michael_coach.id, tag_id=tags[1].id),  # Advanced Techniques
+            CoachTag(coach_id=michael_coach.id, tag_id=tags[2].id),  # Tournament Preparation
+            CoachTag(coach_id=michael_coach.id, tag_id=tags[3].id),  # Doubles Strategy
+            CoachTag(coach_id=michael_coach.id, tag_id=tags[9].id),  # Video Analysis
+            CoachTag(coach_id=michael_coach.id, tag_id=tags[11].id)  # Footwork Specialist
+        ])
+        
+        db.session.commit()
+
+        # Create academies
+        academies = [
+            Academy(
+                name="Elite Pickleball Academy",
+                description="Premier pickleball training facility with experienced coaches for all skill levels.",
+                website="https://elitepickleball.example.com",
+                private_url_code="ELITE123",
+                logo_path="uploads/academy_logos/elite_logo.png"
+            ),
+            Academy(
+                name="City Pickleball School",
+                description="Community-focused pickleball training for urban players.",
+                website="https://citypickleball.example.com",
+                private_url_code="CITY456",
+                logo_path="uploads/academy_logos/city_logo.png"
+            )
+        ]
+        db.session.add_all(academies)
+        db.session.commit()
+
+        # Associate coaches with academies
+        academy_coaches = [
+            # Elite Academy coaches
+            AcademyCoach(academy_id=academies[0].id, coach_id=john_coach.id, is_active=True),
+            AcademyCoach(academy_id=academies[0].id, coach_id=jane_coach.id, is_active=True),
+            AcademyCoach(academy_id=academies[0].id, coach_id=michael_coach.id, is_active=True),
+            
+            # City Academy coaches
+            AcademyCoach(academy_id=academies[1].id, coach_id=jane_coach.id, is_active=True),
+            AcademyCoach(academy_id=academies[1].id, coach_id=michael_coach.id, is_active=True)
+        ]
+        db.session.add_all(academy_coaches)
+        
+        # Create academy managers
+        academy_managers = [
+            # Elite Academy managers
+            AcademyManager(academy_id=academies[0].id, user_id=admin.id, is_owner=True),
+            AcademyManager(academy_id=academies[0].id, user_id=michael.id, is_owner=False),
+            
+            # City Academy managers
+            AcademyManager(academy_id=academies[1].id, user_id=admin.id, is_owner=False),
+            AcademyManager(academy_id=academies[1].id, user_id=michael.id, is_owner=True)
+        ]
+        db.session.add_all(academy_managers)
+        db.session.commit()
+
         # Create pricing plans for coaches
         # John's pricing plans
         john_plans = [
@@ -283,6 +445,112 @@ def seed_database():
         db.session.add_all(john_plans + jane_plans)
         db.session.commit()
         
+        # Create academy pricing plans
+        print("Creating academy pricing plans...")
+        academy_plans = [
+            AcademyPricingPlan(
+                academy_id=academies[0].id,  # Elite Academy
+                name="Elite 10-Session Package",
+                description="Access to any coach in our Elite Academy for 10 sessions",
+                discount_type="package",
+                sessions_required=10,
+                percentage_discount=20.0,
+                is_active=True
+            ),
+            AcademyPricingPlan(
+                academy_id=academies[0].id,  # Elite Academy
+                name="Elite 5-Session Package",
+                description="Access to any coach in our Elite Academy for 5 sessions",
+                discount_type="package",
+                sessions_required=5,
+                percentage_discount=15.0,
+                is_active=True
+            ),
+            AcademyPricingPlan(
+                academy_id=academies[1].id,  # City Academy
+                name="City Academy 5-Session Package",
+                description="Book 5 sessions with any City Academy coach",
+                discount_type="package",
+                sessions_required=5,
+                percentage_discount=12.0,
+                is_active=True
+            )
+        ]
+        db.session.add_all(academy_plans)
+        db.session.commit()
+
+        # Create academy packages for some students
+        print("Creating academy packages...")
+        for student in students[:3]:  # First 3 students get academy packages
+            # Elite Academy package
+            elite_package = BookingPackage(
+                student_id=student.id,
+                academy_id=academies[0].id,
+                academy_pricing_plan_id=academy_plans[0].id,
+                package_type='academy',
+                total_sessions=10,
+                sessions_booked=random.randint(0, 3),
+                sessions_completed=random.randint(0, 2),
+                total_price=400.0,  # Example price
+                original_price=500.0,
+                discount_amount=100.0,
+                purchase_date=datetime.now() - timedelta(days=random.randint(5, 30)),
+                expires_at=datetime.now() + timedelta(days=random.randint(30, 90))
+            )
+            db.session.add(elite_package)
+            
+            # City Academy package for some students
+            if random.random() < 0.5:
+                city_package = BookingPackage(
+                    student_id=student.id,
+                    academy_id=academies[1].id,
+                    academy_pricing_plan_id=academy_plans[2].id,
+                    package_type='academy',
+                    total_sessions=5,
+                    sessions_booked=random.randint(0, 2),
+                    sessions_completed=random.randint(0, 1),
+                    total_price=220.0,
+                    original_price=250.0,
+                    discount_amount=30.0,
+                    purchase_date=datetime.now() - timedelta(days=random.randint(5, 30)),
+                    expires_at=datetime.now() + timedelta(days=random.randint(30, 90))
+                )
+                db.session.add(city_package)
+
+        db.session.commit()
+
+        # Associate some bookings with academy packages
+        print("Associating bookings with academy packages...")
+        # Get all academy packages
+        academy_packages = BookingPackage.query.filter_by(package_type='academy').all()
+
+        for package in academy_packages:
+            # Find bookings that could be associated with this package
+            # Must be for coaches in the same academy
+            academy_coach_ids = [ac.coach_id for ac in AcademyCoach.query.filter_by(
+                academy_id=package.academy_id,
+                is_active=True
+            ).all()]
+            
+            # Get eligible bookings for this student with these coaches
+            eligible_bookings = [b for b in past_bookings + future_bookings 
+                                if b.student_id == package.student_id 
+                                and b.coach_id in academy_coach_ids
+                                and b.status != 'cancelled']
+            
+            # Randomly select up to sessions_booked bookings
+            if eligible_bookings and package.sessions_booked > 0:
+                num_to_associate = min(package.sessions_booked, len(eligible_bookings))
+                for booking in random.sample(eligible_bookings, num_to_associate):
+                    # Add to the association table
+                    stmt = booking_package_association.insert().values(
+                        package_id=package.id,
+                        booking_id=booking.id
+                    )
+                    db.session.execute(stmt)
+
+        db.session.commit()
+
         # Create availability for the next 14 days
         today = datetime.now().date()
         
@@ -296,12 +564,12 @@ def seed_database():
             
             # John's availability
             john_slots = [
-                (time(9), time(10), courts[0].id),  # Morning at City Park
-                (time(13), time(14), courts[1].id),  # Afternoon at Downtown Club
-                (time(17), time(18), courts[2].id)   # Evening at Riverside
+                (time(9), time(10), courts[0].id, False),   # Morning at City Park - coach books court
+                (time(13), time(14), courts[1].id, True),   # Afternoon at Downtown Club - student books court
+                (time(17), time(18), courts[2].id, False)   # Evening at Riverside - coach books court
             ]
             
-            for start, end, court_id in john_slots:
+            for start, end, court_id, student_books in john_slots:
                 is_booked = random.random() < 0.3  # 30% chance of being booked
                 availability = Availability(
                     coach_id=john_coach.id,
@@ -309,18 +577,19 @@ def seed_database():
                     date=current_date,
                     start_time=start,
                     end_time=end,
-                    is_booked=is_booked
+                    is_booked=is_booked,
+                    student_books_court=student_books  # New field
                 )
                 db.session.add(availability)
             
             # Jane's availability
             jane_slots = [
-                (time(10), time(11), courts[0].id),  # Morning at City Park
-                (time(14), time(15), courts[1].id),  # Afternoon at Downtown Club
-                (time(18), time(19), courts[2].id)   # Evening at Riverside
+                (time(10), time(11), courts[0].id, True),   # Morning at City Park - student books court
+                (time(14), time(15), courts[1].id, False),  # Afternoon at Downtown Club - coach books court
+                (time(18), time(19), courts[2].id, True)    # Evening at Riverside - student books court
             ]
             
-            for start, end, court_id in jane_slots:
+            for start, end, court_id, student_books in jane_slots:
                 is_booked = random.random() < 0.3  # 30% chance of being booked
                 availability = Availability(
                     coach_id=jane_coach.id,
@@ -328,7 +597,28 @@ def seed_database():
                     date=current_date,
                     start_time=start,
                     end_time=end,
-                    is_booked=is_booked
+                    is_booked=is_booked,
+                    student_books_court=student_books  # New field
+                )
+                db.session.add(availability)
+                
+            # Michael's availability
+            michael_slots = [
+                (time(8), time(9), courts[0].id, False),   # Early morning at City Park - coach books court
+                (time(12), time(13), courts[1].id, True),  # Noon at Downtown Club - student books court
+                (time(16), time(17), courts[2].id, True)   # Afternoon at Riverside - student books court
+            ]
+            
+            for start, end, court_id, student_books in michael_slots:
+                is_booked = random.random() < 0.3  # 30% chance of being booked
+                availability = Availability(
+                    coach_id=michael_coach.id,
+                    court_id=court_id,
+                    date=current_date,
+                    start_time=start,
+                    end_time=end,
+                    is_booked=is_booked,
+                    student_books_court=student_books  # New field
                 )
                 db.session.add(availability)
         
@@ -414,6 +704,27 @@ def seed_database():
                     db.session.add(booking)
                     db.session.flush()  # Get the booking ID
                     
+                    # Create payment proofs for uploaded/approved status
+                    if coaching_payment_status in ['uploaded', 'approved']:
+                        proof = PaymentProof(
+                            booking_id=booking.id,
+                            image_path=f"uploads/payment_proofs/booking_{booking.id}_coaching_{int(datetime.now().timestamp())}.png",
+                            proof_type='coaching',
+                            status=coaching_payment_status,
+                            notes="Payment received via Venmo" if coaching_payment_status == 'approved' else None
+                        )
+                        db.session.add(proof)
+                    
+                    if court_payment_required and court_payment_status in ['uploaded', 'approved']:
+                        proof = PaymentProof(
+                            booking_id=booking.id,
+                            image_path=f"uploads/payment_proofs/booking_{booking.id}_court_{int(datetime.now().timestamp())}.png",
+                            proof_type='court',
+                            status=court_payment_status,
+                            notes="Court reservation confirmed" if court_payment_status == 'approved' else None
+                        )
+                        db.session.add(proof)
+
                     # Create a session log for this booking
                     session_log = SessionLog(
                         booking_id=booking.id,
@@ -497,11 +808,160 @@ def seed_database():
                 discount_percentage=discount_percentage
             )
             
+            # Create payment proofs for uploaded/approved status
+            if coaching_payment_status in ['uploaded', 'approved']:
+                proof = PaymentProof(
+                    booking_id=booking.id,
+                    image_path=f"uploads/payment_proofs/booking_{booking.id}_coaching_{int(datetime.now().timestamp())}.png",
+                    proof_type='coaching',
+                    status=coaching_payment_status,
+                    notes="Payment received via Venmo" if coaching_payment_status == 'approved' else None
+                )
+                db.session.add(proof)
+            
+            if court_payment_required and court_payment_status in ['uploaded', 'approved']:
+                proof = PaymentProof(
+                    booking_id=booking.id,
+                    image_path=f"uploads/payment_proofs/booking_{booking.id}_court_{int(datetime.now().timestamp())}.png",
+                    proof_type='court',
+                    status=court_payment_status,
+                    notes="Court reservation confirmed" if court_payment_status == 'approved' else None
+                )
+                db.session.add(proof)
+
             db.session.add(booking)
             future_bookings.append(booking)
         
         db.session.commit()
+
+        # Create notifications
+        notifications = []
         
+        # Notification types to create
+        notification_types = [
+            'booking_created',
+            'booking_cancelled',
+            'booking_rescheduled',
+            'payment_proof_uploaded',
+            'payment_approved',
+            'session_completed',
+            'rating_received',
+            'court_booking_reminder',
+            'academy_added'
+        ]
+
+        # Create notifications for coaches
+        for coach_user in [john, jane, michael]:
+            for i in range(5):  # 5 notifications per coach
+                notif_type = random.choice(notification_types)
+                title = f"{notif_type.replace('_', ' ').title()}"
+                
+                if notif_type == 'booking_created':
+                    message = f"New booking created by {random.choice(students).first_name} for {(today + timedelta(days=random.randint(1, 14))).strftime('%Y-%m-%d')}"
+                elif notif_type == 'payment_proof_uploaded':
+                    message = f"Payment proof uploaded by {random.choice(students).first_name} for your session"
+                else:
+                    message = f"Notification about {notif_type.replace('_', ' ')}"
+                
+                notification = Notification(
+                    user_id=coach_user.id,
+                    title=title,
+                    message=message,
+                    notification_type=notif_type,
+                    related_id=random.randint(1, 100),  # Random ID for testing
+                    is_read=random.choice([True, False]),
+                    created_at=datetime.now() - timedelta(hours=random.randint(1, 72))
+                )
+                notifications.append(notification)
+        
+        # Create notifications for students
+        for student in students:
+            for i in range(3):  # 3 notifications per student
+                notif_type = random.choice(notification_types)
+                title = f"{notif_type.replace('_', ' ').title()}"
+                
+                if notif_type == 'booking_confirmed':
+                    message = f"Your booking with Coach {random.choice([john, jane, michael]).first_name} has been confirmed"
+                elif notif_type == 'payment_approved':
+                    message = f"Your payment proof has been approved by Coach {random.choice([john, jane, michael]).first_name}"
+                else:
+                    message = f"Notification about {notif_type.replace('_', ' ')}"
+                
+                notification = Notification(
+                    user_id=student.id,
+                    title=title,
+                    message=message,
+                    notification_type=notif_type,
+                    related_id=random.randint(1, 100),  # Random ID for testing
+                    is_read=random.choice([True, False]),
+                    created_at=datetime.now() - timedelta(hours=random.randint(1, 72))
+                )
+                notifications.append(notification)
+        
+        # Create notifications for academy managers
+        for manager in [admin, michael]:
+            for i in range(4):  # 4 notifications per manager
+                notif_type = random.choice(['academy_added', 'coach_joined', 'analytics_report', 'academy_booking'])
+                title = f"{notif_type.replace('_', ' ').title()}"
+                
+                if notif_type == 'coach_joined':
+                    message = f"Coach {random.choice([john, jane]).first_name} has joined your academy"
+                elif notif_type == 'analytics_report':
+                    message = f"Weekly academy performance report is now available"
+                else:
+                    message = f"Notification about {notif_type.replace('_', ' ')}"
+                
+                notification = Notification(
+                    user_id=manager.id,
+                    title=title,
+                    message=message,
+                    notification_type=notif_type,
+                    related_id=random.choice([academies[0].id, academies[1].id]),
+                    is_read=random.choice([True, False]),
+                    created_at=datetime.now() - timedelta(hours=random.randint(1, 72))
+                )
+                notifications.append(notification)
+        
+        db.session.add_all(notifications)
+        db.session.commit()
+        
+        # Create directories for uploads if they don't exist
+        os.makedirs(os.path.join(app.static_folder, 'uploads/payment_proofs'), exist_ok=True)
+        os.makedirs(os.path.join(app.static_folder, 'uploads/academy_logos'), exist_ok=True)
+        
+        # Generate placeholder images for payment proofs
+        for proof in PaymentProof.query.all():
+            # Extract filename from path
+            filename = proof.image_path.split('/')[-1]
+            filepath = os.path.join(app.static_folder, 'uploads/payment_proofs', filename)
+            
+            try:
+                # Create a simple colored image
+                img = Image.new('RGB', (300, 300), color = (73, 109, 137))
+                img.save(filepath)
+            except Exception as e:
+                print(f"Error creating placeholder image: {e}")
+                # Fallback to simple file creation
+                with open(filepath, 'w') as f:
+                    f.write('Placeholder for payment proof image')
+        
+        # Generate placeholder images for academy logos
+        for academy in Academy.query.all():
+            if academy.logo_path:
+                # Extract filename from path
+                filename = academy.logo_path.split('/')[-1]
+                filepath = os.path.join(app.static_folder, 'uploads/academy_logos', filename)
+                
+                try:
+                    # Create a simple colored image
+                    img = Image.new('RGB', (200, 200), color = (137, 73, 109))
+                    img.save(filepath)
+                except Exception as e:
+                    print(f"Error creating placeholder image: {e}")
+                    # Fallback to simple file creation
+                    with open(filepath, 'w') as f:
+                        f.write('Placeholder for academy logo')     
+
         # Create coach ratings
         for coach in [john_coach, jane_coach]:
             # Each coach gets rated by 70% of their past students

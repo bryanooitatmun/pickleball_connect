@@ -22,6 +22,7 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     is_temporary = db.Column(db.Boolean, default=False)  # Flag for temporary users
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_academy_manager = db.Column(db.Boolean, default=False)
     
     # Bookings as a student
     bookings = db.relationship('Booking', 
@@ -50,6 +51,11 @@ class User(UserMixin, db.Model):
     
     def __repr__(self):
         return f'<User {self.email}>'
+
+    @property
+    def unread_notifications_count(self):
+        from app.models.notification import Notification
+        return Notification.query.filter_by(user_id=self.id, is_read=False).count()
 
 @login.user_loader
 def load_user(user_id):

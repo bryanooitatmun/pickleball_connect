@@ -20,6 +20,7 @@ class Coach(db.Model):
     bookings = db.relationship('Booking', foreign_keys='Booking.coach_id', backref='coach', lazy='dynamic')
     session_logs = db.relationship('SessionLog', backref='coach', lazy='dynamic')
     pricing_plans = db.relationship('PricingPlan', back_populates='coach', lazy='dynamic')
+    tags = db.relationship('Tag', secondary='coach_tag', backref='coaches', lazy='dynamic')
     
     def __repr__(self):
         return f'<Coach {self.user.first_name} {self.user.last_name}>'

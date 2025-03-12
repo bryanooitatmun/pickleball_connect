@@ -17,3 +17,14 @@ class Config:
     SHOWCASE_IMAGES_FOLDER = os.path.join(UPLOAD_FOLDER, 'showcase_images')
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload size
+
+   # Email configuration
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.example.com')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@pickleballconnect.com')
+    
+    # Payment proof upload directory
+    PAYMENT_PROOFS_DIR = os.path.join(UPLOAD_FOLDER, '/payment_proofs')

@@ -86,6 +86,7 @@ def add_court():
         zip_code = request.form.get('zip_code')
         indoor = request.form.get('indoor') == 'on'
         number_of_courts = request.form.get('number_of_courts', type=int)
+        booking_link = request.form.get('booking_link')
         
         if not name:
             flash('Court name is required.', 'error')
@@ -98,7 +99,8 @@ def add_court():
             state=state,
             zip_code=zip_code,
             indoor=indoor,
-            number_of_courts=number_of_courts
+            number_of_courts=number_of_courts,
+            booking_link=booking_link
         )
         
         try:
@@ -127,6 +129,7 @@ def edit_court(court_id):
         court.zip_code = request.form.get('zip_code')
         court.indoor = request.form.get('indoor') == 'on'
         court.number_of_courts = request.form.get('number_of_courts', type=int)
+        court.booking_link = request.form.get('booking_link')
         
         try:
             db.session.commit()

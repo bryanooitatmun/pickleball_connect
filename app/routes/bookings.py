@@ -13,6 +13,7 @@ from app.forms.booking import BookingForm
 from datetime import datetime, timedelta
 from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
+from app.utils.email import send_coach_booking_notification
 
 import uuid 
 
@@ -266,6 +267,9 @@ def create_booking():
                 # Mark availability as booked
                 availability.is_booked = True
                 
+                court_payment_required = availability.student_books_court
+                court_payment_status = 'pending' if court_payment_required else 'not_required'
+
                 # Create booking
                 booking = Booking(
                     student_id=user_id,
@@ -282,7 +286,9 @@ def create_booking():
                     status='upcoming',
                     pricing_plan_id=pricing_plan_id if pricing_plan else None,
                     discount_percentage=discount_percentage,
-                    discount_amount=discount_amount
+                    discount_amount=discount_amount,
+                    court_payment_required=court_payment_required,
+                    court_payment_status=court_payment_status
                 )
                 
                 db.session.add(booking)
@@ -300,6 +306,16 @@ def create_booking():
         # Generate confirmation number
         confirmation_number = f"PBC-{uuid.uuid4().hex[:8].upper()}"
         
+        notification = Notification(
+            user_id=coach.user_id,
+            title="New booking",
+            message=f"New booking on {booking.date.strftime('%Y-%m-%d')} at {booking.start_time.strftime('%I:%M %p')}",
+            notification_type="booking",
+            related_id=booking.id
+        )
+        db.session.add(notification)
+        send_coach_booking_notification(booking)
+
         # Commit all changes
         db.session.commit()
         
@@ -323,7 +339,7 @@ def book_session(coach_id):
         return redirect(url_for('main.index'))
     
     coach = Coach.query.get_or_404(coach_id)
-    
+
     # Get coach courts
     coach_courts = CoachCourt.query.filter_by(coach_id=coach_id).all()
     courts = Court.query.filter(Court.id.in_([cc.court_id for cc in coach_courts])).all()
@@ -341,12 +357,36 @@ def book_session(coach_id):
     ).first()
     
     # Get active packages this student has purchased
-    active_packages = BookingPackage.query.filter(
+    coach_packages = BookingPackage.query.filter(
         BookingPackage.student_id == current_user.id,
         BookingPackage.coach_id == coach_id,
         BookingPackage.sessions_booked < BookingPackage.total_sessions,
         (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
     ).all()
+    
+    # Get academy packages that can be used with this coach
+    academy_packages = []
+    
+    # Get academies this coach belongs to
+    coach_academies = AcademyCoach.query.filter_by(
+        coach_id=coach_id,
+        is_active=True
+    ).all()
+    
+    academy_ids = [ca.academy_id for ca in coach_academies]
+    
+    if academy_ids:
+        # Find packages for these academies
+        academy_packages = BookingPackage.query.filter(
+            BookingPackage.student_id == current_user.id,
+            BookingPackage.academy_id.in_(academy_ids),
+            BookingPackage.package_type == 'academy',
+            BookingPackage.sessions_booked < BookingPackage.total_sessions,
+            (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
+        ).all()
+    
+    # Combine all available packages
+    available_packages = coach_packages + academy_packages
     
     if request.method == 'POST':
         # Get form data
@@ -453,6 +493,11 @@ def book_session(coach_id):
                     
                     # If using a package
                     if applied_package:
+                        # Check if this package can be used with this coach
+                        if not applied_package.can_use_for_coach(coach_id):
+                            flash('This package cannot be used with this coach.', 'error')
+                            return redirect(url_for('bookings.book_session', coach_id=coach_id))
+
                         # If we still have sessions in the package
                         if applied_package.sessions_booked < applied_package.total_sessions:
                             booking_price = 0  # Package already paid for
@@ -530,7 +575,7 @@ def book_session(coach_id):
         courts=courts, 
         pricing_plans=pricing_plans,
         is_first_time=is_first_time,
-        active_packages=active_packages
+        active_packages=available_packages
     )
 
 @bp.route('/purchase-package/<int:coach_id>/<int:plan_id>', methods=['GET', 'POST'])

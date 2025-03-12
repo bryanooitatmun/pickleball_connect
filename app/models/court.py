@@ -11,6 +11,7 @@ class Court(db.Model):
     zip_code = db.Column(db.String(16))
     indoor = db.Column(db.Boolean, default=False)
     number_of_courts = db.Column(db.Integer, default=1)
+    booking_link = db.Column(db.String(256))  # URL to booking page for this court
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):

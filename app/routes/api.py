@@ -280,7 +280,8 @@ def add_availability():
             date=date_obj,
             start_time=start_time,
             end_time=end_time,
-            is_booked=False
+            is_booked=False,
+            student_books_court=data.get('student_books_court', False)  # New field
         )
         
         db.session.add(availability)
@@ -357,7 +358,8 @@ def add_bulk_availability():
                     date=date_obj,
                     start_time=start_time,
                     end_time=end_time,
-                    is_booked=False
+                    is_booked=False,
+                    student_books_court=slot_data.get('student_books_court', False)  # New field
                 )
                 
                 db.session.add(availability)
@@ -1017,7 +1019,18 @@ def complete_session(booking_id):
 def get_courts():
     """API endpoint to get all courts"""
     courts = Court.query.all()
-    courts_data = [{'id': court.id, 'name': court.name, 'address':court.address, 'city':court.city, 'state':court.state, 'zip_code':court.zip_code} for court in courts]
+    courts_data = [
+        {
+            'id': court.id, 
+            'name': court.name, 
+            'address': court.address, 
+            'city': court.city, 
+            'state': court.state, 
+            'zip_code': court.zip_code,
+            'booking_link': court.booking_link
+        } 
+        for court in courts
+    ]
     return jsonify(courts_data)
 
 @bp.route('/coach/update-profile-picture', methods=['POST'])
@@ -1433,6 +1446,17 @@ def defer_booking():
         # Add reschedule history if needed
         # This would be a good addition to track booking changes
         
+        notification = Notification(
+            user_id=booking.student_id,
+            title="Booking rescheduled",
+            message=f"Your booking has been rescheduled to {booking.date.strftime('%Y-%m-%d')} at {booking.start_time.strftime('%I:%M %p')}",
+            notification_type="reschedule",
+            related_id=booking.id
+        )
+        db.session.add(notification)
+
+        send_booking_rescheduled_notification(booking, original_date, original_start_time, original_court_id)
+        
         db.session.commit()
         
         # Here you would typically send an email notification to the student
@@ -1675,6 +1699,17 @@ def cancel_student_booking():
         if availability:
             availability.is_booked = False
     
+    notification = Notification(
+        user_id=coach.user_id if cancelled_by == 'student' else booking.student_id,
+        title="Booking cancelled",
+        message=f"Booking on {booking.date.strftime('%Y-%m-%d')} has been cancelled",
+        notification_type="cancellation",
+        related_id=booking.id
+    )
+    db.session.add(notification)
+
+    send_booking_cancelled_notification(booking, cancelled_by, reason)
+
     try:
         db.session.commit()
         return jsonify({'success': True})
@@ -1889,3 +1924,446 @@ def submit_support_request():
         'success': True,
         'message': 'Your support request has been submitted.'
     })
+
+
+@bp.route('/upload-payment-proof/<int:booking_id>', methods=['POST'])
+@login_required
+def upload_payment_proof(booking_id):
+    """API endpoint for student to upload payment proof"""
+    if current_user.is_coach:
+        return jsonify({'error': 'Coaches cannot upload payment proofs'}), 403
+    
+    # Get booking and verify it belongs to this student
+    booking = Booking.query.filter_by(
+        id=booking_id,
+        student_id=current_user.id
+    ).first_or_404()
+    
+    # Check if proof type is provided
+    proof_type = request.form.get('proof_type')
+    if proof_type not in ['coaching', 'court']:
+        return jsonify({'error': 'Invalid proof type'}), 400
+    
+    # Check if file is provided
+    if 'proof_image' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['proof_image']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    # Save the image
+    try:
+        from app.utils.file_utils import save_uploaded_file
+        
+        # Create directory path for payment proofs
+        import os
+        proof_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'payment_proofs')
+        os.makedirs(proof_dir, exist_ok=True)
+        
+        # Save file with unique name
+        filename = f"booking_{booking_id}_{proof_type}_{int(datetime.now().timestamp())}"
+        image_path = save_uploaded_file(file, proof_dir, filename)
+        
+        if not image_path:
+            return jsonify({'error': 'Failed to save file'}), 500
+        
+        # Create payment proof record
+        proof = PaymentProof(
+            booking_id=booking_id,
+            image_path=image_path,
+            proof_type=proof_type,
+            status='pending'
+        )
+        
+        db.session.add(proof)
+        
+        # Update booking status
+        if proof_type == 'coaching':
+            booking.coaching_payment_status = 'uploaded'
+        elif proof_type == 'court':
+            booking.court_payment_status = 'uploaded'
+        
+        db.session.commit()
+        
+        # Create notification for coach
+        from app.models.notification import Notification
+        
+        notification = Notification(
+            user_id=booking.coach.user_id,
+            title=f"Payment proof uploaded",
+            message=f"Student has uploaded {proof_type} payment proof for booking on {booking.date.strftime('%Y-%m-%d')}",
+            notification_type='payment_proof',
+            related_id=booking.id
+        )
+        
+        db.session.add(notification)
+        db.session.commit()
+        
+        # Send email notification
+        from app.utils.email import send_coach_payment_proof_notification
+        send_coach_payment_proof_notification(booking, proof_type)
+        
+        return jsonify({
+            'success': True,
+            'message': f'{proof_type.capitalize()} payment proof uploaded successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/payment-proofs/<int:booking_id>')
+@login_required
+def get_payment_proofs(booking_id):
+    """API endpoint for users to view payment proofs for a booking"""
+    
+    # Get booking and verify it belongs to this coach
+    booking = Booking.query.filter_by(
+        id=booking_id,
+    ).first_or_404()
+    
+    # Get payment proofs
+    proofs = PaymentProof.query.filter_by(booking_id=booking_id).all()
+    
+    result = []
+    for proof in proofs:
+        result.append({
+            'id': proof.id,
+            'proof_type': proof.proof_type,
+            'status': proof.status,
+            'image_url': url_for('static', filename=proof.image_path),
+            'notes': proof.notes,
+            'created_at': proof.created_at.isoformat()
+        })
+    
+    return jsonify(result)
+
+@bp.route('/coach/update-payment-status', methods=['POST'])
+@login_required
+def update_payment_status():
+    """API endpoint for coach to approve/reject payment proof"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Only coaches can update payment status'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    data = request.get_json()
+    proof_id = data.get('proof_id')
+    status = data.get('status')  # 'approved' or 'rejected'
+    notes = data.get('notes', '')
+    
+    if not proof_id or status not in ['approved', 'rejected']:
+        return jsonify({'error': 'Invalid parameters'}), 400
+    
+    # Get payment proof
+    proof = PaymentProof.query.get_or_404(proof_id)
+    
+    # Verify booking belongs to this coach
+    booking = Booking.query.get_or_404(proof.booking_id)
+    if booking.coach_id != coach.id:
+        return jsonify({'error': 'Payment proof does not belong to your booking'}), 403
+    
+    # Update proof status
+    proof.status = status
+    proof.notes = notes
+    
+    # Update booking status
+    if proof.proof_type == 'coaching':
+        booking.coaching_payment_status = status
+    elif proof.proof_type == 'court':
+        booking.court_payment_status = status
+    
+    db.session.commit()
+    
+    # Create notification for student
+    from app.models.notification import Notification
+    
+    notification = Notification(
+        user_id=booking.student_id,
+        title=f"Payment proof {status}",
+        message=f"Your {proof.proof_type} payment proof has been {status} by the coach",
+        notification_type='payment_status',
+        related_id=booking.id
+    )
+    
+    if notes:
+        notification.message += f": {notes}"
+    
+    db.session.add(notification)
+    db.session.commit()
+    
+    # Send email notification
+    from app.utils.email import send_student_payment_status_notification
+    send_student_payment_status_notification(booking, proof.proof_type, status, notes)
+    
+    return jsonify({
+        'success': True,
+        'message': f'Payment proof {status}'
+    })
+
+# app/routes/api.py
+@bp.route('/coach/tags')
+@login_required
+def get_coach_tags():
+    """API endpoint to get coach's tags"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Get coach's tags
+    coach_tags = CoachTag.query.filter_by(coach_id=coach.id).all()
+    
+    result = []
+    for ct in coach_tags:
+        result.append({
+            'id': ct.tag.id,
+            'name': ct.tag.name
+        })
+    
+    return jsonify(result)
+
+@bp.route('/coach/tags/add', methods=['POST'])
+@login_required
+def add_coach_tag():
+    """API endpoint to add a tag to a coach's profile"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    tag_name = data.get('tag_name')
+    
+    if not tag_name:
+        return jsonify({'error': 'Tag name is required'}), 400
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Find or create tag
+    tag = Tag.query.filter_by(name=tag_name).first()
+    if not tag:
+        tag = Tag(name=tag_name)
+        db.session.add(tag)
+        db.session.flush()  # Get ID without committing
+    
+    # Check if coach already has this tag
+    existing = CoachTag.query.filter_by(
+        coach_id=coach.id,
+        tag_id=tag.id
+    ).first()
+    
+    if existing:
+        return jsonify({'error': 'Tag already associated with your profile'}), 400
+    
+    # Create coach-tag association
+    coach_tag = CoachTag(
+        coach_id=coach.id,
+        tag_id=tag.id
+    )
+    
+    db.session.add(coach_tag)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'tag_id': tag.id,
+        'tag_name': tag.name
+    })
+
+@bp.route('/coach/tags/remove', methods=['POST'])
+@login_required
+def remove_coach_tag():
+    """API endpoint to remove a tag from a coach's profile"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    tag_id = data.get('tag_id')
+    
+    if not tag_id:
+        return jsonify({'error': 'Tag ID is required'}), 400
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Find coach-tag association
+    coach_tag = CoachTag.query.filter_by(
+        coach_id=coach.id,
+        tag_id=tag_id
+    ).first_or_404()
+    
+    db.session.delete(coach_tag)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+@bp.route('/api/tags')
+def get_all_tags():
+    """API endpoint to get all available tags"""
+    tags = Tag.query.all()
+    
+    result = []
+    for tag in tags:
+        result.append({
+            'id': tag.id,
+            'name': tag.name
+        })
+    
+    return jsonify(result)
+
+
+@bp.route('/notifications')
+@login_required
+def get_notifications():
+    """API endpoint to get user notifications"""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    
+    # Get paginated notifications
+    notifications = Notification.query.filter_by(user_id=current_user.id) \
+        .order_by(Notification.created_at.desc()) \
+        .paginate(page=page, per_page=per_page)
+    
+    result = []
+    for notification in notifications.items:
+        result.append({
+            'id': notification.id,
+            'title': notification.title,
+            'message': notification.message,
+            'notification_type': notification.notification_type,
+            'related_id': notification.related_id,
+            'is_read': notification.is_read,
+            'created_at': notification.created_at.isoformat()
+        })
+    
+    return jsonify({
+        'notifications': result,
+        'total': notifications.total,
+        'pages': notifications.pages,
+        'current_page': page,
+        'has_next': notifications.has_next,
+        'has_prev': notifications.has_prev,
+        'unread_count': current_user.unread_notifications_count
+    })
+
+@bp.route('/notifications/mark-read', methods=['POST'])
+@login_required
+def mark_notification_read():
+    """API endpoint to mark notification as read"""
+    data = request.get_json()
+    notification_id = data.get('notification_id')
+    
+    if not notification_id:
+        return jsonify({'error': 'Notification ID is required'}), 400
+    
+    notification = Notification.query.filter_by(
+        id=notification_id,
+        user_id=current_user.id
+    ).first_or_404()
+    
+    notification.is_read = True
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'unread_count': current_user.unread_notifications_count
+    })
+
+@bp.route('/notifications/mark-all-read', methods=['POST'])
+@login_required
+def mark_all_notifications_read():
+    """API endpoint to mark all notifications as read"""
+    Notification.query.filter_by(
+        user_id=current_user.id,
+        is_read=False
+    ).update({'is_read': True})
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'unread_count': 0
+    })
+
+@bp.route('/academy/<int:academy_id>/pricing-plans')
+@login_required
+def get_academy_pricing_plans(academy_id):
+    """API endpoint to get academy pricing plans"""
+    plans = AcademyPricingPlan.query.filter_by(
+        academy_id=academy_id,
+        is_active=True
+    ).all()
+    
+    result = []
+    for plan in plans:
+        plan_data = {
+            'id': plan.id,
+            'name': plan.name,
+            'description': plan.description,
+            'discount_type': plan.discount_type,
+            'sessions_required': plan.sessions_required,
+            'percentage_discount': plan.percentage_discount,
+            'fixed_discount': plan.fixed_discount,
+            'first_time_only': plan.first_time_only,
+            'valid_from': plan.valid_from.isoformat() if plan.valid_from else None,
+            'valid_to': plan.valid_to.isoformat() if plan.valid_to else None
+        }
+        result.append(plan_data)
+    
+    return jsonify(result)
+
+@bp.route('/academy/<int:academy_id>/packages/purchase', methods=['POST'])
+@login_required
+def purchase_academy_package(academy_id):
+    """API endpoint to purchase an academy package"""
+    data = request.get_json()
+    academy_plan_id = data.get('plan_id')
+    
+    if not academy_plan_id:
+        return jsonify({'error': 'Plan ID is required'}), 400
+    
+    # Get the academy and plan
+    academy = Academy.query.get_or_404(academy_id)
+    pricing_plan = AcademyPricingPlan.query.get_or_404(academy_plan_id)
+    
+    # Calculate package price
+    # This is simplified - you'll need to calculate based on average coach rates
+    # or set a fixed academy rate
+    base_rate = 50.0  # Example base rate
+    total_sessions = pricing_plan.sessions_required
+    original_price = base_rate * total_sessions
+    
+    discount_amount = None
+    if pricing_plan.percentage_discount:
+        discount_amount = original_price * (pricing_plan.percentage_discount / 100)
+    elif pricing_plan.fixed_discount:
+        discount_amount = pricing_plan.fixed_discount
+    
+    total_price = original_price - (discount_amount or 0)
+    
+    # Create the package
+    package = BookingPackage(
+        student_id=current_user.id,
+        academy_id=academy_id,
+        academy_pricing_plan_id=academy_plan_id,
+        package_type='academy',
+        total_sessions=total_sessions,
+        sessions_booked=0,
+        sessions_completed=0,
+        total_price=total_price,
+        original_price=original_price,
+        discount_amount=discount_amount,
+        expires_at=datetime.now() + timedelta(days=90)
+    )
+    
+    try:
+        db.session.add(package)
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'package_id': package.id,
+            'total_sessions': package.total_sessions,
+            'total_price': package.total_price
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500

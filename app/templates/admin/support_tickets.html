@@ -262,6 +262,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
 // Tab switching
 const openTabBtn = document.getElementById('open-tab-btn');
 const inProgressTabBtn = document.getElementById('in-progress-tab-btn');
@@ -350,4 +351,5 @@ if (ticketSort) {
         console.log('Sort tickets by:', this.value);
     });
 }
+</script>
 {% endblock %}

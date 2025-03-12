@@ -7,6 +7,9 @@ from config import Config
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+from flask_mail import Mail
+
+mail = Mail()
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -20,6 +23,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
+    mail.init_app(app)  # Initialize mail
     
     from app.routes.main import bp as main_bp
     from app.routes.auth import bp as auth_bp
@@ -30,7 +34,8 @@ def create_app(config_class=Config):
     from app.routes.api import bp as api_bp
     from app.routes.admin_connect_points import bp as admin_connect_points_bp
     from app.routes.connect_points import bp as connect_points_bp
-
+    from app.routes.academy import bp as academy_bp
+    
     app.register_blueprint(api_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -40,7 +45,8 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(admin_connect_points_bp, url_prefix='/admin/connect-points')
     app.register_blueprint(connect_points_bp, url_prefix='/api/connect-points')
-    
+    app.register_blueprint(academy_bp)
+
     # Ensure the upload directories exist
     os.makedirs(app.config['PROFILE_PICS_FOLDER'], exist_ok=True)
     os.makedirs(app.config['SHOWCASE_IMAGES_FOLDER'], exist_ok=True)

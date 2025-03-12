@@ -11,7 +11,8 @@ class Availability(db.Model):
     end_time = db.Column(db.Time, nullable=False)
     is_booked = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    student_books_court = db.Column(db.Boolean, default=False)  # Toggle: True if student books court, False if coach does
+
     court = db.relationship('Court')
     
     __table_args__ = (
@@ -36,6 +37,10 @@ class Booking(db.Model):
     coach_fee = db.Column(db.Float, nullable=False)               # Coach fee component
     status = db.Column(db.String(20), default='upcoming')  # 'upcoming', 'completed', 'cancelled'
     venue_confirmed = db.Column(db.Boolean, default=False)
+    coaching_payment_required = db.Column(db.Boolean, default=True)
+    coaching_payment_status = db.Column(db.String(20), default='pending')  # 'pending', 'uploaded', 'approved', 'rejected'
+    court_payment_required = db.Column(db.Boolean, default=False)  # Set to True if student books court
+    court_payment_status = db.Column(db.String(20), default='not_required')  # 'not_required', 'pending', 'uploaded', 'approved', 'rejected'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Track applied discount if any

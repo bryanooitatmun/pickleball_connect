@@ -7,8 +7,6 @@ class Tag(db.Model):
     name = db.Column(db.String(50), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    def __repr__(self):
-        return f'<Tag {self.name}>'
 
 class CoachTag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -25,5 +23,3 @@ class CoachTag(db.Model):
         db.UniqueConstraint('coach_id', 'tag_id', name='unique_coach_tag'),
     )
     
-    def __repr__(self):
-        return f'<CoachTag {self.coach_id} - {self.tag_id}>'

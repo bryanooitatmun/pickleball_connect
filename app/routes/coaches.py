@@ -8,8 +8,11 @@ from app.models.court import Court, CoachCourt
 from app.models.booking import Availability, Booking
 from app.models.session_log import SessionLog
 from app.models.rating import CoachRating
+from app.models.tag import Tag, CoachTag
 from app.models.pricing import PricingPlan  # Add missing import for PricingPlan
 from app.forms.coach import CoachProfileForm, AvailabilityForm, SessionLogForm  # Also add the missing form import
+from app.models.academy import Academy, AcademyCoach, AcademyManager, AcademyCoachRole
+from app.models.academy_pricing import AcademyPricingPlan
 from datetime import datetime, timedelta
 from sqlalchemy import func, or_, extract  # Add missing import for or_
 
@@ -39,7 +42,9 @@ def get_coaches():
     court_id = request.args.get('court_id', type=int)
     sort_by = request.args.get('sort_by', 'name')  # Default sort by name
     sort_direction = request.args.get('sort_direction', 'asc')
-    
+
+    academy_id = request.args.get('academy_id', -1, type=int)
+
     # Base query - join Coach with User to access user details
     query = db.session.query(
         Coach, 
@@ -52,6 +57,26 @@ def get_coaches():
         CoachRating, Coach.id == CoachRating.coach_id
     )
     
+    academy = None
+    academy_coaches = None
+    coach_ids = None
+
+    if academy_id != -1:
+        # Verify academy exists
+        academy = Academy.query.get_or_404(academy_id)
+        
+        # Get academy coaches
+        academy_coaches = AcademyCoach.query.filter_by(
+            academy_id=academy_id,
+            is_active=True
+        ).all()
+
+        coach_ids = [ac.coach_id for ac in academy_coaches]
+        
+        query = query.filter(
+            Coach.id.in_(coach_ids)
+        )
+
     # Apply filters
     if search_query:
         search_term = f"%{search_query}%"
@@ -101,13 +126,156 @@ def get_coaches():
     # Execute query
     coaches_data = query.all()
     
+
+
+    # Add academy pricing plans data at the response level, not per coach
+    academy_data = None
+
+    if academy_id != -1 and academy:
+        # Get academy pricing plans
+        pricing_plans = []
+        academy_plans = AcademyPricingPlan.query.filter_by(
+            academy_id=academy.id,
+            is_active=True
+        ).all()
+        
+        for plan in academy_plans:
+            pricing_plans.append({
+                'id': plan.id,
+                'name': plan.name,
+                'description': plan.description,
+                'discount_type': plan.discount_type,
+                'sessions_required': plan.sessions_required,
+                'percentage_discount': plan.percentage_discount,
+                'fixed_discount': plan.fixed_discount,
+                'valid_from': plan.valid_from.isoformat() if plan.valid_from else None,
+                'valid_to': plan.valid_to.isoformat() if plan.valid_to else None
+            })
+        
+        # Get academy roles with proper ordering for display
+        coaches_by_role = []
+        role_mapping = {}
+        role_ordering = {}
+        
+        for ac in academy_coaches:
+            coach = Coach.query.get(ac.coach_id)
+            if coach and coach.user:
+                coach_info = {
+                    'id': coach.id,
+                    'name': f"{coach.user.first_name} {coach.user.last_name}",
+                    'profile_picture': coach.user.profile_picture
+                }
+                
+                # Determine role and ordering
+                if ac.role:
+                    role_key = ac.role.name.lower().replace(' ', '_')
+                    role_name = ac.role.name
+                    ordering = ac.role.ordering
+                else:
+                    # Fallback based on experience
+                    if coach.years_experience >= 10:
+                        role_key = 'head_coach'
+                        role_name = 'Head Coach'
+                        ordering = 10
+                    elif coach.years_experience >= 5:
+                        role_key = 'senior_coach'
+                        role_name = 'Senior Coach'
+                        ordering = 20
+                    else:
+                        role_key = 'coach'
+                        role_name = 'Coach'
+                        ordering = 30
+                
+                # Initialize the role category if needed
+                if role_key not in role_mapping:
+                    role_mapping[role_key] = {
+                        'role_name': role_name,
+                        'ordering': ordering,
+                        'coaches': []
+                    }
+                    role_ordering[role_key] = ordering
+                
+                role_mapping[role_key]['coaches'].append(coach_info)
+        
+        # Sort and convert to list
+        for role_key in sorted(role_mapping.keys(), key=lambda x: role_ordering.get(x, 100)):
+            coaches_by_role.append({
+                'role_key': role_key,
+                'role_name': role_mapping[role_key]['role_name'],
+                'ordering': role_mapping[role_key]['ordering'],
+                'coaches': role_mapping[role_key]['coaches']
+            })
+            
+        # Get academy tags
+        academy_tags = []
+        if hasattr(academy, 'tags'):
+            for tag in academy.tags:
+                academy_tags.append({
+                    'id': tag.id,
+                    'name': tag.name
+                })
+        
+        # Create the academy data object
+        academy_data = {
+            'id': academy.id,
+            'name': academy.name,
+            'description': academy.description,
+            'logo_path': academy.logo_path,
+            'website': academy.website,
+            'private_url_code': academy.private_url_code,
+            'coaches_count': len(coach_ids),
+            'coaches_by_role': coaches_by_role,
+            'tags': academy_tags,
+            'pricing_plans': pricing_plans
+        }
+        
     # Format response data
     result = []
+
     for coach, user, avg_rating, rating_count in coaches_data:
         # Get coach's courts
         courts = Court.query.join(CoachCourt).filter(CoachCourt.coach_id == coach.id).all()
         court_names = [court.name for court in courts]
         
+        # Get coach's tags
+        tags = []
+        coach_tags = CoachTag.query.filter_by(coach_id=coach.id).all()
+        for ct in coach_tags:
+            tag = Tag.query.get(ct.tag_id)
+            if tag:
+                tags.append({
+                    'id': tag.id,
+                    'name': tag.name
+                })
+
+        # Get coach's academies
+        academy_affiliations = []
+        academy_coaches = AcademyCoach.query.filter_by(
+            coach_id=coach.id,
+            is_active=True
+        ).all()
+        
+        for ac in academy_coaches:
+            academy = Academy.query.get(ac.academy_id)
+            if academy:
+                role_name = "Coach"
+                if ac.role:
+                    role_name = ac.role.name
+                if academy_id == -1:
+                    academy_affiliations.append({
+                        'id': academy.id,
+                        'name': academy.name,
+                        'private_url_code': academy.private_url_code,
+                        'role': role_name
+                    })
+                elif academy_id == academy.id:
+                    academy_affiliations.append({
+                        'id': academy.id,
+                        'name': academy.name,
+                        'private_url_code': academy.private_url_code,
+                        'role': role_name
+                    })
+
         coach_data = {
             'id': coach.id,
             'first_name': user.first_name,
@@ -119,11 +287,16 @@ def get_coaches():
             'rating_count': rating_count,
             'courts': court_names,
             'biography': coach.biography,
-            'profile_picture': user.profile_picture
+            'profile_picture': user.profile_picture,
+            'tags': tags,
+            'academy_affiliations': academy_affiliations
         }
         result.append(coach_data)
     
-    return jsonify(result)
+    return jsonify({
+        'coaches': result,
+        'academy': academy_data
+    })
 
 
 @bp.route('/api/coach/<int:coach_id>')

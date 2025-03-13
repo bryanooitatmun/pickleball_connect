@@ -22,23 +22,99 @@ def academy_manager_required(f):
     return decorated_function
 
 @bp.route('/<string:private_url_code>')
-def academy_landing(private_url_code):
-    """Public academy landing page with coach list"""
+def academy_page(private_url_code):
+    """Academy-specific page to show its coaches"""
+    # Fetch academy data
     academy = Academy.query.filter_by(private_url_code=private_url_code).first_or_404()
     
-    # Get all active academy coaches
+    # Get academy coaches
     academy_coaches = AcademyCoach.query.filter_by(
         academy_id=academy.id,
         is_active=True
     ).all()
     
     coach_ids = [ac.coach_id for ac in academy_coaches]
-    coaches = Coach.query.filter(Coach.id.in_(coach_ids)).all()
+    coaches_count = len(coach_ids)
+    
+    # Get roles with ordering information
+    coaches_by_role = []
+    
+    # Group coaches by role
+    role_mapping = {}
+    role_ordering = {}
+    
+    for ac in academy_coaches:
+        coach = Coach.query.get(ac.coach_id)
+        if coach and coach.user:
+            coach_info = {
+                'id': coach.id,
+                'name': f"{coach.user.first_name} {coach.user.last_name}",
+                'profile_picture': coach.user.profile_picture
+            }
+            
+            # Determine role and ordering
+            if ac.role:
+                role_key = ac.role.name.lower().replace(' ', '_')
+                role_name = ac.role.name
+                ordering = ac.role.ordering
+            else:
+                # Fallback based on experience
+                if coach.years_experience >= 10:
+                    role_key = 'head_coach'
+                    role_name = 'Head Coach'
+                    ordering = 10
+                elif coach.years_experience >= 5:
+                    role_key = 'senior_coach'
+                    role_name = 'Senior Coach'
+                    ordering = 20
+                else:
+                    role_key = 'coach'
+                    role_name = 'Coach'
+                    ordering = 30
+            
+            # Initialize the role category if needed
+            if role_key not in role_mapping:
+                role_mapping[role_key] = {
+                    'role_name': role_name,
+                    'ordering': ordering,
+                    'coaches': []
+                }
+                role_ordering[role_key] = ordering
+            
+            role_mapping[role_key]['coaches'].append(coach_info)
+    
+    # Sort and convert to list
+    for role_key in sorted(role_mapping.keys(), key=lambda x: role_ordering.get(x, 100)):
+        coaches_by_role.append({
+            'role_key': role_key,
+            'role_name': role_mapping[role_key]['role_name'],
+            'coaches': role_mapping[role_key]['coaches']
+        })
+    
+    # Get academy tags
+    academy_tags = []
+    for tag in academy.tags:
+        academy_tags.append({
+            'id': tag.id,
+            'name': tag.name
+        })
+    
+    # Prepare the context
+    academy_data = {
+        'id': academy.id,
+        'name': academy.name,
+        'description': academy.description,
+        'logo_path': academy.logo_path,
+        'website': academy.website,
+        'coaches_count': coaches_count,
+        'coaches_by_role': coaches_by_role,
+        'tags': academy_tags
+    }
     
     return render_template(
-        'academy/landing.html',
-        academy=academy,
-        coaches=coaches
+        'coaches/index.html',  # Use the same template
+        page_type='academy_page',  # Set page type
+        academy=academy_data
     )
 
 @bp.route('/dashboard')

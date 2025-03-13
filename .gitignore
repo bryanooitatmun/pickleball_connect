@@ -47,3 +47,4 @@ instance/
 /static/uploads
 /logs
 .env
+/app/static/uploads

@@ -13,6 +13,11 @@ from app.models.pricing import PricingPlan
 from app.models.rating import CoachRating
 from app.models.package import BookingPackage, booking_package_association
 from app.models.support import SupportTicket, TicketResponse
+from app.models.academy import Academy, AcademyCoach, AcademyManager
+from app.models.academy_pricing import AcademyPricingPlan  # New model
+from app.models.payment import PaymentProof
+from app.models.notification import Notification
+from app.models.tag import Tag, CoachTag
 from datetime import datetime, timedelta, time
 from sqlalchemy import inspect
 from functools import wraps
@@ -509,7 +514,15 @@ def table_view(table):
         'coach_court': CoachCourt,
         'booking_package': BookingPackage,
         'support_ticket': SupportTicket,
-        'ticket_response': TicketResponse
+        'ticket_response': TicketResponse,
+        'academy': Academy,
+        'academy_coach': AcademyCoach,
+        'academy_manager': AcademyManager,
+        'coach_tag': CoachTag,
+        'payment_proof': PaymentProof,
+        'notification': Notification,
+        'academy_pricing_plan': AcademyPricingPlan,
+        'tag': Tag
     }
     
     if table.lower() not in model_map:

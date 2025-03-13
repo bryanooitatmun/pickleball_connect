@@ -1,5 +1,9 @@
 {% extends 'base.html' %}
 
+{# Set default values if not provided #}
+{% set page_type = page_type|default('public_list') %}
+{% set academy = academy|default(None) %}
+
 {% block extra_styles %}
     .animate-float {
       animation: float 3s ease-in-out infinite;
@@ -95,6 +99,18 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    .group:hover .tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .tooltip {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+      z-index: 10;
+    }
+
 {% endblock %}
 
 {% block head_scripts %}
@@ -108,13 +124,48 @@
   <div class="pt-32 pb-12 relative overflow-hidden">
     <div class="hero-gradient absolute inset-0 opacity-10"></div>
     <div class="container mx-auto px-6 relative z-10">
-      <div class="text-center max-w-3xl mx-auto mb-12 scroll-section">
-        <h1 class="text-4xl md:text-5xl font-bold mb-6">
-          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Meet Our Expert</span>
-          <br />Pickleball Coaches
-        </h1>
-        <p class="text-lg text-gray-600 mb-8">Connect with our handpicked coaches and take your pickleball game to the next level.</p>
-      </div>
+      {% if page_type == 'academy_page' and academy %}
+        <!-- Academy-specific Hero Content -->
+        <div class="flex flex-col md:flex-row items-center mb-12">
+          {% if academy.logo_path %}
+            <div class="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl mb-6 md:mb-0 md:mr-8">
+              <img src="/static/{{ academy.logo_path }}" alt="{{ academy.name }}" class="w-full h-full object-cover">
+            </div>
+          {% endif %}
+          <div class="text-center md:text-left">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ academy.name }}</h1>
+            <p class="text-lg text-gray-600">{{ academy.description }}</p>
+            {% if academy.website %}
+              <a href="{{ academy.website }}" target="_blank" class="inline-flex items-center mt-4 text-blue-600 hover:text-blue-800">
+                <span>Visit Website</span>
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+        <!-- Academy Stats and Tags -->
+        <div class="flex flex-wrap justify-center md:justify-start gap-4 mb-6">
+          <div class="bg-white bg-opacity-80 px-4 py-2 rounded-lg shadow-sm">
+            <span class="font-semibold">{{ academy.coaches_count }}</span> Coaches
+          </div>
+          {% if academy.tags and academy.tags|length > 0 %}
+            {% for tag in academy.tags %}
+              <div class="bg-purple-100 px-4 py-2 rounded-lg text-purple-800">{{ tag.name }}</div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      {% else %}
+        <!-- Default Public List Hero Content -->
+        <div class="text-center max-w-3xl mx-auto mb-12 scroll-section">
+          <h1 class="text-4xl md:text-5xl font-bold mb-6">
+            <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Meet Our Expert</span>
+            <br /><span id="view-title">Pickleball Coaches</span>
+          </h1>
+          <p id="view-subtitle" class="text-lg text-gray-600 mb-8">Connect with our handpicked coaches and take your pickleball game to the next level.</p>
+        </div>
+      {% endif %}
     </div>
     
     <!-- Curved Wave Separator -->
@@ -124,6 +175,47 @@
       </svg>
     </div>
   </div>
+
+  {% if page_type == 'public_list' %}
+  <div class="bg-white pt-6">
+    <div class="container mx-auto px-6">
+      <div class="flex border-b border-gray-200">
+        <button id="coaches-tab" class="view-tab py-3 px-6 font-medium text-blue-600 border-b-2 border-blue-600">
+          Coaches
+        </button>
+        <button id="academies-tab" class="view-tab py-3 px-6 font-medium text-gray-500 hover:text-gray-700">
+          Academies
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if page_type == 'academy_page' and academy and academy.coaches_by_role|length > 0 %}
+  <div class="bg-white border-b">
+    <div class="container mx-auto px-6 py-6">
+      <h2 class="text-2xl font-bold mb-4">Our Coaching Team</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for role in academy.coaches_by_role %}
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="font-semibold text-lg mb-2">{{ role.role_name }}</h3>
+            <div class="flex flex-wrap">
+              {% for coach in role.coaches %}
+                <div class="flex items-center bg-white rounded-full pl-1 pr-3 py-1 mr-2 mb-2">
+                  <div class="w-8 h-8 rounded-full mr-2 bg-cover bg-center" 
+                      style="background-image: url('/static/{{ coach.profile_picture or 'uploads/profile_pics/default.png' }}')">
+                  </div>
+                  <span class="text-sm">{{ coach.name }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Search and Filter Section -->
   <div class="bg-white py-8 border-b">
@@ -290,7 +382,11 @@
         <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        <h3 class="mt-4 text-xl font-medium text-gray-700">No coaches found</h3>
+        {% if page_type == 'academy_page' %}
+          <h3 class="mt-4 text-xl font-medium text-gray-700">No coaches found in this academy</h3>
+        {% else %}
+          <h3 class="mt-4 text-xl font-medium text-gray-700" id="no-results-message">No coaches found</h3>
+        {% endif %}
         <p class="mt-2 text-gray-500">Try adjusting your filters or search terms.</p>
       </div>
       
@@ -301,7 +397,13 @@
     </div>
   </div>
 
-  {% if not current_user.is_authenticated %}
+  <div class="bg-gray-50 py-12">
+    <div id="academy-pricing-plans" class="container mx-auto px-6 hidden">
+       <!-- Pricing plans will be inserted here by JavaScript --> 
+    </div>
+  </div>
+
+  {% if page_type == 'public_list' and not current_user.is_authenticated %}
   <!-- CTA Section with Gradient Background -->
   <div class="py-20 hero-gradient text-white">
     <div class="container mx-auto px-6 text-center">
@@ -319,7 +421,21 @@
       </div>
     </div>
   </div>
+  {% elif page_type == 'academy_page' %}
+  <!-- Academy CTA -->
+  <div class="py-16 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+    <div class="container mx-auto px-6 text-center">
+      <div class="scroll-section">
+        <h2 class="text-4xl font-bold mb-6">Train with Our Expert Coaches</h2>
+        <p class="text-xl mb-8 max-w-2xl mx-auto">Take your pickleball skills to the next level with personalized coaching.</p>
+        <a href="#" class="inline-block bg-white text-purple-600 px-8 py-4 rounded-full font-medium hover:shadow-xl transform hover:scale-105 transition-all">
+          Book a Session Now
+        </a>
+      </div>
+    </div>
+  </div>
   {% endif %}
+
   <!-- Coach Card Template -->
   <template id="coach-card-template">
     <div class="coach-card bg-white rounded-xl shadow-lg overflow-hidden transform transition-all">
@@ -331,6 +447,12 @@
       </div>
       <div class="p-6">
         <h2 class="text-xl font-bold mb-3 coach-name">Coach Name</h2>
+        
+        <!-- Academy Affiliations - NEW SECTION -->
+        <div class="mb-3 academy-affiliations-container">
+          <!-- Will be populated dynamically -->
+        </div>
+        
         <div class="flex items-center mb-3">
           <div class="flex text-yellow-400 mr-2 coach-stars">
             <!-- Stars will be populated via JavaScript -->
@@ -340,8 +462,44 @@
         <p class="text-gray-700 mb-2"><span class="font-semibold">Coaching Rate:</span> <span class="coach-rate">$50/hour</span></p>
         <p class="text-gray-700 mb-2"><span class="font-semibold">Sessions Coached:</span> <span class="coach-sessions">120</span></p>
         <p class="text-gray-700 mb-4"><span class="font-semibold">Courts:</span> <span class="coach-courts">City Park, Downtown Club</span></p>
+        
+        <!-- Tags Section -->
+        <div class="flex flex-wrap gap-2 mb-4 coach-tags">
+          <!-- Will be populated dynamically -->
+        </div>
+        
         <a href="#" class="coach-profile-link w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all inline-block text-center">
           View Profile
+        </a>
+      </div>
+    </div>
+  </template>
+
+  <!-- Academy Card Template -->
+  <template id="academy-card-template">
+    <div class="academy-card bg-white rounded-xl shadow-lg overflow-hidden transform transition-all">
+      <div class="relative">
+        <img src="/api/placeholder/400/250" alt="Academy" class="w-full h-64 object-cover academy-image">
+        <div class="absolute top-4 right-4 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full academy-coach-count">
+          8 Coaches
+        </div>
+      </div>
+      <div class="p-6">
+        <h2 class="text-xl font-bold mb-3 academy-name">Academy Name</h2>
+        <p class="text-gray-700 mb-3 academy-description line-clamp-2">Academy description goes here with details about their specialty and approach.</p>
+        
+        <!-- Academy Tags -->
+        <div class="flex flex-wrap gap-2 mb-4 academy-tags">
+          <!-- Tags will be populated dynamically -->
+        </div>
+        
+        <!-- Academy Coaches By Category -->
+        <div class="mb-4 coaches-by-role-container">
+          <!-- Coach role sections will be populated dynamically -->
+        </div>
+        
+        <a href="#" class="academy-profile-link w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all inline-block text-center">
+          View Academy
         </a>
       </div>
     </div>
@@ -376,6 +534,15 @@
       const coachesGrid = document.getElementById('coaches-grid');
       const loadingIndicator = document.getElementById('loading-indicator');
       const noResults = document.getElementById('no-results');
+      const coachesTab = document.getElementById('coaches-tab');
+      const academiesTab = document.getElementById('academies-tab');
+      const academiesGrid = document.getElementById('coaches-grid'); // Reusing same grid
+
+      // Current view state
+      const PAGE_MODE = '{{ page_type }}';
+      const ACADEMY_ID = {% if academy %}{{ academy.id }}{% else %}null{% endif %};
+
+      let currentView = 'coaches'; // 'coaches' or 'academies'
 
       // Filter state
       let filters = {
@@ -437,6 +604,211 @@
         }
       });
       
+      // Toggle between coaches and academies views
+      if (coachesTab){
+        coachesTab.addEventListener('click', () => {
+          if (currentView !== 'coaches') {
+            currentView = 'coaches';
+            updateViewTabs();
+            searchInput.placeholder = "Search coaches by name...";
+            // Reset filters and load coaches
+            resetFilters();
+            loadCoaches();
+            updateFilterOptionsForView();
+            updatePageTitle();
+          }
+        });
+      }
+      if (academiesTab){
+        academiesTab.addEventListener('click', () => {
+          if (currentView !== 'academies') {
+            currentView = 'academies';
+            updateViewTabs();
+            searchInput.placeholder = "Search academies by name...";
+            // Reset filters and load academies
+            resetFilters()
+            loadAcademies();
+            updateFilterOptionsForView();
+            updatePageTitle();
+          }
+        });
+      }
+      // Update the visual state of the tabs
+      function updateViewTabs() {
+        if (currentView === 'coaches') {
+          coachesTab.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+          coachesTab.classList.remove('text-gray-500');
+          academiesTab.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+          academiesTab.classList.add('text-gray-500');
+        } else {
+          academiesTab.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+          academiesTab.classList.remove('text-gray-500');
+          coachesTab.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+          coachesTab.classList.add('text-gray-500');
+        }
+      }
+
+      // Load academies with filters
+      async function loadAcademies() {
+        loadingIndicator.classList.remove('hidden');
+        academiesGrid.classList.add('hidden');
+        noResults.classList.add('hidden');
+        
+        // Get sorting values (use different sort options for academies if needed)
+        const [sortBy, sortDirection] = sortDropdown.value.split(':');
+        
+        try {
+          // Build query string from filters
+          const params = new URLSearchParams({
+            query: filters.query,
+            sort_by: sortBy,
+            sort_direction: sortDirection
+          });
+          
+          const response = await fetch(`/api/academies?${params.toString()}`);
+          const academies = await response.json();
+          
+          renderAcademies(academies);
+          
+          loadingIndicator.classList.add('hidden');
+          academiesGrid.classList.remove('hidden');
+          
+        } catch (error) {
+          console.error('Error loading academies:', error);
+          loadingIndicator.classList.add('hidden');
+          alert('Error loading academies. Please try again later.');
+        }
+      }
+
+
+      function updateFilterOptionsForView() {
+        const priceFilter = document.querySelector('.filter-options .bg-white:nth-child(1)');
+        const duprFilter = document.querySelector('.filter-options .bg-white:nth-child(2)');
+        const ratingFilter = document.querySelector('.filter-options .bg-white:nth-child(3)');
+        
+        if (currentView === 'academies') {
+          // Hide coach-specific filters for academy view
+          priceFilter.classList.add('hidden');
+          duprFilter.classList.add('hidden');
+          ratingFilter.classList.add('hidden');
+        } else {
+          // Show all filters for coach view
+          priceFilter.classList.remove('hidden');
+          duprFilter.classList.remove('hidden');
+          ratingFilter.classList.remove('hidden');
+        }
+      }
+
+      // Render academy cards
+      function renderAcademies(academies) {
+        academiesGrid.innerHTML = '';
+        
+        if (academies.length === 0) {
+          noResults.classList.remove('hidden');
+          return;
+        }
+        
+        noResults.classList.add('hidden');
+        
+        const template = document.getElementById('academy-card-template');
+        
+        academies.forEach(academy => {
+          const clone = template.content.cloneNode(true);
+          
+          // Basic academy info
+          if (academy.logo_path) {
+            clone.querySelector('.academy-image').src = `/static/${academy.logo_path}`;
+          }
+          clone.querySelector('.academy-name').textContent = academy.name;
+          clone.querySelector('.academy-description').textContent = academy.description;
+          clone.querySelector('.academy-coach-count').textContent = `${academy.coaches_count} Coaches`;
+          
+          // Add tags
+          const tagsContainer = clone.querySelector('.academy-tags');
+          if (academy.tags && academy.tags.length > 0) {
+            academy.tags.forEach(tag => {
+              const tagElement = document.createElement('span');
+              tagElement.className = 'bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded';
+              tagElement.textContent = tag.name;
+              tagsContainer.appendChild(tagElement);
+            });
+          } else {
+            // Hide tags container if no tags
+            tagsContainer.classList.add('hidden');
+          }
+          
+          // Dynamically populate coaches by role
+          const coachesContainer = clone.querySelector('.coaches-by-role-container');
+          
+          // Clear any existing content from template
+          coachesContainer.innerHTML = '';
+          
+          // Check if we have coach roles data (now an array)
+          if (academy.coaches_by_role && academy.coaches_by_role.length > 0) {
+            // For each role in the coaches_by_role array (already sorted)
+            academy.coaches_by_role.forEach(roleData => {
+              // Skip empty role categories
+              if (!roleData.coaches || roleData.coaches.length === 0) return;
+              
+              // Create a section for this role
+              const roleSection = document.createElement('div');
+              roleSection.className = 'role-section mt-2';
+              
+              // Create heading for this role
+              const heading = document.createElement('h3');
+              heading.className = 'text-sm font-semibold text-gray-700 mb-2';
+              heading.textContent = `${roleData.role_name}:`;
+              roleSection.appendChild(heading);
+              
+              // Create coach avatars list
+              const coachesList = document.createElement('div');
+              coachesList.className = 'flex -space-x-2 overflow-hidden';
+              
+              // Add each coach avatar
+              roleData.coaches.forEach(coach => {
+                const coachItem = document.createElement('div');
+                coachItem.className = 'flex items-center bg-gray-100 rounded-full pr-3 mr-2 mb-2 hover:bg-gray-200 transition-colors cursor-pointer';
+                coachItem.addEventListener('click', () => {
+                  window.location.href = `/coach/coaches/${coach.id}`;
+                });
+                
+                // Coach image
+                const coachImg = document.createElement('div');
+                coachImg.className = 'w-8 h-8 rounded-full mr-2';
+                coachImg.style.backgroundImage = `url(/static/${coach.profile_picture || 'uploads/profile_pics/default.png'})`;
+                coachImg.style.backgroundSize = 'cover';
+                coachImg.style.backgroundPosition = 'center';
+                
+                // Coach name
+                const coachName = document.createElement('span');
+                coachName.className = 'text-xs font-medium';
+                coachName.textContent = coach.name;
+                
+                coachItem.appendChild(coachImg);
+                coachItem.appendChild(coachName);
+                roleSection.appendChild(coachItem);
+              });
+              
+              roleSection.appendChild(coachesList);
+              coachesContainer.appendChild(roleSection);
+            });
+          } else {
+            // If no coach role data, hide the container
+            coachesContainer.classList.add('hidden');
+          }
+          
+          // Set profile link with private URL
+          clone.querySelector('.academy-profile-link').href = `/academy/${academy.private_url_code}`;
+          
+          academiesGrid.appendChild(clone);
+        });
+        
+        // Initialize animation for new cards
+        if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+          initScrollAnimations();
+        }
+      }
+      
       // Scroll animations
       const scrollSections = document.querySelectorAll('.scroll-section');
       
@@ -452,13 +824,27 @@
         observer.observe(section);
       });
 
-      
       // Initialize GSAP ScrollTrigger for coach cards if available
       if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
         gsap.registerPlugin(ScrollTrigger);
         
         function initScrollAnimations() {
           gsap.utils.toArray('.coach-card').forEach((card, i) => {
+            gsap.from(card, {
+              y: 50,
+              opacity: 0,
+              duration: 0.8,
+              delay: i * 0.1,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: card,
+                start: "top 85%",
+                toggleActions: "play none none none"
+              }
+            });
+          });
+
+          gsap.utils.toArray('.academy-card').forEach((card, i) => {
             gsap.from(card, {
               y: 50,
               opacity: 0,
@@ -534,7 +920,7 @@
         
         coaches.forEach(coach => {
           const clone = template.content.cloneNode(true);
-          console.log(coach);
+
           // Update coach data
           clone.querySelector('.coach-image').src = `/static/${coach.profile_picture}`;
           clone.querySelector('.coach-name').textContent = `${coach.first_name} ${coach.last_name}`;
@@ -551,6 +937,57 @@
           // Set profile link
           clone.querySelector('.coach-profile-link').href = `/coach/coaches/${coach.id}`;
           
+          // Add academy affiliations
+          const affiliationsContainer = clone.querySelector('.academy-affiliations-container');
+          
+          if (coach.academy_affiliations && coach.academy_affiliations.length > 0) {
+            const heading = document.createElement('p');
+            heading.className = 'text-sm font-semibold text-gray-700 mb-1';
+            heading.textContent = 'Academy Affiliations:';
+            affiliationsContainer.appendChild(heading);
+            
+            const affiliationsList = document.createElement('div');
+            affiliationsList.className = 'flex flex-wrap gap-1';
+            
+            coach.academy_affiliations.forEach(affiliation => {
+              const badge = document.createElement('a');
+              badge.href = `/academy/${affiliation.private_url_code}`;
+              badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors';
+              
+              // Add academy icon
+              const icon = document.createElement('span');
+              icon.className = 'mr-1 text-purple-500';
+              icon.innerHTML = '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path></svg>';
+              
+              badge.appendChild(icon);
+              
+              // Add text with role
+              const text = document.createTextNode(`${affiliation.name} (${affiliation.role})`);
+              badge.appendChild(text);
+              
+              affiliationsList.appendChild(badge);
+            });
+            
+            affiliationsContainer.appendChild(affiliationsList);
+          } else {
+            // Hide container if no affiliations
+            affiliationsContainer.classList.add('hidden');
+          }
+
+          // Add tags
+          const tagsContainer = clone.querySelector('.coach-tags');
+          if (coach.tags && coach.tags.length > 0) {
+            coach.tags.forEach(tag => {
+              const tagElement = document.createElement('span');
+              tagElement.className = 'bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded';
+              tagElement.textContent = tag.name;
+              tagsContainer.appendChild(tagElement);
+            });
+          } else {
+            // Hide tags container if no tags
+            tagsContainer.classList.add('hidden');
+          }
+
           coachesGrid.appendChild(clone);
         });
         
@@ -586,10 +1023,26 @@
             params.append('court_id', filters.courtId);
           }
           
-          const response = await fetch(`/coach/api/coaches?${params.toString()}`);
-          const coaches = await response.json();
+          // Use different endpoint depending on page mode
+          let url = '/coach/api/coaches';
+          
+          // If in academy mode, use the academy parameter
+          if (PAGE_MODE === 'academy_page' && ACADEMY_ID) {
+            params.append('academy_id', ACADEMY_ID);
+          }
+          
+          const response = await fetch(`${url}?${params.toString()}`);
+          const data = await response.json();
+          
+          // Check if we got the new format or old format
+          const coaches = Array.isArray(data) ? data : data.coaches;
           
           renderCoaches(coaches);
+          
+          // If we have academy data and we're in academy mode, display pricing plans
+          if (data.academy && PAGE_MODE === 'academy_page') {
+            renderAcademyPricingPlans(data.academy);
+          }
           
           loadingIndicator.classList.add('hidden');
           coachesGrid.classList.remove('hidden');
@@ -600,22 +1053,147 @@
           alert('Error loading coaches. Please try again later.');
         }
       }
-      
-      // Apply filters
-      applyFiltersBtn.addEventListener('click', () => {
-        filters.minPrice = parseInt(minPrice.value);
-        filters.maxPrice = parseInt(maxPrice.value);
-        filters.minDupr = parseFloat(minDupr.value);
-        filters.maxDupr = parseFloat(maxDupr.value);
-        filters.minRating = parseFloat(minRating.value);
-        filters.courtId = courtFilter.value;
+
+      // New function to render academy pricing plans
+      function renderAcademyPricingPlans(academy) {
+        // Check if we have a container for pricing plans
+        const plansContainer = document.getElementById('academy-pricing-plans');
+        if (!plansContainer) return;
         
-        loadCoaches();
-        filterOptions.classList.remove('open');
-      });
+        // Clear existing content
+        plansContainer.innerHTML = '';
+        
+        // Check if we have pricing plans to display
+        if (!academy.pricing_plans || academy.pricing_plans.length === 0) {
+          plansContainer.classList.add('hidden');
+          return;
+        }
+        
+        // Show the container
+        plansContainer.classList.remove('hidden');
+        
+        // Create heading
+        const heading = document.createElement('h2');
+        heading.className = 'text-3xl font-bold mb-8 text-center';
+        heading.textContent = 'Academy Packages';
+        plansContainer.appendChild(heading);
+        
+        // Create plans grid
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8';
+        
+        // Add each plan
+        academy.pricing_plans.forEach(plan => {
+          const planCard = document.createElement('div');
+          planCard.className = 'bg-white rounded-lg shadow-lg overflow-hidden transition-transform hover:transform hover:scale-105';
+          
+          // Card header
+          const cardHeader = document.createElement('div');
+          cardHeader.className = 'bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4 text-white';
+          const planName = document.createElement('h3');
+          planName.className = 'text-xl font-bold';
+          planName.textContent = plan.name;
+          cardHeader.appendChild(planName);
+          
+          // Card body
+          const cardBody = document.createElement('div');
+          cardBody.className = 'p-6';
+          
+          // Description
+          const description = document.createElement('p');
+          description.className = 'text-gray-600 mb-6';
+          description.textContent = plan.description;
+          cardBody.appendChild(description);
+          
+          // Features
+          const features = document.createElement('div');
+          features.className = 'mb-6';
+          
+          // Sessions
+          const sessionsFeature = document.createElement('div');
+          sessionsFeature.className = 'flex items-center mb-2';
+          sessionsFeature.innerHTML = `
+            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>${plan.sessions_required} Sessions</span>
+          `;
+          features.appendChild(sessionsFeature);
+          
+          // Discount
+          if (plan.percentage_discount) {
+            const discountFeature = document.createElement('div');
+            discountFeature.className = 'flex items-center mb-2';
+            discountFeature.innerHTML = `
+              <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 6v12M17 6v12"></path>
+              </svg>
+              <span>${plan.percentage_discount}% Discount</span>
+            `;
+            features.appendChild(discountFeature);
+          } else if (plan.fixed_discount) {
+            const discountFeature = document.createElement('div');
+            discountFeature.className = 'flex items-center mb-2';
+            discountFeature.innerHTML = `
+              <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 6v12M17 6v12"></path>
+              </svg>
+              <span>$${plan.fixed_discount} Off</span>
+            `;
+            features.appendChild(discountFeature);
+          }
+          
+          // Validity period if any
+          if (plan.valid_from && plan.valid_to) {
+            const validityFeature = document.createElement('div');
+            validityFeature.className = 'flex items-center mb-2 text-sm text-gray-500';
+            validityFeature.innerHTML = `
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <span>Valid: ${new Date(plan.valid_from).toLocaleDateString()} - ${new Date(plan.valid_to).toLocaleDateString()}</span>
+            `;
+            features.appendChild(validityFeature);
+          }
+          
+          cardBody.appendChild(features);
+          
+          // Purchase button
+          const purchaseBtn = document.createElement('a');
+          purchaseBtn.className = 'block w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-3 rounded-lg font-medium text-center hover:shadow-lg transition-all';
+          purchaseBtn.textContent = 'Purchase Package';
+          purchaseBtn.href = `/bookings/purchase-academy-package/${academy.id}/${plan.id}`;
+          cardBody.appendChild(purchaseBtn);
+          
+          // Add card sections to the card
+          planCard.appendChild(cardHeader);
+          planCard.appendChild(cardBody);
+          
+          // Add card to the grid
+          grid.appendChild(planCard);
+        });
+        
+        // Add grid to the container
+        plansContainer.appendChild(grid);
+      }
       
-      // Reset filters
-      resetFiltersBtn.addEventListener('click', () => {
+      function updatePageTitle() {
+        const viewTitle = document.getElementById('view-title');
+        const viewSubtitle = document.getElementById('view-subtitle');
+        
+        if (currentView === 'coaches') {
+          viewTitle.textContent = 'Pickleball Coaches';
+          viewSubtitle.textContent = 'Connect with our handpicked coaches and take your pickleball game to the next level.';
+        } else {
+          viewTitle.textContent = 'Pickleball Academies';
+          viewSubtitle.textContent = 'Join a premier academy with multiple coaches and comprehensive training programs.';
+        }
+      }
+
+      function resetFilters(){
+
         // Reset filter inputs
         minPrice.value = 0;
         maxPrice.value = 200;
@@ -645,7 +1223,25 @@
         
         // Reset sort dropdown
         sortDropdown.value = 'name:asc';
+
+      }
+
+      // Apply filters
+      applyFiltersBtn.addEventListener('click', () => {
+        filters.minPrice = parseInt(minPrice.value);
+        filters.maxPrice = parseInt(maxPrice.value);
+        filters.minDupr = parseFloat(minDupr.value);
+        filters.maxDupr = parseFloat(maxDupr.value);
+        filters.minRating = parseFloat(minRating.value);
+        filters.courtId = courtFilter.value;
         
+        loadCoaches();
+        filterOptions.classList.remove('open');
+      });
+      
+      // Reset filters
+      resetFiltersBtn.addEventListener('click', () => {
+        resetFilters();
         loadCoaches();
       });
       
@@ -665,6 +1261,24 @@
         loadCoaches();
       });
       
+      // Modify loadCoaches function to check current view
+      const originalLoadCoaches = loadCoaches;
+      loadCoaches = function() {
+        if (currentView === 'coaches') {
+          originalLoadCoaches();
+        } else {
+          loadAcademies();
+        }
+      };
+
+      // Modify resetFilters to be view-aware
+      const originalResetFilters = resetFiltersBtn.addEventListener;
+      resetFiltersBtn.removeEventListener('click', originalResetFilters);
+      resetFiltersBtn.addEventListener('click', () => {
+        resetFilters();
+        loadAcademies();
+      });
+
       // Initialize
       loadCourts();
       loadCoaches();

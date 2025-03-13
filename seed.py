@@ -1,6 +1,7 @@
 # Modify seed.py to include court fees, coach images, and support tickets
 
 from app import create_app, db
+import sys
 from app.models.user import User
 from app.models.coach import Coach, CoachImage
 from app.models.court import Court, CoachCourt
@@ -11,6 +12,11 @@ from app.models.pricing import PricingPlan
 from app.models.package import BookingPackage, booking_package_association
 from app.models.court_fee import CourtFee 
 from app.models.support import SupportTicket, TicketResponse
+from app.models.academy import Academy, AcademyCoach, AcademyManager, AcademyCoachRole
+from app.models.academy_pricing import AcademyPricingPlan  # New model
+from app.models.payment import PaymentProof
+from app.models.notification import Notification
+from app.models.tag import Tag, CoachTag
 from datetime import datetime, timedelta, time
 import random
 import uuid
@@ -18,6 +24,7 @@ import os
 import shutil
 
 app = create_app()
+app.app_context().push()
 
 def seed_database():
     with app.app_context():
@@ -285,50 +292,55 @@ def seed_database():
             db.session.add(CoachCourt(coach_id=michael_coach.id, court_id=court.id))
         
         db.session.commit()
-        
-        # Create coach profile tags
-        tags = [
-            Tag(name="Beginner Friendly"),
-            Tag(name="Advanced Techniques"),
-            Tag(name="Tournament Preparation"),
-            Tag(name="Doubles Strategy"),
-            Tag(name="Singles Strategy"),
-            Tag(name="Youth Coaching"),
-            Tag(name="Senior Training"),
-            Tag(name="Drill-Focused"),
-            Tag(name="Game-Based Learning"),
-            Tag(name="Video Analysis"),
-            Tag(name="Mental Game"),
-            Tag(name="Footwork Specialist"),
-            Tag(name="Serve & Return")
+
+        # Create academy coach roles
+        roles = [
+            AcademyCoachRole(name="Head Coach", description="Lead coach for the academy", ordering=10),
+            AcademyCoachRole(name="Senior Coach", description="Experienced coach with advanced skills", ordering=20),
+            AcademyCoachRole(name="Coach", description="Regular coach", ordering=30),
+            AcademyCoachRole(name="Assistant Coach", description="Support coach for the academy", ordering=40),
+            AcademyCoachRole(name="Junior Coach", description="Developing coach", ordering=50)
         ]
-        db.session.add_all(tags)
+        db.session.add_all(roles)
+        db.session.commit()
+
+        # Create coach profile tags
+        coach_tags = [
+            Tag(name="Beginner Friendly"),
+            Tag(name="Advanced Training"),
+            Tag(name="Tournament Coach"),
+            Tag(name="Singles Specialist"),
+            Tag(name="Doubles Expert"),
+            Tag(name="Youth Training"),
+            Tag(name="Senior Training"),
+            Tag(name="Video Analysis"),
+            Tag(name="Drills Focus"),
+            Tag(name="Game Strategy")
+        ]
+        db.session.add_all(coach_tags)
         db.session.commit()
 
         # Associate tags with coaches
         # John's tags
         db.session.add_all([
-            CoachTag(coach_id=john_coach.id, tag_id=tags[0].id),  # Beginner Friendly
-            CoachTag(coach_id=john_coach.id, tag_id=tags[3].id),  # Doubles Strategy
-            CoachTag(coach_id=john_coach.id, tag_id=tags[7].id),  # Drill-Focused
-            CoachTag(coach_id=john_coach.id, tag_id=tags[12].id)  # Serve & Return
+            CoachTag(coach_id=john_coach.id, tag_id=coach_tags[0].id),  # Beginner Friendly
+            CoachTag(coach_id=john_coach.id, tag_id=coach_tags[3].id),  # Doubles Strategy
+            CoachTag(coach_id=john_coach.id, tag_id=coach_tags[7].id),  # Drill-Focused
         ])
         
         # Jane's tags
         db.session.add_all([
-            CoachTag(coach_id=jane_coach.id, tag_id=tags[1].id),  # Advanced Techniques
-            CoachTag(coach_id=jane_coach.id, tag_id=tags[2].id),  # Tournament Preparation
-            CoachTag(coach_id=jane_coach.id, tag_id=tags[8].id),  # Game-Based Learning
-            CoachTag(coach_id=jane_coach.id, tag_id=tags[10].id)  # Mental Game
+            CoachTag(coach_id=jane_coach.id, tag_id=coach_tags[1].id),  # Advanced Techniques
+            CoachTag(coach_id=jane_coach.id, tag_id=coach_tags[2].id),  # Tournament Preparation
+            CoachTag(coach_id=jane_coach.id, tag_id=coach_tags[8].id),  # Game-Based Learning
         ])
         
         # Michael's tags
         db.session.add_all([
-            CoachTag(coach_id=michael_coach.id, tag_id=tags[1].id),  # Advanced Techniques
-            CoachTag(coach_id=michael_coach.id, tag_id=tags[2].id),  # Tournament Preparation
-            CoachTag(coach_id=michael_coach.id, tag_id=tags[3].id),  # Doubles Strategy
-            CoachTag(coach_id=michael_coach.id, tag_id=tags[9].id),  # Video Analysis
-            CoachTag(coach_id=michael_coach.id, tag_id=tags[11].id)  # Footwork Specialist
+            CoachTag(coach_id=michael_coach.id, tag_id=coach_tags[1].id),  # Advanced Techniques
+            CoachTag(coach_id=michael_coach.id, tag_id=coach_tags[2].id),  # Tournament Preparation
+            CoachTag(coach_id=michael_coach.id, tag_id=coach_tags[3].id),  # Doubles Strategy
+            CoachTag(coach_id=michael_coach.id, tag_id=coach_tags[9].id),  # Video Analysis
         ])
         
         db.session.commit()
@@ -340,32 +352,53 @@ def seed_database():
                 description="Premier pickleball training facility with experienced coaches for all skill levels.",
                 website="https://elitepickleball.example.com",
                 private_url_code="ELITE123",
-                logo_path="uploads/academy_logos/elite_logo.png"
+                logo_path="uploads/showcase_images/sample_showcase.png"
             ),
             Academy(
                 name="City Pickleball School",
                 description="Community-focused pickleball training for urban players.",
                 website="https://citypickleball.example.com",
                 private_url_code="CITY456",
-                logo_path="uploads/academy_logos/city_logo.png"
+                logo_path="uploads/showcase_images/sample_showcase.png"
             )
         ]
         db.session.add_all(academies)
         db.session.commit()
 
+        # Create tags for academies
+        academy_tags = [
+            Tag(name="Comprehensive Training"),
+            Tag(name="All Levels"),
+            Tag(name="Competition Focus"),
+            Tag(name="Family Friendly"),
+            Tag(name="Indoor Facilities"),
+            Tag(name="Pro Coaching"),
+            Tag(name="Private Lessons"),
+            Tag(name="Group Classes")
+        ]
+        db.session.add_all(academy_tags)
+        db.session.commit()
+
+
         # Associate coaches with academies
         academy_coaches = [
             # Elite Academy coaches
-            AcademyCoach(academy_id=academies[0].id, coach_id=john_coach.id, is_active=True),
-            AcademyCoach(academy_id=academies[0].id, coach_id=jane_coach.id, is_active=True),
-            AcademyCoach(academy_id=academies[0].id, coach_id=michael_coach.id, is_active=True),
+            AcademyCoach(academy_id=academies[0].id, coach_id=john_coach.id, is_active=True, role_id=roles[1].id),  # Senior Coach
+            AcademyCoach(academy_id=academies[0].id, coach_id=jane_coach.id, is_active=True, role_id=roles[1].id),  # Coach
+            AcademyCoach(academy_id=academies[0].id, coach_id=michael_coach.id, is_active=True, role_id=roles[0].id),  # Head Coach
             
             # City Academy coaches
-            AcademyCoach(academy_id=academies[1].id, coach_id=jane_coach.id, is_active=True),
-            AcademyCoach(academy_id=academies[1].id, coach_id=michael_coach.id, is_active=True)
+            AcademyCoach(academy_id=academies[1].id, coach_id=jane_coach.id, is_active=True, role_id=roles[0].id),  # Head Coach
+            AcademyCoach(academy_id=academies[1].id, coach_id=michael_coach.id, is_active=True, role_id=roles[1].id)  # Senior Coach
         ]
         db.session.add_all(academy_coaches)
-        
+
+        # Add tags to academies
+        academies[0].tags.extend([coach_tags[0], coach_tags[2], coach_tags[5]])  # Use existing tags
+        academies[1].tags.extend([coach_tags[1], coach_tags[3], coach_tags[7]])
+
+        db.session.commit()
+
         # Create academy managers
         academy_managers = [
             # Elite Academy managers
@@ -519,38 +552,6 @@ def seed_database():
 
         db.session.commit()
 
-        # Associate some bookings with academy packages
-        print("Associating bookings with academy packages...")
-        # Get all academy packages
-        academy_packages = BookingPackage.query.filter_by(package_type='academy').all()
-
-        for package in academy_packages:
-            # Find bookings that could be associated with this package
-            # Must be for coaches in the same academy
-            academy_coach_ids = [ac.coach_id for ac in AcademyCoach.query.filter_by(
-                academy_id=package.academy_id,
-                is_active=True
-            ).all()]
-            
-            # Get eligible bookings for this student with these coaches
-            eligible_bookings = [b for b in past_bookings + future_bookings 
-                                if b.student_id == package.student_id 
-                                and b.coach_id in academy_coach_ids
-                                and b.status != 'cancelled']
-            
-            # Randomly select up to sessions_booked bookings
-            if eligible_bookings and package.sessions_booked > 0:
-                num_to_associate = min(package.sessions_booked, len(eligible_bookings))
-                for booking in random.sample(eligible_bookings, num_to_associate):
-                    # Add to the association table
-                    stmt = booking_package_association.insert().values(
-                        package_id=package.id,
-                        booking_id=booking.id
-                    )
-                    db.session.execute(stmt)
-
-        db.session.commit()
-
         # Create availability for the next 14 days
         today = datetime.now().date()
         
@@ -681,7 +682,14 @@ def seed_database():
                         elif pricing_plan.fixed_discount:
                             discount_amount = pricing_plan.fixed_discount
                             price = base_price - discount_amount
-                    
+
+                    # Set court payment requirements based on availability setup
+                    # For seed data, we'll simulate this with random values
+                    coaching_payment_required = True
+                    coaching_payment_status = random.choice(['pending', 'uploaded', 'approved'])
+                    court_payment_required = random.choice([True, False])
+                    court_payment_status = 'not_required' if not court_payment_required else random.choice(['pending', 'uploaded', 'approved'])
+
                     # Create booking
                     booking = Booking(
                         student_id=student.id,
@@ -808,6 +816,9 @@ def seed_database():
                 discount_percentage=discount_percentage
             )
             
+            db.session.add(booking)
+            db.session.flush()
+
             # Create payment proofs for uploaded/approved status
             if coaching_payment_status in ['uploaded', 'approved']:
                 proof = PaymentProof(
@@ -829,9 +840,40 @@ def seed_database():
                 )
                 db.session.add(proof)
 
-            db.session.add(booking)
             future_bookings.append(booking)
         
+        db.session.commit()
+
+        # Associate some bookings with academy packages
+        print("Associating bookings with academy packages...")
+        # Get all academy packages
+        academy_packages = BookingPackage.query.filter_by(package_type='academy').all()
+
+        for package in academy_packages:
+            # Find bookings that could be associated with this package
+            # Must be for coaches in the same academy
+            academy_coach_ids = [ac.coach_id for ac in AcademyCoach.query.filter_by(
+                academy_id=package.academy_id,
+                is_active=True
+            ).all()]
+            
+            # Get eligible bookings for this student with these coaches
+            eligible_bookings = [b for b in past_bookings + future_bookings 
+                                if b.student_id == package.student_id 
+                                and b.coach_id in academy_coach_ids
+                                and b.status != 'cancelled']
+            
+            # Randomly select up to sessions_booked bookings
+            if eligible_bookings and package.sessions_booked > 0:
+                num_to_associate = min(package.sessions_booked, len(eligible_bookings))
+                for booking in random.sample(eligible_bookings, num_to_associate):
+                    # Add to the association table
+                    stmt = booking_package_association.insert().values(
+                        package_id=package.id,
+                        booking_id=booking.id
+                    )
+                    db.session.execute(stmt)
+
         db.session.commit()
 
         # Create notifications
@@ -1351,4 +1393,14 @@ def seed_database():
         print("Database seeded successfully!")
 
 if __name__ == "__main__":
-    seed_database()
+    """Main function to seed the database"""
+    with app.app_context():
+
+        # Reset database
+        if len(sys.argv) > 1 and sys.argv[1] == '--reset':
+            print("Dropping all tables...")
+            db.drop_all()
+            print("Creating all tables...")
+            db.create_all()
+
+        seed_database()

@@ -7,10 +7,13 @@ from app.models.coach import Coach, CoachImage
 from app.models.user import User
 from app.models.court import Court, CoachCourt
 from app.models.booking import Availability, Booking, AvailabilityTemplate
+from app.models.package import BookingPackage
 from app.models.session_log import SessionLog
 from app.models.rating import CoachRating
 from app.models.pricing import PricingPlan  # Add missing import for PricingPlan
 from app.forms.coach import CoachProfileForm, AvailabilityForm, SessionLogForm  # Also add the missing form import
+from app.models.academy import Academy, AcademyCoach, AcademyManager
+from app.models.academy_pricing import AcademyPricingPlan
 from app.models.user import User
 from app.utils.file_utils import save_uploaded_file, delete_file
 from datetime import datetime, timedelta
@@ -1724,16 +1727,13 @@ def get_student_packages():
     if current_user.is_coach:
         return jsonify({'error': 'Coach accounts cannot access student packages'}), 403
     
-    # This requires the BookingPackage model to be implemented
-    # If it's not available yet, you'll need to adapt this code
     try:
-        from app.models.package import BookingPackage
-        
         packages = BookingPackage.query.filter_by(student_id=current_user.id).all()
         
         result = []
         for package in packages:
             coach = Coach.query.get(package.coach_id)
+            print(package)
             coach_user = User.query.get(coach.user_id)
             
             package_data = {
@@ -2367,3 +2367,315 @@ def purchase_academy_package(academy_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@bp.route('/academies')
+def get_academies():
+    """API endpoint to get filtered academies data"""
+    # Get query parameters
+    search_query = request.args.get('query', '')
+    sort_by = request.args.get('sort_by', 'name')  # Default sort by name
+    sort_direction = request.args.get('sort_direction', 'asc')
+    
+    # Base query - join with coaches to count them
+    query = db.session.query(
+        Academy,
+        func.count(AcademyCoach.id).label('coaches_count')
+    ).outerjoin(
+        AcademyCoach, 
+        db.and_(
+            Academy.id == AcademyCoach.academy_id,
+            AcademyCoach.is_active == True
+        )
+    )
+    
+    # Apply filters
+    if search_query:
+        search_term = f"%{search_query}%"
+        query = query.filter(
+            db.or_(
+                Academy.name.ilike(search_term),
+                Academy.description.ilike(search_term)
+            )
+        )
+    
+    # Group by academy to support coach count
+    query = query.group_by(Academy.id)
+    
+    # Apply sorting
+    if sort_by == 'name':
+        order_col = Academy.name
+    elif sort_by == 'coaches':
+        order_col = func.count(AcademyCoach.id)
+    else:  # Default to name
+        order_col = Academy.name
+    
+    if sort_direction == 'desc':
+        query = query.order_by(order_col.desc())
+    else:
+        query = query.order_by(order_col.asc())
+    
+    # Execute query
+    academies_data = query.all()
+    
+    # Format response data
+    result = []
+    for academy, coaches_count in academies_data:
+
+        # Get academy coaches with dynamic roles
+        coaches_by_role = {}
+        role_ordering = {}  # Track ordering for each role
+
+        # Get the coaches in this academy
+        academy_coaches = AcademyCoach.query.filter_by(
+            academy_id=academy.id, 
+            is_active=True
+        ).all()
+        
+        for ac in academy_coaches:
+            coach = Coach.query.get(ac.coach_id)
+            if coach and coach.user:
+                coach_info = {
+                    'id': coach.id,
+                    'name': f"{coach.user.first_name} {coach.user.last_name}",
+                    'profile_picture': coach.user.profile_picture
+                }
+                
+                # Get role name (or create default)
+                if ac.role:
+                    role_key = ac.role.name.lower().replace(' ', '_')
+                    ordering = ac.role.ordering
+                else:
+                    # Fallback categories based on experience
+                    if coach.years_experience >= 10:
+                        role_key = 'head_coach'
+                        ordering = 10
+                    elif coach.years_experience >= 5:
+                        role_key = 'senior_coach'
+                        ordering = 20
+                    else:
+                        role_key = 'coach'
+                        ordering = 30
+                
+                # Initialize the role category if it doesn't exist
+                if role_key not in coaches_by_role:
+                    coaches_by_role[role_key] = {
+                        'role_name': ac.role.name if ac.role else role_key.replace('_', ' ').title(),
+                        'ordering': ordering,
+                        'coaches': []
+                    }
+                
+                coaches_by_role[role_key]['coaches'].append(coach_info)
+
+        # Get academy tags using the many-to-many relationship
+        academy_tags = []
+        for tag in academy.tags:
+            academy_tags.append({
+                'id': tag.id,
+                'name': tag.name
+            })   
+
+        coach_ids = [ac.coach_id for ac in academy_coaches]
+        
+        ordered_roles = []
+        for role_key, role_data in sorted(coaches_by_role.items(), key=lambda x: x[1]['ordering']):
+            ordered_roles.append({
+                'role_key': role_key,
+                'role_name': role_data['role_name'],
+                'ordering': role_data['ordering'],
+                'coaches': role_data['coaches']
+            })
+
+        academy_data = {
+            'id': academy.id,
+            'name': academy.name,
+            'description': academy.description,
+            'logo_path': academy.logo_path,
+            'website': academy.website,
+            'private_url_code': academy.private_url_code,
+            'coaches_count': coaches_count,
+            'coach_ids': coach_ids,
+            'coaches_by_role': ordered_roles,
+            'tags': academy_tags
+        }
+        result.append(academy_data)
+    
+    return jsonify(result)
+
+@bp.route('/academies/<string:private_url_code>')
+def get_academy_by_url_code(private_url_code):
+    """API endpoint to get academy details by private URL code"""
+    academy = Academy.query.filter_by(private_url_code=private_url_code).first_or_404()
+    
+    # Get academy coaches
+    academy_coaches = AcademyCoach.query.filter_by(
+        academy_id=academy.id,
+        is_active=True
+    ).all()
+    
+    coach_ids = [ac.coach_id for ac in academy_coaches]
+    coaches = Coach.query.filter(Coach.id.in_(coach_ids)).all()
+    
+    # Format coach data
+    formatted_coaches = []
+    for coach in coaches:
+        # Get coach rating
+        avg_rating = db.session.query(func.avg(CoachRating.rating)).filter(
+            CoachRating.coach_id == coach.id
+        ).scalar() or 0
+        
+        rating_count = CoachRating.query.filter_by(coach_id=coach.id).count()
+        
+        formatted_coaches.append({
+            'id': coach.id,
+            'user_id': coach.user_id,
+            'first_name': coach.user.first_name,
+            'last_name': coach.user.last_name,
+            'profile_picture': coach.user.profile_picture,
+            'hourly_rate': coach.hourly_rate,
+            'sessions_completed': coach.sessions_completed,
+            'avg_rating': round(float(avg_rating), 1),
+            'rating_count': rating_count
+        })
+    
+    # Get academy pricing plans
+    pricing_plans = []
+    academy_plans = AcademyPricingPlan.query.filter_by(
+        academy_id=academy.id,
+        is_active=True
+    ).all()
+    
+    for plan in academy_plans:
+        pricing_plans.append({
+            'id': plan.id,
+            'name': plan.name,
+            'description': plan.description,
+            'discount_type': plan.discount_type,
+            'sessions_required': plan.sessions_required,
+            'percentage_discount': plan.percentage_discount,
+            'fixed_discount': plan.fixed_discount
+        })
+    
+    academy_data = {
+        'id': academy.id,
+        'name': academy.name,
+        'description': academy.description,
+        'logo_path': academy.logo_path,
+        'website': academy.website,
+        'coaches': formatted_coaches,
+        'pricing_plans': pricing_plans
+    }
+    
+    return jsonify(academy_data)
+
+
+# @bp.route('/academies/<int:academy_id>/coaches')
+# def get_academy_coaches(academy_id):
+#     """API endpoint to get all coaches in an academy"""
+#     # Verify academy exists
+#     academy = Academy.query.get_or_404(academy_id)
+    
+#     # Get academy coaches
+#     academy_coaches = AcademyCoach.query.filter_by(
+#         academy_id=academy_id,
+#         is_active=True
+#     ).all()
+    
+#     coach_ids = [ac.coach_id for ac in academy_coaches]
+    
+#     # Apply additional filters just like in the coaches API
+#     search_query = request.args.get('query', '')
+#     min_price = request.args.get('min_price', type=float)
+#     max_price = request.args.get('max_price', type=float)
+#     min_dupr = request.args.get('min_dupr', type=float)
+#     max_dupr = request.args.get('max_dupr', type=float)
+#     min_rating = request.args.get('min_rating', type=float)
+#     court_id = request.args.get('court_id', type=int)
+#     sort_by = request.args.get('sort_by', 'name')
+#     sort_direction = request.args.get('sort_direction', 'asc')
+    
+#     # Base query - get coaches that are part of this academy
+#     query = db.session.query(
+#         Coach, 
+#         User, 
+#         func.avg(CoachRating.rating).label('avg_rating'),
+#         func.count(CoachRating.id).label('rating_count')
+#     ).join(
+#         User, Coach.user_id == User.id
+#     ).outerjoin(
+#         CoachRating, Coach.id == CoachRating.coach_id
+#     ).filter(
+#         Coach.id.in_(coach_ids)
+#     )
+    
+#     # Apply filters
+#     if search_query:
+#         search_term = f"%{search_query}%"
+#         query = query.filter(
+#             db.or_(
+#                 User.first_name.ilike(search_term),
+#                 User.last_name.ilike(search_term)
+#             )
+#         )
+    
+#     if min_price is not None:
+#         query = query.filter(Coach.hourly_rate >= min_price)
+    
+#     if max_price is not None:
+#         query = query.filter(Coach.hourly_rate <= max_price)
+    
+#     if min_dupr is not None:
+#         query = query.filter(User.dupr_rating >= min_dupr)
+    
+#     if max_dupr is not None:
+#         query = query.filter(User.dupr_rating <= max_dupr)
+    
+#     if min_rating is not None and min_rating > 0:
+#         query = query.having(func.avg(CoachRating.rating) >= min_rating)
+    
+#     if court_id:
+#         query = query.join(CoachCourt, Coach.id == CoachCourt.coach_id).filter(CoachCourt.court_id == court_id)
+    
+#     # Group by coach and user
+#     query = query.group_by(Coach.id, User.id)
+    
+#     # Apply sorting
+#     if sort_by == 'price':
+#         order_col = Coach.hourly_rate
+#     elif sort_by == 'dupr':
+#         order_col = User.dupr_rating
+#     elif sort_by == 'rating':
+#         order_col = func.avg(CoachRating.rating)
+#     else:  # Default to name
+#         order_col = User.first_name
+    
+#     if sort_direction == 'desc':
+#         query = query.order_by(order_col.desc())
+#     else:
+#         query = query.order_by(order_col.asc())
+    
+#     # Execute query
+#     coaches_data = query.all()
+    
+#     # Format response data
+#     result = []
+#     for coach, user, avg_rating, rating_count in coaches_data:
+#         # Get coach's courts
+#         courts = Court.query.join(CoachCourt).filter(CoachCourt.coach_id == coach.id).all()
+#         court_names = [court.name for court in courts]
+        
+#         coach_data = {
+#             'id': coach.id,
+#             'first_name': user.first_name,
+#             'last_name': user.last_name,
+#             'dupr_rating': user.dupr_rating,
+#             'hourly_rate': coach.hourly_rate,
+#             'sessions_completed': coach.sessions_completed,
+#             'avg_rating': round(float(avg_rating), 1) if avg_rating else 0,
+#             'rating_count': rating_count,
+#             'courts': court_names,
+#             'biography': coach.biography,
+#             'profile_picture': user.profile_picture
+#         }
+#         result.append(coach_data)
+    
+#     return jsonify(result)

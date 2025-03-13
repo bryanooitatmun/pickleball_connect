@@ -13,6 +13,7 @@ from app.forms.booking import BookingForm
 from datetime import datetime, timedelta
 from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
+from app.models.notification import Notification
 from app.utils.email import send_coach_booking_notification
 
 import uuid 
@@ -99,7 +100,8 @@ def get_availability(coach_id, court_id, date):
             available_slots.append({
                 'id': a.id,
                 'time': a.start_time.strftime('%I:%M %p'),
-                'court_fee': court_fee
+                'court_fee': court_fee,
+                'student_books_court': a.student_books_court  # Include booking responsibility
             })
             
         for b in bookings:
@@ -191,6 +193,7 @@ def create_booking():
             coach_id = booking_item.get('coach_id')
             court_id = booking_item.get('court_id')
             availability_ids = booking_item.get('availability_ids', [])
+            package_id = booking_item.get('package_id')  # Add package ID handling
             
             # Get coach hourly rate
             coach = Coach.query.get(coach_id)
@@ -199,7 +202,20 @@ def create_booking():
                 
             hourly_rate = coach.hourly_rate
             
-            # Check if student is eligible for first-time discount
+            # Check for package
+            package = None
+            if package_id:
+                package = BookingPackage.query.get(package_id)
+                
+                # Verify package belongs to this user and has sessions remaining
+                if not package or package.student_id != user_id or package.sessions_booked >= package.total_sessions:
+                    return jsonify({'error': 'Invalid package or insufficient sessions remaining'}), 400
+                
+                # Verify package can be used with this coach
+                if not package.can_use_for_coach(coach_id):
+                    return jsonify({'error': 'This package cannot be used with this coach'}), 400
+            
+           # Check if student is eligible for first-time discount
             is_first_time = not Booking.query.filter_by(
                 student_id=user_id,
                 coach_id=coach_id
@@ -238,7 +254,7 @@ def create_booking():
                         discount_percentage = pricing_plan.percentage_discount
                     elif pricing_plan.fixed_discount:
                         discount_amount = pricing_plan.fixed_discount
-            
+
             # Process each availability slot
             for avail_id in availability_ids:
                 availability = Availability.query.get(avail_id)
@@ -264,6 +280,11 @@ def create_booking():
                 else:
                     price = base_price
                 
+                # If using package, set coach fee to 0
+                if package:
+                    price = court_fee  # Only pay for court
+                    package.sessions_booked += 1
+                
                 # Mark availability as booked
                 availability.is_booked = True
                 
@@ -279,10 +300,10 @@ def create_booking():
                     date=availability.date,
                     start_time=availability.start_time,
                     end_time=availability.end_time,
-                    base_price=base_price,  # Store the original price before discount
-                    price=price,            # Actual price after discount
-                    court_fee=court_fee,    # Store the court fee separately
-                    coach_fee=hourly_rate,  # Store the coach fee separately
+                    base_price=base_price,
+                    price=price,
+                    court_fee=court_fee,
+                    coach_fee=hourly_rate,
                     status='upcoming',
                     pricing_plan_id=pricing_plan_id if pricing_plan else None,
                     discount_percentage=discount_percentage,
@@ -293,19 +314,26 @@ def create_booking():
                 
                 db.session.add(booking)
                 
+                # Associate booking with package if applicable
+                if package:
+                    package.bookings.append(booking)
+                
                 bookings_created.append({
+                    'id': booking.id,  # Include booking ID in response
                     'date': availability.date.isoformat(),
                     'start_time': availability.start_time.strftime('%I:%M %p'),
                     'end_time': availability.end_time.strftime('%I:%M %p'),
                     'coach_fee': hourly_rate,
                     'court_fee': court_fee,
                     'base_price': base_price,
-                    'price': price
+                    'price': price,
+                    'student_books_court': availability.student_books_court
                 })
         
         # Generate confirmation number
         confirmation_number = f"PBC-{uuid.uuid4().hex[:8].upper()}"
         
+        # Create notification for coach
         notification = Notification(
             user_id=coach.user_id,
             title="New booking",
@@ -314,8 +342,10 @@ def create_booking():
             related_id=booking.id
         )
         db.session.add(notification)
+        
+        # Send email notification
         send_coach_booking_notification(booking)
-
+        
         # Commit all changes
         db.session.commit()
         

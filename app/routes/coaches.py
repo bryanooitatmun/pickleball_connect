@@ -312,7 +312,15 @@ def get_coach_profile(coach_id):
     # Get coach courts
     coach_courts = CoachCourt.query.filter_by(coach_id=coach_id).all()
     courts = Court.query.filter(Court.id.in_([cc.court_id for cc in coach_courts])).all()
-    court_data = [{'id': court.id, 'name': court.name} for court in courts]
+    
+    # Format court data with booking links
+    court_data = []
+    for court in courts:
+        court_data.append({
+            'id': court.id, 
+            'name': court.name,
+            'booking_link': court.booking_link
+        })
     
     # Get profile picture URL
     profile_picture = url_for('static', filename=user.profile_picture) if user.profile_picture else None
@@ -321,6 +329,26 @@ def get_coach_profile(coach_id):
     showcase_images = []
     for image in coach.showcase_images:
         showcase_images.append(url_for('static', filename=image.image_path))
+        
+    # Get coach's academies
+    academy_affiliations = []
+    academy_coaches = AcademyCoach.query.filter_by(
+        coach_id=coach.id,
+        is_active=True
+    ).all()
+    
+    for ac in academy_coaches:
+        academy = Academy.query.get(ac.academy_id)
+        if academy:
+            role_name = "Coach"
+            if ac.role:
+                role_name = ac.role.name
+            academy_affiliations.append({
+                'id': academy.id,
+                'name': academy.name,
+                'private_url_code': academy.private_url_code,
+                'role': role_name
+            })
 
     # Format response data
     coach_data = {
@@ -335,7 +363,10 @@ def get_coach_profile(coach_id):
         'courts': court_data,
         'biography': coach.biography,
         'profile_picture': profile_picture,
-        'showcase_images': showcase_images
+        'showcase_images': showcase_images,
+        'location': user.location,
+        'specialties': coach.specialties,
+        'academy_affiliations': academy_affiliations  # Add academy affiliations
     }
     
     return jsonify(coach_data)

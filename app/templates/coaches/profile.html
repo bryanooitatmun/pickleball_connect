@@ -193,6 +193,14 @@
               <!-- Courts will be inserted here by JavaScript -->
             </ul>
           </div>
+
+          <!-- Academy affiliations -->
+          <div id="coach-academy-container" class="mb-6 hidden">
+            <h3 class="font-semibold mb-2">Academy Affiliations</h3>
+            <ul id="coach-academies" class="space-y-1">
+              <!-- Academy affiliations will be inserted here by JavaScript -->
+            </ul>
+          </div>
           
           <!-- Book button -->
           <button id="schedule-btn" class="block w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium text-center hover:shadow-lg transform hover:scale-105 transition-all">
@@ -231,17 +239,6 @@
     <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-3/4 lg:w-3/4 p-6 scrollable-modal">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold text-gray-800">Schedule a Session</h2>
-        {# <div class="flex items-center space-x-4">
-          <div class="text-sm font-medium bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-            Sessions: <span id="session-count">0</span>
-          </div>
-          <div>
-            <span class="text-lg font-bold text-blue-600">Total: $<span id="current-total">0</span></span>
-            <div id="savings-container" class="text-sm text-green-600 hidden">
-              Savings: $<span id="total-savings">0</span>
-            </div>
-          </div>
-        </div> #}
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -326,9 +323,20 @@
 
               <!-- Court Fee Information -->
               <div class="mt-4 p-3 bg-gray-50 rounded-lg text-sm">
-                <h4 class="font-bold mb-2">Court Fee Information</h4>
-                <div id="court-fee-info" class="text-gray-600">
+                <h4 class="font-bold mb-2">Court Information</h4>
+                <div id="court-fee-info" class="text-gray-600 mb-2">
                   <p>Select a court to view fee information.</p>
+                </div>
+                <div id="court-booking-info" class="text-gray-600 hidden">
+                  <div class="flex items-center text-sm text-blue-600">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <span id="booking-responsibility-text">Loading booking information...</span>
+                  </div>
+                  <div id="court-booking-link-container" class="mt-2 hidden">
+                    <a id="court-booking-link" href="#" target="_blank" class="text-blue-500 hover:underline flex items-center">
+                      <i class="fas fa-external-link-alt mr-1"></i> Book this court
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -340,6 +348,12 @@
             <div id="pricing-plans-container" class="space-y-3">
               <!-- Pricing plans will be populated here -->
               <p class="text-sm text-gray-500">No special pricing plans available</p>
+            </div>
+          </div>
+          <div class="mt-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-200" id="packages-container">
+            <h3 class="font-bold text-lg text-blue-800 mb-3">Your Available Packages</h3>
+            <div id="student-packages" class="space-y-3">
+              <p class="text-sm text-gray-500">Loading your packages...</p>
             </div>
           </div>
         </div>
@@ -410,6 +424,18 @@
       <p class="text-xl font-bold mt-6">Total Price: <span class="text-blue-600">$<span id="total-price">0</span></span>
       </p>
 
+      <div id="payment-instructions" class="mt-4 p-4 bg-blue-50 rounded-lg">
+        <h3 class="font-bold text-blue-800 mb-2">Payment Instructions</h3>
+        <div id="coach-payment-instructions" class="mb-3">
+          <p class="text-sm text-gray-700">Please make payment to the coach:</p>
+          <p class="text-sm font-medium">Bank transfer: <span id="coach-bank-info">Example Bank - John Doe - 123456789</span></p>
+        </div>
+        <div id="court-payment-instructions" class="hidden">
+          <p class="text-sm text-gray-700 mb-1">Court payment is your responsibility:</p>
+          <p class="text-sm text-gray-700" id="court-payment-method">Please pay directly at the venue or through their booking system.</p>
+        </div>
+      </div>
+
       <div class="mt-8 flex justify-end space-x-4">
         <button id="cancel-button"
           class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
@@ -418,6 +444,68 @@
         <button id="confirm-button"
           class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all">
           Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment proof upload modal-->
+  <div id="payment-proof-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-2/3 lg:w-1/2 p-6 scrollable-modal">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-800">Upload Payment Proof</h2>
+        <button class="close-modal text-gray-400 hover:text-gray-600">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="mb-6">
+        <p class="text-gray-600 mb-4">Please upload proof of payment for your booking.</p>
+        
+        <form id="payment-proof-form" enctype="multipart/form-data">
+          <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="proof-type">
+              Payment Type
+            </label>
+            <select id="proof-type" name="proof_type" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="coaching">Coach Payment</option>
+              <option value="court" id="court-payment-option" class="hidden">Court Payment</option>
+            </select>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="proof-image">
+              Payment Screenshot/Image
+            </label>
+            <input type="file" id="proof-image" name="proof_image" accept="image/*" 
+                  class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          
+          <input type="hidden" id="booking-id" name="booking_id">
+          
+          <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+            Upload Payment Proof
+          </button>
+        </form>
+      </div>
+      
+      <div id="payment-status" class="hidden">
+        <div class="flex items-center mb-4">
+          <div class="flex-shrink-0">
+            <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-lg font-medium text-green-800">Payment Proof Uploaded</h3>
+            <p class="text-sm text-green-700">Your payment proof has been submitted successfully!</p>
+          </div>
+        </div>
+        
+        <button id="view-bookings-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-all">
+          View My Bookings
         </button>
       </div>
     </div>
@@ -519,24 +607,26 @@
   </div>
 
   <!-- Success Modal -->
-  <div id="success-modal"
-    class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div id="success-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-1/2 max-w-lg p-8 text-center">
       <div class="mb-6">
-        <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg">
+        <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
         </svg>
       </div>
       <h2 class="text-2xl font-bold mb-2 text-gray-800">Booking Successful!</h2>
       <p class="text-lg text-gray-600 mb-4">Your sessions have been booked successfully.</p>
-      <p class="text-sm text-gray-500 mb-6">Confirmation number: <span id="confirmation-number"
-          class="font-bold"></span></p>
+      <p class="text-sm text-gray-500 mb-6">Confirmation number: <span id="confirmation-number" class="font-bold"></span></p>
       <p class="text-sm text-gray-500 mb-6">A confirmation email has been sent to your email address.</p>
-      <button id="success-done-btn"
-        class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
-        Done
-      </button>
+      
+      <div class="flex flex-col space-y-4">
+        <button id="upload-payment-btn" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+          Upload Payment Proof
+        </button>
+        <button id="success-done-btn" class="bg-gray-500 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transition-all">
+          Done
+        </button>
+      </div>
     </div>
   </div>
 
@@ -592,6 +682,10 @@
       let selectedPricingPlan = null;
       let availablePricingPlans = [];
       const isUserLoggedIn = {% if current_user.is_authenticated %}true{% else %}false{% endif %};
+      let studentPackages = [];
+      let selectedPackage = null;
+      let bookingResponsibilities = {}; // Track who books the court for each availability
+      let successfulBookingId = null; // Store the ID of a successful booking
 
       // Utility Functions
       function formatMoney(amount) {
@@ -775,6 +869,7 @@
           
           const coach = await response.json();
           coachData = coach;
+          
           // Update profile image
           const profileImageContainer = document.getElementById('coach-profile-image');
           if (coach.profile_picture) {
@@ -876,15 +971,170 @@
             document.getElementById('showcase-container').classList.remove('hidden');
           }
           
+          // Update academy affiliations if available
+          if (coach.academy_affiliations && coach.academy_affiliations.length > 0) {
+            const academiesContainer = document.getElementById('coach-academies');
+            academiesContainer.innerHTML = '';
+            
+            coach.academy_affiliations.forEach(academy => {
+              const academyItem = document.createElement('li');
+              academyItem.className = 'flex items-center';
+              academyItem.innerHTML = `
+                <i class="fas fa-university text-blue-500 mr-2"></i>
+                <span>${academy.name} ${academy.role ? `- ${academy.role}` : ''}</span>
+              `;
+              academiesContainer.appendChild(academyItem);
+            });
+            
+            document.getElementById('coach-academy-container').classList.remove('hidden');
+          }
+          
+          // Fetch student packages if user is logged in
+          if (isUserLoggedIn) {
+            fetchStudentPackages();
+          } else {
+            // Hide packages container if not logged in
+            const packagesContainer = document.getElementById('packages-container');
+            if (packagesContainer) {
+              packagesContainer.classList.add('hidden');
+            }
+          }
 
           // Hide loading overlay
-          loadingOverlay.classList.add('hidden');          
+          loadingOverlay.classList.add('hidden');
         } catch (error) {
           console.error('Error fetching coach data:', error);
           document.getElementById('coach-bio').textContent = 'Failed to load coach information. Please try again later.';
           // Hide loading overlay
           loadingOverlay.classList.add('hidden');
         }
+      }
+            
+      async function fetchStudentPackages() {
+        if (!isUserLoggedIn) return;
+        
+        try {
+          // Fetch packages that can be used with this coach
+          const response = await fetch(`/api/student/packages?coach_id=${coachData.id}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch packages');
+          }
+          
+          const data = await response.json();
+          studentPackages = data;
+          
+          // Update the packages UI
+          updatePackagesUI();
+        } catch (error) {
+          console.error('Error fetching student packages:', error);
+          document.getElementById('student-packages').innerHTML = `
+            <p class="text-sm text-red-500">Could not load your packages. Please try again later.</p>
+          `;
+        }
+      }
+
+      function updatePackagesUI() {
+        const container = document.getElementById('student-packages');
+        if (!container) return;
+        
+        // Hide container if user is not logged in or no packages
+        if (!isUserLoggedIn) {
+          document.getElementById('packages-container').classList.add('hidden');
+          return;
+        }
+        
+        if (!studentPackages || studentPackages.length === 0) {
+          container.innerHTML = `
+            <p class="text-sm text-gray-500">You don't have any active packages with this coach or their academies.</p>
+          `;
+          return;
+        }
+        
+        // Show available packages
+        container.innerHTML = '';
+        
+        studentPackages.forEach(pkg => {
+          const sessionsRemaining = pkg.total_sessions - pkg.sessions_booked;
+          const expiryDate = pkg.expires_at ? new Date(pkg.expires_at).toLocaleDateString() : 'Never';
+          
+          // Determine package type text
+          let packageTypeText = 'Coach Package';
+          if (pkg.package_type === 'academy') {
+            packageTypeText = 'Academy Package';
+          }
+          
+          const isSelected = selectedPackage && selectedPackage.id === pkg.id;
+          
+          const packageDiv = document.createElement('div');
+          packageDiv.className = `${isSelected ? 'bg-blue-200' : 'bg-white'} p-3 rounded-lg border border-blue-300 hover:shadow-md transition-all`;
+          packageDiv.innerHTML = `
+            <div class="flex justify-between mb-1">
+              <span class="font-semibold">${pkg.pricing_plan.name}</span>
+              <span class="text-blue-700">${sessionsRemaining} sessions remaining</span>
+            </div>
+            <p class="text-sm text-gray-600">${packageTypeText}</p>
+            <p class="text-xs text-gray-500 mt-1">Expires: ${expiryDate}</p>
+            <div class="flex justify-end mt-2">
+              <button class="text-sm px-3 py-1 ${isSelected ? 'bg-green-600' : 'bg-blue-600'} text-white rounded-lg hover:bg-blue-700 package-select-btn" 
+                data-package-id="${pkg.id}">
+                ${isSelected ? 'Selected' : 'Use Package'}
+              </button>
+            </div>
+          `;
+          
+          container.appendChild(packageDiv);
+        });
+        
+        // Add event listeners to package selection buttons
+        document.querySelectorAll('.package-select-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const packageId = parseInt(this.getAttribute('data-package-id'));
+            
+            // Check if this package is already selected
+            if (selectedPackage && selectedPackage.id === packageId) {
+              // Deselect the package
+              selectedPackage = null;
+              updatePackagesUI();
+              
+              // Reset pricing to normal
+              updatePricesWithDiscount();
+              return;
+            }
+            
+            // Get the package data
+            const pkg = studentPackages.find(p => p.id === packageId);
+            if (!pkg) return;
+            
+            // Check if there are enough sessions remaining in the package
+            if (pkg.total_sessions - pkg.sessions_booked < selectedSlots.length) {
+              alert(`You've selected ${selectedSlots.length} sessions but only have ${pkg.total_sessions - pkg.sessions_booked} sessions remaining in this package.`);
+              return;
+            }
+            
+            // Set as selected package
+            selectedPackage = pkg;
+            
+            // Update UI
+            updatePackagesUI();
+            
+            // Update pricing to show package discount
+            applyPackageDiscount();
+          });
+        });
+      }
+
+      function applyPackageDiscount() {
+        if (!selectedPackage) return;
+        
+        // If using a package, set price to 0 for each slot
+        selectedSlots.forEach(slot => {
+          // Keep court fee, but set coach fee to 0
+          slot.discounted_price = slot.court_fee;
+        });
+        
+        // Update UI
+        updateSelectedTimeslotsUI();
+        updateTotalPrice();
       }
 
       function setSelectedDate(dateStr) {
@@ -1228,6 +1478,7 @@
           });
         });
       }
+      
       // Add this function to update prices with selected discount
       function updatePricesWithDiscount() {
         if (!selectedPricingPlan) {
@@ -1288,7 +1539,7 @@
         
         // Initialize all hours as not available
         hours.forEach(hour => {
-          hourStatus[hour] = { status: 'unavailable', slotId: null };
+          hourStatus[hour] = { status: 'unavailable', slotId: null, student_books_court: false };
         });
         
         // If we have availability data for the selected date, update the status
@@ -1298,14 +1549,25 @@
           // Mark available slots
           availability.available.forEach(slot => {
             if (hours.includes(slot.time)) {
-              hourStatus[slot.time] = { status: 'available', slotId: slot.id };
+              hourStatus[slot.time] = { 
+                status: 'available', 
+                slotId: slot.id,
+                student_books_court: slot.student_books_court
+              };
+              
+              // Store booking responsibility
+              bookingResponsibilities[slot.id] = slot.student_books_court;
             }
           });
           
           // Mark booked slots
           availability.booked.forEach(slot => {
             if (hours.includes(slot.time)) {
-              hourStatus[slot.time] = { status: 'booked', slotId: null };
+              hourStatus[slot.time] = { 
+                status: 'booked', 
+                slotId: null,
+                student_books_court: false
+              };
             }
           });
         }
@@ -1314,15 +1576,19 @@
         hours.forEach(hour => {
           const timeSlot = document.createElement("div");
           timeSlot.className = "p-2 rounded-lg text-center text-sm"; // Default styling
-          timeSlot.textContent = hour;
+          
+          // Create inner content with time and possibly booking indicator
+          const timeText = document.createElement("div");
+          timeText.textContent = hour;
+          
+          const status = hourStatus[hour].status;
+          const slotId = hourStatus[hour].slotId;
+          const studentBooksCourtFlag = hourStatus[hour].student_books_court;
 
           // Find if this slot is in our selected slots
           const isSelected = selectedSlots.some(slot =>
             slot.date === date && slot.time === hour && slot.courtId === selectedCourtId
           );
-
-          const status = hourStatus[hour].status;
-          const slotId = hourStatus[hour].slotId;
 
           if (isSelected) {
             timeSlot.className += " bg-blue-500 text-white cursor-pointer";
@@ -1331,6 +1597,14 @@
           else if (status === 'available') {
             timeSlot.className += " bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer";
             timeSlot.addEventListener("click", () => addSelectedSlot(date, hour, slotId, selectedCourtId));
+            
+            // Add indicator for booking responsibility
+            if (studentBooksCourtFlag) {
+              const indicator = document.createElement("div");
+              indicator.className = "text-xs mt-1 text-orange-600";
+              indicator.innerHTML = `<i class="fas fa-calendar-check"></i> Book court`;
+              timeSlot.appendChild(indicator);
+            }
           }
           else if (status === 'booked') {
             timeSlot.className += " bg-orange-300 text-white cursor-not-allowed";
@@ -1338,7 +1612,8 @@
           else {
             timeSlot.className += " bg-gray-300 text-gray-500 cursor-not-allowed";
           }
-
+          
+          timeSlot.prepend(timeText);
           availabilityGrid.appendChild(timeSlot);
         });
         
@@ -1350,8 +1625,11 @@
           availabilityGrid.innerHTML = "<p class='text-center text-gray-500 py-4'>No time slots available on this date.</p>";
           return;
         }
+        
+        // Update court booking info
+        updateCourtBookingInfo();
       }
-
+      
       // Add a selected time slot
       function addSelectedSlot(date, time, availabilityId, courtId) {
         // Check if already selected
@@ -1369,6 +1647,9 @@
 
         // Get court fee for this time
         const courtFee = availabilityItem ? availabilityItem.court_fee : 0;
+        
+        // Get booking responsibility
+        const studentBooksCourtFlag = availabilityItem ? availabilityItem.student_books_court : false;
 
         // Calculate total price (coach fee + court fee)
         const totalPrice = parseFloat(coachData.hourly_rate) + parseFloat(courtFee);
@@ -1382,8 +1663,12 @@
           coach_fee: parseFloat(coachData.hourly_rate),
           court_fee: parseFloat(courtFee),
           price: totalPrice,
-          discounted_price: totalPrice // Will be updated if discount applied
+          discounted_price: totalPrice, // Will be updated if discount applied
+          student_books_court: studentBooksCourtFlag // Add booking responsibility flag
         });
+
+        // Store booking responsibility for this availability
+        bookingResponsibilities[availabilityId] = studentBooksCourtFlag;
 
         // Update session count
         const sessionCount = document.getElementById('session-count');
@@ -1391,8 +1676,10 @@
           sessionCount.textContent = selectedSlots.length;
         }
 
-        // If we have a pricing plan selected, update the prices
-        if (selectedPricingPlan) {
+        // If we have a package selected, update the prices
+        if (selectedPackage) {
+          applyPackageDiscount();
+        } else if (selectedPricingPlan) {
           updatePricesWithDiscount();
         } else {
           updateSelectedTimeslotsUI();
@@ -1404,6 +1691,7 @@
 
         populateAvailabilityGrid(date);
       }
+      
       // Remove a selected time slot
       function removeSelectedSlot(date, time, courtId) {
         selectedSlots = selectedSlots.filter(slot =>
@@ -1437,6 +1725,45 @@
         updatePricingPlanOptions();
 
         populateAvailabilityGrid(date);
+      }
+
+      function updateCourtBookingInfo() {
+        const infoContainer = document.getElementById('court-booking-info');
+        const responsibilityText = document.getElementById('booking-responsibility-text');
+        const linkContainer = document.getElementById('court-booking-link-container');
+        const bookingLink = document.getElementById('court-booking-link');
+        
+        if (!infoContainer || !selectedCourtId) {
+          if (infoContainer) infoContainer.classList.add('hidden');
+          return;
+        }
+        
+        // Get the selected court data
+        const selectedCourt = coachData.courts.find(court => court.id === parseInt(selectedCourtId));
+        if (!selectedCourt) {
+          infoContainer.classList.add('hidden');
+          return;
+        }
+        
+        infoContainer.classList.remove('hidden');
+        
+        // Check if any of the selected slots require student to book the court
+        const studentResponsible = selectedSlots.some(slot => slot.student_books_court);
+        
+        if (studentResponsible) {
+          responsibilityText.textContent = "You are responsible for booking the court for some sessions.";
+          
+          // Show booking link if available
+          if (selectedCourt.booking_link) {
+            bookingLink.href = selectedCourt.booking_link;
+            linkContainer.classList.remove('hidden');
+          } else {
+            linkContainer.classList.add('hidden');
+          }
+        } else {
+          responsibilityText.textContent = "The coach will handle court bookings for these sessions.";
+          linkContainer.classList.add('hidden');
+        }
       }
 
       // Update the selected timeslots UI
@@ -1548,6 +1875,30 @@
         const container = document.getElementById('confirmation-timeslots');
         container.innerHTML = "";
 
+        // Check if any selected slots have student court booking responsibility
+        const studentResponsible = selectedSlots.some(slot => slot.student_books_court);
+        
+        // Update payment instructions based on responsibility
+        const courtPaymentInstructions = document.getElementById('court-payment-instructions');
+        if (studentResponsible) {
+          courtPaymentInstructions.classList.remove('hidden');
+          
+          // Get the court info for booking link
+          if (selectedCourtId) {
+            const selectedCourt = coachData.courts.find(court => court.id === parseInt(selectedCourtId));
+            if (selectedCourt && selectedCourt.booking_link) {
+              document.getElementById('court-payment-method').innerHTML = `
+                Please pay and book the court through their system: 
+                <a href="${selectedCourt.booking_link}" target="_blank" class="text-blue-600 hover:underline">
+                  ${selectedCourt.name} Booking Link
+                </a>
+              `;
+            }
+          }
+        } else {
+          courtPaymentInstructions.classList.add('hidden');
+        }
+
         // Sort slots by date and time
         const sortedSlots = [...selectedSlots].sort((a, b) => {
           const dateA = new Date(a.date + ' ' + a.time);
@@ -1570,15 +1921,17 @@
           }
 
           slotDiv.innerHTML = `
-      <div class="flex justify-between">
-        <div>
-          <span class="font-medium">${formatDate(slot.date)} at ${slot.time}</span>
-          <div class="text-sm">${slot.courtName}</div>
-          <div class="text-xs mt-1">Coach: $${slot.coach_fee.toFixed(2)} | Court: $${slot.court_fee.toFixed(2)}</div>
-        </div>
-        <div class="font-bold">${priceDisplay}</div>
-      </div>
-    `;
+            <div class="flex justify-between">
+              <div>
+                <span class="font-medium">${formatDate(slot.date)} at ${slot.time}</span>
+                <div class="text-sm">${slot.courtName}</div>
+                <div class="text-xs mt-1">Coach: $${slot.coach_fee.toFixed(2)} | Court: $${slot.court_fee.toFixed(2)}</div>
+                ${slot.student_books_court ? 
+                  '<div class="text-xs text-orange-600 mt-1"><i class="fas fa-info-circle"></i> You need to book this court</div>' : ''}
+              </div>
+              <div class="font-bold">${priceDisplay}</div>
+            </div>
+          `;
 
           container.appendChild(slotDiv);
         });
@@ -1678,7 +2031,7 @@
       // Submit the booking to the server
       async function submitBooking(userData = null) {
         try {
-      // Group availabilities by court
+          // Group availabilities by court
           const courtAvailabilities = {};
 
           selectedSlots.forEach(slot => {
@@ -1693,7 +2046,8 @@
             coach_id: coachData.id,
             court_id: parseInt(courtId),
             availability_ids: courtAvailabilities[courtId],
-            pricing_plan_id: selectedPricingPlan ? selectedPricingPlan.id : null
+            pricing_plan_id: selectedPricingPlan ? selectedPricingPlan.id : null,
+            package_id: selectedPackage ? selectedPackage.id : null // Add package ID if using a package
           }));
 
           // Add user data if provided (for guest booking)
@@ -1739,6 +2093,11 @@
 
           const result = await response.json();
 
+          // Store the booking ID for payment proof
+          successfulBookingId = result.bookings && result.bookings.length > 0 
+            ? result.bookings[0].id 
+            : null;
+
           // Show success message
           hideAllModals();
 
@@ -1751,7 +2110,9 @@
           // Reset state
           selectedSlots = [];
           selectedPricingPlan = null;
+          selectedPackage = null;
           selectedCourtId = null;
+          bookingResponsibilities = {};
           updateSelectedTimeslotsUI();
           updateTotalPrice();
 
@@ -1759,9 +2120,32 @@
           console.error('Error creating booking:', error);
           loadingOverlay.classList.add('hidden');
           alert(`Booking failed: ${error.message}`);
-            }
-          }
+        }
+      }
 
+      function showPaymentProofModal(bookingId) {
+        // Set booking ID in form
+        document.getElementById('booking-id').value = bookingId;
+        
+        // Check if any selected slots had student court booking responsibility
+        const studentResponsible = Object.values(bookingResponsibilities).some(val => val === true);
+        
+        // Show/hide court payment option based on responsibility
+        const courtPaymentOption = document.getElementById('court-payment-option');
+        if (studentResponsible) {
+          courtPaymentOption.classList.remove('hidden');
+        } else {
+          courtPaymentOption.classList.add('hidden');
+        }
+        
+        // Reset form and show it
+        document.getElementById('payment-proof-form').reset();
+        document.getElementById('payment-proof-form').classList.remove('hidden');
+        document.getElementById('payment-status').classList.add('hidden');
+        
+        showModal(document.getElementById('payment-proof-modal'));
+      }     
+      
       // Event Listeners
 
       // Court selection change
@@ -1771,6 +2155,18 @@
 
         if (courtId) {
           selectedCourtId = courtId;
+
+          // Update court booking link if available
+          const selectedCourt = coachData.courts.find(court => court.id === courtId);
+          const bookingLinkContainer = document.getElementById('court-booking-link-container');
+          const bookingLink = document.getElementById('court-booking-link');
+          
+          if (selectedCourt && selectedCourt.booking_link) {
+            bookingLink.href = selectedCourt.booking_link;
+            bookingLinkContainer.classList.remove('hidden');
+          } else {
+            bookingLinkContainer.classList.add('hidden');
+          }
 
           // Show loading animations for each section that will update
           animateElementUpdate(document.getElementById('calendar-container'), true);
@@ -1936,6 +2332,62 @@
         hideAllModals();
       });
 
+      // event listener for upload payment button in success modal
+      document.getElementById('upload-payment-btn').addEventListener('click', function() {
+        hideAllModals();
+        if (successfulBookingId) {
+          showPaymentProofModal(successfulBookingId);
+        } else {
+          alert('Booking ID not found. Please go to your bookings page to upload payment proof.');
+        }
+      });
+
+      // event listener for payment proof form submission
+      document.getElementById('payment-proof-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const bookingId = formData.get('booking_id');
+        
+        if (!bookingId) {
+          alert('Booking ID is missing.');
+          return;
+        }
+        
+        try {
+          // Show loading overlay
+          loadingOverlay.classList.remove('hidden');
+          
+          // Submit form data to server
+          const response = await fetch(`/upload-payment-proof/${bookingId}`, {
+            method: 'POST',
+            body: formData
+          });
+          
+          // Hide loading overlay
+          loadingOverlay.classList.add('hidden');
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to upload payment proof');
+          }
+          
+          // Show success state
+          document.getElementById('payment-proof-form').classList.add('hidden');
+          document.getElementById('payment-status').classList.remove('hidden');
+          
+        } catch (error) {
+          console.error('Error uploading payment proof:', error);
+          loadingOverlay.classList.add('hidden');
+          alert(`Upload failed: ${error.message}`);
+        }
+      });
+
+      // event listener for "View My Bookings" button
+      document.getElementById('view-bookings-btn').addEventListener('click', function() {
+        window.location.href = '/student/bookings';
+      });
+
       // Scroll animations
       const scrollSections = document.querySelectorAll('.scroll-section');
 
@@ -1975,6 +2427,6 @@
       // Extract coach id from URL
       const coachId =  {{ coach.id }}  || 1; // Default to 1 if no ID is provided
       fetchCoachData(coachId);
-    });
+   });
   </script>
   {% endblock %}

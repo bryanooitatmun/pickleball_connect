@@ -1723,50 +1723,78 @@ def cancel_student_booking():
 @bp.route('/student/packages', methods=['GET'])
 @login_required
 def get_student_packages():
-    """API endpoint to get student packages"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts cannot access student packages'}), 403
+    """API endpoint to get student packages that can be used with a specific coach"""
+    coach_id = request.args.get('coach_id', type=int)
     
-    try:
-        packages = BookingPackage.query.filter_by(student_id=current_user.id).all()
-        
-        result = []
-        for package in packages:
-            coach = Coach.query.get(package.coach_id)
-            print(package)
-            coach_user = User.query.get(coach.user_id)
-            
-            package_data = {
-                'id': package.id,
-                'coach_id': package.coach_id,
-                'coach': {
-                    'id': coach.id,
-                    'user': {
-                        'first_name': coach_user.first_name,
-                        'last_name': coach_user.last_name
-                    }
-                },
-                'pricing_plan': {
-                    'id': package.pricing_plan_id,
-                    'name': package.pricing_plan.name,
-                    'description': package.pricing_plan.description
-                },
-                'total_sessions': package.total_sessions,
-                'sessions_booked': package.sessions_booked,
-                'sessions_completed': package.sessions_completed,
-                'total_price': float(package.total_price),
-                'original_price': float(package.original_price),
-                'discount_amount': float(package.discount_amount) if package.discount_amount else None,
-                'purchase_date': package.purchase_date.isoformat(),
-                'expires_at': package.expires_at.isoformat() if package.expires_at else None
-            }
-            
-            result.append(package_data)
-        
-        return jsonify(result)
-    except ImportError:
-        # If BookingPackage is not implemented yet
+    if not coach_id:
         return jsonify([])
+    
+    # Get packages created specifically for this coach
+    coach_packages = BookingPackage.query.filter(
+        BookingPackage.student_id == current_user.id,
+        BookingPackage.coach_id == coach_id,
+        BookingPackage.sessions_booked < BookingPackage.total_sessions,
+        (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
+    ).all()
+    
+    # Get academies this coach belongs to
+    coach_academies = AcademyCoach.query.filter_by(
+        coach_id=coach_id,
+        is_active=True
+    ).all()
+    
+    academy_ids = [ca.academy_id for ca in coach_academies]
+    
+    # Get academy packages that can be used with this coach
+    academy_packages = []
+    if academy_ids:
+        academy_packages = BookingPackage.query.filter(
+            BookingPackage.student_id == current_user.id,
+            BookingPackage.academy_id.in_(academy_ids),
+            BookingPackage.package_type == 'academy',
+            BookingPackage.sessions_booked < BookingPackage.total_sessions,
+            (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
+        ).all()
+    
+    # Combine and format packages
+    result = []
+    for package in coach_packages + academy_packages:
+        package_data = {
+            'id': package.id,
+            'package_type': package.package_type,
+            'total_sessions': package.total_sessions,
+            'sessions_booked': package.sessions_booked,
+            'sessions_completed': package.sessions_completed,
+            'total_price': float(package.total_price),
+            'original_price': float(package.original_price),
+            'discount_amount': float(package.discount_amount) if package.discount_amount else None,
+            'purchase_date': package.purchase_date.isoformat(),
+            'expires_at': package.expires_at.isoformat() if package.expires_at else None
+        }
+        
+        # Add pricing plan info
+        if package.package_type == 'coach' and package.pricing_plan:
+            package_data['pricing_plan'] = {
+                'id': package.pricing_plan.id,
+                'name': package.pricing_plan.name,
+                'description': package.pricing_plan.description
+            }
+        elif package.package_type == 'academy' and package.academy_pricing_plan:
+            package_data['pricing_plan'] = {
+                'id': package.academy_pricing_plan.id,
+                'name': package.academy_pricing_plan.name,
+                'description': package.academy_pricing_plan.description
+            }
+        else:
+            package_data['pricing_plan'] = {
+                'id': None,
+                'name': 'Standard Package',
+                'description': 'Basic coaching package'
+            }
+        
+        result.append(package_data)
+    
+    return jsonify(result)
 
 @bp.route('/student/session-logs', methods=['GET'])
 @login_required
@@ -1904,6 +1932,7 @@ def get_all_courts():
         result.append(court_data)
     
     return jsonify(result)
+
 
 @bp.route('/support/request', methods=['POST'])
 @login_required

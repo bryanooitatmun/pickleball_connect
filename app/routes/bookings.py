@@ -1,5 +1,5 @@
 # app/routes/bookings.py
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import current_user, login_required
 from app import db
 from app.models.user import User
@@ -15,8 +15,11 @@ from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
 from app.models.notification import Notification
 from app.utils.email import send_coach_booking_notification
-
+from werkzeug.utils import secure_filename
+from app.models.payment import PaymentProof
+import os
 import uuid 
+import json
 
 bp = Blueprint('bookings', __name__)
 
@@ -132,68 +135,322 @@ def get_court_fee_for_time(court_fees, slot_time):
     return 0.0
 
 
-@bp.route('/api/bookings/create', methods=['POST'])
-def create_booking():
-    """API endpoint to create bookings"""
-    data = request.json
+# @bp.route('/api/bookings/create', methods=['POST'])
+# def create_booking():
+#     """API endpoint to create bookings"""
+#     data = request.json
     
-    # Extract booking data
-    bookings_data = data.get('bookings', [])
-    user_data = data.get('user_data', {})
+#     # Extract booking data
+#     bookings_data = data.get('bookings', [])
+#     user_data = data.get('user_data', {})
     
-    # Check if we have booking data
-    if not bookings_data:
-        return jsonify({'error': 'No booking data provided'}), 400
+#     # Check if we have booking data
+#     if not bookings_data:
+#         return jsonify({'error': 'No booking data provided'}), 400
     
-    # Check if user is authenticated or we need to create a guest user
-    if current_user.is_authenticated:
-        user_id = current_user.id
-    else:
-        # Create or get temporary user
-        email = user_data.get('email')
-        if not email:
-            return jsonify({'error': 'Email is required for guest bookings'}), 400
+#     # Check if user is authenticated or we need to create a guest user
+#     if current_user.is_authenticated:
+#         user_id = current_user.id
+#     else:
+#         # Create or get temporary user
+#         email = user_data.get('email')
+#         if not email:
+#             return jsonify({'error': 'Email is required for guest bookings'}), 400
             
-        # Check if user with this email already exists
-        existing_user = User.query.filter_by(email=email).first()
+#         # Check if user with this email already exists
+#         existing_user = User.query.filter_by(email=email).first()
         
-        if existing_user:
-            user_id = existing_user.id
-        else:
-            # Create temporary user
-            temp_user = User(
-                first_name=user_data.get('first_name', ''),
-                last_name=user_data.get('last_name', ''),
-                email=email,
-                phone=user_data.get('phone', ''),
-                is_temporary=True,  # Mark as temporary user
-                dupr_rating=user_data.get('dupr_rating'),
-                location=user_data.get('location', ''),
-                bio=user_data.get('bio', '')
-            )
+#         if existing_user:
+#             user_id = existing_user.id
+#         else:
+#             # Create temporary user
+#             temp_user = User(
+#                 first_name=user_data.get('first_name', ''),
+#                 last_name=user_data.get('last_name', ''),
+#                 email=email,
+#                 phone=user_data.get('phone', ''),
+#                 is_temporary=True,  # Mark as temporary user
+#                 dupr_rating=user_data.get('dupr_rating'),
+#                 location=user_data.get('location', ''),
+#                 bio=user_data.get('bio', '')
+#             )
             
-            # Set password if creating account
-            if user_data.get('create_account'):
-                temp_user.is_temporary = False
-                temp_user.set_password(user_data.get('password'))
+#             # Set password if creating account
+#             if user_data.get('create_account'):
+#                 temp_user.is_temporary = False
+#                 temp_user.set_password(user_data.get('password'))
             
-            try:
-                db.session.add(temp_user)
-                db.session.flush()  # Get ID without committing
-                user_id = temp_user.id
-            except IntegrityError:
-                db.session.rollback()
-                return jsonify({'error': 'Failed to create temporary user'}), 400
+#             try:
+#                 db.session.add(temp_user)
+#                 db.session.flush()  # Get ID without committing
+#                 user_id = temp_user.id
+#             except IntegrityError:
+#                 db.session.rollback()
+#                 return jsonify({'error': 'Failed to create temporary user'}), 400
     
-    # Process each booking
-    bookings_created = []
+#     # Process each booking
+#     bookings_created = []
     
+#     try:
+#         for booking_item in bookings_data:
+#             coach_id = booking_item.get('coach_id')
+#             court_id = booking_item.get('court_id')
+#             availability_ids = booking_item.get('availability_ids', [])
+#             package_id = booking_item.get('package_id')  # Add package ID handling
+            
+#             # Get coach hourly rate
+#             coach = Coach.query.get(coach_id)
+#             if not coach:
+#                 return jsonify({'error': f'Coach with ID {coach_id} not found'}), 404
+                
+#             hourly_rate = coach.hourly_rate
+            
+#             # Check for package
+#             package = None
+#             if package_id:
+#                 package = BookingPackage.query.get(package_id)
+                
+#                 # Verify package belongs to this user and has sessions remaining
+#                 if not package or package.student_id != user_id or package.sessions_booked >= package.total_sessions:
+#                     return jsonify({'error': 'Invalid package or insufficient sessions remaining'}), 400
+                
+#                 # Verify package can be used with this coach
+#                 if not package.can_use_for_coach(coach_id):
+#                     return jsonify({'error': 'This package cannot be used with this coach'}), 400
+            
+#            # Check if student is eligible for first-time discount
+#             is_first_time = not Booking.query.filter_by(
+#                 student_id=user_id,
+#                 coach_id=coach_id
+#             ).first()
+            
+#             # Check for applied pricing plan
+#             pricing_plan_id = booking_item.get('pricing_plan_id')
+#             pricing_plan = None
+#             discount_percentage = None
+#             discount_amount = None
+            
+#             if pricing_plan_id:
+#                 pricing_plan = PricingPlan.query.get(pricing_plan_id)
+                
+#                 # Verify eligibility
+#                 if pricing_plan and pricing_plan.is_active:
+#                     # First-time discount eligibility
+#                     if pricing_plan.first_time_only and not is_first_time:
+#                         return jsonify({'error': 'First-time discount can only be applied to new students.'}), 400
+                        
+#                     # Seasonal discount eligibility
+#                     if pricing_plan.discount_type == 'seasonal' and (
+#                         (pricing_plan.valid_from and pricing_plan.valid_from > datetime.now().date()) or
+#                         (pricing_plan.valid_to and pricing_plan.valid_to < datetime.now().date())
+#                     ):
+#                         return jsonify({'error': 'This promotional discount is not currently active.'}), 400
+                        
+#                     # Package discount eligibility
+#                     if pricing_plan.discount_type == 'package' and len(availability_ids) < pricing_plan.sessions_required:
+#                         return jsonify({
+#                             'error': f'You need to book at least {pricing_plan.sessions_required} sessions to use this package deal.'
+#                         }), 400
+                    
+#                     # Set discount values
+#                     if pricing_plan.percentage_discount:
+#                         discount_percentage = pricing_plan.percentage_discount
+#                     elif pricing_plan.fixed_discount:
+#                         discount_amount = pricing_plan.fixed_discount
+
+#             # Process each availability slot
+#             for avail_id in availability_ids:
+#                 availability = Availability.query.get(avail_id)
+                
+#                 if not availability or availability.is_booked:
+#                     return jsonify({'error': 'One or more selected slots are no longer available'}), 400
+                    
+#                 # Get court fee for this time
+#                 court_fees = CourtFee.query.filter_by(court_id=court_id).all()
+#                 court_fee = get_court_fee_for_time(court_fees, availability.start_time)
+                
+#                 # Calculate total price (coach fee + court fee)
+#                 base_price = hourly_rate + court_fee
+                
+#                 # Apply discount if any
+#                 if discount_percentage:
+#                     discount_value = base_price * (discount_percentage / 100)
+#                     price = base_price - discount_value
+#                 elif discount_amount:
+#                     # Distribute fixed discount proportionally across all booked sessions
+#                     per_session_discount = discount_amount / len(availability_ids)
+#                     price = base_price - per_session_discount
+#                 else:
+#                     price = base_price
+                
+#                 # If using package, set coach fee to 0
+#                 if package:
+#                     price = court_fee  # Only pay for court
+#                     package.sessions_booked += 1
+                
+#                 # Mark availability as booked
+#                 availability.is_booked = True
+                
+#                 court_payment_required = availability.student_books_court
+#                 court_payment_status = 'pending' if court_payment_required else 'not_required'
+
+#                 # Create booking
+#                 booking = Booking(
+#                     student_id=user_id,
+#                     coach_id=coach_id,
+#                     court_id=court_id,
+#                     availability_id=availability.id,
+#                     date=availability.date,
+#                     start_time=availability.start_time,
+#                     end_time=availability.end_time,
+#                     base_price=base_price,
+#                     price=price,
+#                     court_fee=court_fee,
+#                     coach_fee=hourly_rate,
+#                     status='upcoming',
+#                     pricing_plan_id=pricing_plan_id if pricing_plan else None,
+#                     discount_percentage=discount_percentage,
+#                     discount_amount=discount_amount,
+#                     court_payment_required=court_payment_required,
+#                     court_payment_status=court_payment_status
+#                 )
+                
+#                 db.session.add(booking)
+                
+#                 # Associate booking with package if applicable
+#                 if package:
+#                     package.bookings.append(booking)
+                
+#                 bookings_created.append({
+#                     'id': booking.id,  # Include booking ID in response
+#                     'date': availability.date.isoformat(),
+#                     'start_time': availability.start_time.strftime('%I:%M %p'),
+#                     'end_time': availability.end_time.strftime('%I:%M %p'),
+#                     'coach_fee': hourly_rate,
+#                     'court_fee': court_fee,
+#                     'base_price': base_price,
+#                     'price': price,
+#                     'student_books_court': availability.student_books_court
+#                 })
+        
+#         # Generate confirmation number
+#         confirmation_number = f"PBC-{uuid.uuid4().hex[:8].upper()}"
+        
+#         # Create notification for coach
+#         notification = Notification(
+#             user_id=coach.user_id,
+#             title="New booking",
+#             message=f"New booking on {booking.date.strftime('%Y-%m-%d')} at {booking.start_time.strftime('%I:%M %p')}",
+#             notification_type="booking",
+#             related_id=booking.id
+#         )
+#         db.session.add(notification)
+        
+#         # Send email notification
+#         send_coach_booking_notification(booking)
+        
+#         # Commit all changes
+#         db.session.commit()
+        
+#         return jsonify({
+#             'success': True,
+#             'message': 'Bookings created successfully',
+#             'confirmation_number': confirmation_number,
+#             'bookings': bookings_created
+#         })
+        
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({'error': str(e)}), 400
+
+@bp.route('/api/bookings/create-with-proofs', methods=['POST'])
+def create_booking_with_proofs():
+    """API endpoint to create bookings with payment and booking proofs"""
+    # Get form data and files
     try:
+        bookings_data = json.loads(request.form.get('bookings', '[]'))
+        user_data_json = request.form.get('user_data')
+        user_data = json.loads(user_data_json) if user_data_json else None
+        
+        # Get uploaded files
+        coach_payment_proof = request.files.get('coach_payment_proof')
+        court_booking_proof = request.files.get('court_booking_proof')
+        
+        # Validate required data
+        if not bookings_data:
+            return jsonify({'error': 'No booking data provided'}), 400
+        
+        if not coach_payment_proof:
+            return jsonify({'error': 'Coach payment proof is required'}), 400
+
+        if not court_booking_proof:
+            return jsonify({'error': 'Court payment proof is required'}), 400
+        
+        # Check if user is authenticated or we need to create a guest user
+        if current_user.is_authenticated:
+            user_id = current_user.id
+        else:
+            # Create or get temporary user
+            email = user_data.get('email')
+            if not email:
+                return jsonify({'error': 'Email is required for guest bookings'}), 400
+                
+            # Check if user with this email already exists
+            existing_user = User.query.filter_by(email=email).first()
+            
+            if existing_user:
+                user_id = existing_user.id
+            else:
+                # Create temporary user
+                temp_user = User(
+                    first_name=user_data.get('first_name', ''),
+                    last_name=user_data.get('last_name', ''),
+                    email=email,
+                    phone=user_data.get('phone', ''),
+                    is_temporary=True,
+                    dupr_rating=user_data.get('dupr_rating'),
+                    location=user_data.get('location', ''),
+                    bio=user_data.get('bio', '')
+                )
+                
+                # Set password if creating account
+                if user_data.get('create_account'):
+                    temp_user.is_temporary = False
+                    temp_user.set_password(user_data.get('password'))
+                
+                try:
+                    db.session.add(temp_user)
+                    db.session.flush()  # Get ID without committing
+                    user_id = temp_user.id
+                except IntegrityError:
+                    db.session.rollback()
+                    return jsonify({'error': 'Failed to create temporary user'}), 400
+        
+        # Save uploaded files
+        unique_id = uuid.uuid4().hex
+        proofs_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'payment_proofs')
+        os.makedirs(proofs_dir, exist_ok=True)
+        
+        # Save coach payment proof
+        coach_proof_filename = f"coach_payment_{unique_id}_{secure_filename(coach_payment_proof.filename)}"
+        coach_proof_path = os.path.join(proofs_dir, coach_proof_filename)
+        coach_payment_proof.save(coach_proof_path)
+        
+        # Save court booking proof if provided
+        court_proof_path = None
+        if court_booking_proof:
+            court_proof_filename = f"court_booking_{unique_id}_{secure_filename(court_booking_proof.filename)}"
+            court_proof_path = os.path.join(proofs_dir, court_proof_filename)
+            court_booking_proof.save(court_proof_path)
+        
+        # Process each booking
+        bookings_created = []
+        
         for booking_item in bookings_data:
             coach_id = booking_item.get('coach_id')
             court_id = booking_item.get('court_id')
             availability_ids = booking_item.get('availability_ids', [])
-            package_id = booking_item.get('package_id')  # Add package ID handling
+            package_id = booking_item.get('package_id')
             
             # Get coach hourly rate
             coach = Coach.query.get(coach_id)
@@ -215,46 +472,6 @@ def create_booking():
                 if not package.can_use_for_coach(coach_id):
                     return jsonify({'error': 'This package cannot be used with this coach'}), 400
             
-           # Check if student is eligible for first-time discount
-            is_first_time = not Booking.query.filter_by(
-                student_id=user_id,
-                coach_id=coach_id
-            ).first()
-            
-            # Check for applied pricing plan
-            pricing_plan_id = booking_item.get('pricing_plan_id')
-            pricing_plan = None
-            discount_percentage = None
-            discount_amount = None
-            
-            if pricing_plan_id:
-                pricing_plan = PricingPlan.query.get(pricing_plan_id)
-                
-                # Verify eligibility
-                if pricing_plan and pricing_plan.is_active:
-                    # First-time discount eligibility
-                    if pricing_plan.first_time_only and not is_first_time:
-                        return jsonify({'error': 'First-time discount can only be applied to new students.'}), 400
-                        
-                    # Seasonal discount eligibility
-                    if pricing_plan.discount_type == 'seasonal' and (
-                        (pricing_plan.valid_from and pricing_plan.valid_from > datetime.now().date()) or
-                        (pricing_plan.valid_to and pricing_plan.valid_to < datetime.now().date())
-                    ):
-                        return jsonify({'error': 'This promotional discount is not currently active.'}), 400
-                        
-                    # Package discount eligibility
-                    if pricing_plan.discount_type == 'package' and len(availability_ids) < pricing_plan.sessions_required:
-                        return jsonify({
-                            'error': f'You need to book at least {pricing_plan.sessions_required} sessions to use this package deal.'
-                        }), 400
-                    
-                    # Set discount values
-                    if pricing_plan.percentage_discount:
-                        discount_percentage = pricing_plan.percentage_discount
-                    elif pricing_plan.fixed_discount:
-                        discount_amount = pricing_plan.fixed_discount
-
             # Process each availability slot
             for avail_id in availability_ids:
                 availability = Availability.query.get(avail_id)
@@ -270,15 +487,26 @@ def create_booking():
                 base_price = hourly_rate + court_fee
                 
                 # Apply discount if any
-                if discount_percentage:
-                    discount_value = base_price * (discount_percentage / 100)
-                    price = base_price - discount_value
-                elif discount_amount:
-                    # Distribute fixed discount proportionally across all booked sessions
-                    per_session_discount = discount_amount / len(availability_ids)
-                    price = base_price - per_session_discount
-                else:
-                    price = base_price
+                discount_percentage = None
+                discount_amount = None
+                price = base_price
+                
+                # Check for applied pricing plan
+                pricing_plan_id = booking_item.get('pricing_plan_id')
+                if pricing_plan_id:
+                    pricing_plan = PricingPlan.query.get(pricing_plan_id)
+                    
+                    if pricing_plan and pricing_plan.is_active:
+                        # Set discount values
+                        if pricing_plan.percentage_discount:
+                            discount_percentage = pricing_plan.percentage_discount
+                            discount_value = base_price * (discount_percentage / 100)
+                            price = base_price - discount_value
+                        elif pricing_plan.fixed_discount:
+                            # Distribute fixed discount proportionally across all booked sessions
+                            per_session_discount = pricing_plan.fixed_discount / len(availability_ids)
+                            discount_amount = per_session_discount
+                            price = base_price - per_session_discount
                 
                 # If using package, set coach fee to 0
                 if package:
@@ -288,8 +516,11 @@ def create_booking():
                 # Mark availability as booked
                 availability.is_booked = True
                 
-                court_payment_required = availability.student_books_court
-                court_payment_status = 'pending' if court_payment_required else 'not_required'
+                # Determine court payment status
+                court_payment_required = True
+                court_payment_status = 'uploaded' if court_booking_proof else 'not_required'
+                if not court_booking_proof:
+                    court_payment_status = 'pending'
 
                 # Create booking
                 booking = Booking(
@@ -305,21 +536,43 @@ def create_booking():
                     court_fee=court_fee,
                     coach_fee=hourly_rate,
                     status='upcoming',
-                    pricing_plan_id=pricing_plan_id if pricing_plan else None,
+                    pricing_plan_id=pricing_plan_id,
                     discount_percentage=discount_percentage,
                     discount_amount=discount_amount,
                     court_payment_required=court_payment_required,
-                    court_payment_status=court_payment_status
+                    court_payment_status=court_payment_status,
+                    coaching_payment_status='uploaded'  # Since proof was provided
                 )
                 
                 db.session.add(booking)
+                db.session.flush()  # Get booking ID
                 
                 # Associate booking with package if applicable
                 if package:
                     package.bookings.append(booking)
+            
+                
+                # Coach payment proof
+                coach_proof = PaymentProof(
+                    booking_id=booking.id,
+                    image_path=coach_proof_path.replace(current_app.config['UPLOAD_FOLDER'] + '/', ''),
+                    proof_type='coaching',
+                    status='pending'
+                )
+                db.session.add(coach_proof)
+                
+                # Court booking proof if provided
+                if court_booking_proof:
+                    court_proof = PaymentProof(
+                        booking_id=booking.id,
+                        image_path=court_proof_path.replace(current_app.config['UPLOAD_FOLDER'] + '/', ''),
+                        proof_type='court',
+                        status='pending'
+                    )
+                    db.session.add(court_proof)
                 
                 bookings_created.append({
-                    'id': booking.id,  # Include booking ID in response
+                    'id': booking.id,
                     'date': availability.date.isoformat(),
                     'start_time': availability.start_time.strftime('%I:%M %p'),
                     'end_time': availability.end_time.strftime('%I:%M %p'),
@@ -336,22 +589,22 @@ def create_booking():
         # Create notification for coach
         notification = Notification(
             user_id=coach.user_id,
-            title="New booking",
-            message=f"New booking on {booking.date.strftime('%Y-%m-%d')} at {booking.start_time.strftime('%I:%M %p')}",
+            title="New booking with payment proof",
+            message=f"New booking on {booking.date.strftime('%Y-%m-%d')} with payment proof uploaded",
             notification_type="booking",
             related_id=booking.id
         )
         db.session.add(notification)
         
         # Send email notification
-        send_coach_booking_notification(booking)
+        #send_coach_booking_notification(booking)
         
         # Commit all changes
         db.session.commit()
         
         return jsonify({
             'success': True,
-            'message': 'Bookings created successfully',
+            'message': 'Bookings created successfully with payment proofs',
             'confirmation_number': confirmation_number,
             'bookings': bookings_created
         })
@@ -359,7 +612,6 @@ def create_booking():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
-
 
 @bp.route('/book/<int:coach_id>', methods=['GET', 'POST'])
 @login_required

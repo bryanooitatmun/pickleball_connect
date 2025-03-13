@@ -1472,6 +1472,82 @@ def defer_booking():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+@bp.route('/coach/payment-info', methods=['PUT'])
+@login_required
+def update_payment_info():
+    """API endpoint to update coach payment information"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Update payment info
+    payment_info = {
+        'bank_name': data.get('bank_name'),
+        'account_name': data.get('account_name'),
+        'account_number': data.get('account_number'),
+        'qr_code_url': data.get('qr_code_url')
+    }
+    
+    coach.payment_info = payment_info
+    
+    # Update court booking instructions if provided
+    if 'court_booking_instructions' in data:
+        coach.court_booking_instructions = data.get('court_booking_instructions')
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/upload-qr-code', methods=['POST'])
+@login_required
+def upload_qr_code():
+    """API endpoint to upload QR code payment image"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    try:
+        if 'qr_code' not in request.files:
+            return jsonify({'success': False, 'message': 'No file provided'}), 400
+        
+        file = request.files['qr_code']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No file selected'}), 400
+        
+        # Save QR code image
+        from app.utils.file_utils import save_uploaded_file
+        
+        qr_path = save_uploaded_file(
+            file, 
+            current_app.config['PAYMENT_QR_DIR'], 
+            f"qr_code_coach_{current_user.id}"
+        )
+        
+        if not qr_path:
+            return jsonify({'success': False, 'message': 'Failed to save QR code'}), 400
+        
+        # Update coach payment info
+        coach = Coach.query.filter_by(user_id=current_user.id).first()
+        
+        if not coach.payment_info:
+            coach.payment_info = {}
+        
+        coach.payment_info['qr_code_url'] = qr_path
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'QR code updated successfully',
+            'qr_code_url': qr_path
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
 @bp.route('/student/profile', methods=['GET'])
 @login_required
 def get_student_profile():

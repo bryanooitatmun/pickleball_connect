@@ -12,6 +12,8 @@ class Coach(db.Model):
     specialties = db.Column(db.String(256))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     phone = db.Column(db.String(20))
+    payment_info = db.Column(db.JSON, nullable=True)  # Store bank details, QR code path, etc.
+    court_booking_instructions = db.Column(db.Text, nullable=True)  # Store specific court booking instructions
     
     # Relationships
     user = db.relationship('User', backref='coach_profile')

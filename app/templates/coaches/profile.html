@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block extra_styles %}
+/* Your existing styles */
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
@@ -33,20 +34,16 @@
 /* Custom CSS for scrollable modal */
 .scrollable-modal {
   max-height: 80vh;
-  /* Set a maximum height for the modal */
   overflow-y: auto;
-  /* Enable vertical scrolling */
 }
 
 @media (max-width: 640px) {
   .grid-cols-2 {
     grid-template-columns: 1fr;
-    /* Stack hours and boxes vertically on small screens */
   }
 
   .text-right {
     text-align: left;
-    /* Align hour labels to the left on small screens */
   }
 }
 
@@ -112,6 +109,82 @@
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* Tag styling */
+.coach-tag {
+  display: inline-block;
+  background-color: #EBF5FF;
+  color: #3B82F6;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* File upload styling */
+.file-upload-container {
+  border: 2px dashed #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.file-upload-container:hover {
+  border-color: #3B82F6;
+}
+
+.file-upload-input {
+  display: none;
+}
+
+.file-upload-label {
+  cursor: pointer;
+  display: block;
+  width: 100%;
+}
+
+.file-preview {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-preview img {
+  max-height: 100px;
+  max-width: 100%;
+  border-radius: 0.25rem;
+}
+
+.payment-steps {
+  counter-reset: step-counter;
+}
+
+.payment-step {
+  position: relative;
+  padding-left: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.payment-step::before {
+  content: counter(step-counter);
+  counter-increment: step-counter;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background-color: #3B82F6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
 }
 {% endblock %}
 
@@ -180,10 +253,16 @@
             </div>
           </div>
           
-          <!-- Coach specialties -->
-          <div id="coach-specialties-container" class="mb-6 hidden">
+          <!-- Coach tags (replacing specialties) -->
+          <div id="coach-tags-container" class="mb-6">
             <h3 class="font-semibold mb-2">Specialties</h3>
-            <p id="coach-specialties" class="text-gray-600"></p>
+            <div class="flex flex-wrap">
+              {% for tag in coach_tags %}
+                <span class="coach-tag">{{ tag.name }}</span>
+              {% else %}
+                <p class="text-gray-600">No specialties listed</p>
+              {% endfor %}
+            </div>
           </div>
           
           <!-- Available courts -->
@@ -233,7 +312,6 @@
   </div>
 
   <!-- Schedule Modal -->
-
   <div id="schedule-modal"
     class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-3/4 lg:w-3/4 p-6 scrollable-modal">
@@ -409,109 +487,162 @@
     </div>
   </div>
 
-  <!-- Confirmation Modal -->
-  <div id="confirmation-modal"
-    class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-1/2 p-8 scrollable-modal">
-      <h2 class="text-2xl font-bold mb-2 text-gray-800">Confirm Your Bookings</h2>
-      <p class="text-gray-600 mb-4">You are booking <span id="confirmation-session-count" class="font-bold">0</span>
-        sessions.</p>
+  <!-- Enhanced Confirmation Modal with Payment Process -->
+  <div id="confirmation-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-3/4 max-w-4xl p-8 scrollable-modal">
+      <form id="booking-payment-form" enctype="multipart/form-data">
+        <h2 class="text-2xl font-bold mb-2 text-gray-800">Complete Your Booking</h2>
+        <p class="text-gray-600 mb-4">You are booking <span id="confirmation-session-count" class="font-bold">0</span> sessions.</p>
 
-      <div id="confirmation-timeslots" class="space-y-3">
-        <!-- Confirmation timeslots will be dynamically populated here -->
-      </div>
-
-      <p class="text-xl font-bold mt-6">Total Price: <span class="text-blue-600">$<span id="total-price">0</span></span>
-      </p>
-
-      <div id="payment-instructions" class="mt-4 p-4 bg-blue-50 rounded-lg">
-        <h3 class="font-bold text-blue-800 mb-2">Payment Instructions</h3>
-        <div id="coach-payment-instructions" class="mb-3">
-          <p class="text-sm text-gray-700">Please make payment to the coach:</p>
-          <p class="text-sm font-medium">Bank transfer: <span id="coach-bank-info">Example Bank - John Doe - 123456789</span></p>
+        <!-- Selected sessions overview -->
+        <div id="confirmation-timeslots" class="space-y-3 mb-6">
+          <!-- Confirmation timeslots will be dynamically populated here -->
         </div>
-        <div id="court-payment-instructions" class="hidden">
-          <p class="text-sm text-gray-700 mb-1">Court payment is your responsibility:</p>
-          <p class="text-sm text-gray-700" id="court-payment-method">Please pay directly at the venue or through their booking system.</p>
+
+        <p class="text-xl font-bold mb-6">Total Price: <span class="text-blue-600">$<span id="total-price">0</span></span></p>
+
+        <!-- Enhanced Payment Instructions -->
+        <div class="bg-blue-50 p-6 rounded-lg mb-6">
+          <h3 class="text-xl font-bold text-blue-800 mb-4">Payment & Booking Instructions</h3>
+          
+          <div class="payment-steps">
+            <!-- Step 1: Coach Payment -->
+            <div class="payment-step mb-6">
+              <h4 class="font-bold text-lg text-gray-800 mb-2">Coach Payment</h4>
+              <div id="coach-payment-methods" class="mb-4">
+                <div id="bank-transfer-details" class="bg-white p-4 rounded-lg mb-3">
+                  <h5 class="font-medium text-gray-800 mb-2">Bank Transfer</h5>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <p class="text-sm text-gray-600 mb-1">Bank Name:</p>
+                      <p id="coach-bank-name" class="font-medium">Loading...</p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-gray-600 mb-1">Account Holder:</p>
+                      <p id="coach-account-name" class="font-medium">Loading...</p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-gray-600 mb-1">Account Number:</p>
+                      <p id="coach-account-number" class="font-medium">Loading...</p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-gray-600 mb-1">Reference:</p>
+                      <p class="font-medium">PBC Coaching</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div id="qr-payment-details" class="bg-white p-4 rounded-lg mb-3 hidden">
+                  <h5 class="font-medium text-gray-800 mb-2">QR Payment</h5>
+                  <div class="flex justify-center">
+                    <div id="coach-qr-code" class="w-48 h-48 bg-gray-200 rounded flex items-center justify-center">
+                      <span class="text-gray-500">QR Code Loading...</span>
+                    </div>
+                  </div>
+                  <p class="text-center text-sm text-gray-600 mt-2">Scan the QR code to make payment</p>
+                </div>
+              </div>
+              
+              <!-- Coach Payment Proof Upload -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Coach Payment Proof</label>
+                <div class="file-upload-container">
+                  <label for="coach-payment-proof" class="file-upload-label">
+                    <div class="flex flex-col items-center justify-center py-4">
+                      <svg class="w-8 h-8 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                      </svg>
+                      <p class="text-sm text-gray-600">Click to upload or drag and drop</p>
+                      <p class="text-xs text-gray-500">PNG, JPG or JPEG (max. 5MB)</p>
+                    </div>
+                  </label>
+                  <input type="file" id="coach-payment-proof" name="coach_payment_proof" accept="image/*" class="file-upload-input" required>
+                  <div id="coach-payment-preview" class="file-preview"></div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Step 2: Court Booking (conditional) -->
+            <div id="court-booking-section" class="payment-step mb-6 hidden">
+              <h4 class="font-bold text-lg text-gray-800 mb-2">Court Booking</h4>
+              <div id="court-booking-instructions" class="bg-white p-4 rounded-lg mb-3">
+                <div class="text-amber-700 bg-amber-50 p-3 rounded-lg mb-3">
+                  <div class="flex">
+                    <div class="flex-shrink-0">
+                      <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                      </svg>
+                    </div>
+                    <div class="ml-3">
+                      <h5 class="text-sm font-medium">Important Notice</h5>
+                      <p class="text-xs mt-1">You must book the VIP courts as specified below. Bookings on regular courts may be cancelled by the coach.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <p id="court-booking-text" class="text-sm text-gray-700 mb-3">Please follow these instructions to book your court:</p>
+                <div id="specific-court-instructions" class="pl-4 border-l-2 border-blue-200 mb-3"></div>
+                
+                <div id="court-booking-link-box" class="mb-3">
+                  <a id="confirmation-court-link" href="#" target="_blank" class="text-blue-600 hover:underline flex items-center">
+                    <i class="fas fa-external-link-alt mr-2"></i> Book court now
+                  </a>
+                </div>
+              </div>
+              
+              <!-- Court Booking Proof Upload -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Court Booking Proof</label>
+                <div class="file-upload-container">
+                  <label for="court-booking-proof" class="file-upload-label">
+                    <div class="flex flex-col items-center justify-center py-4">
+                      <svg class="w-8 h-8 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                      </svg>
+                      <p class="text-sm text-gray-600">Upload screenshot of your court booking</p>
+                      <p class="text-xs text-gray-500">PNG, JPG or JPEG (max. 5MB)</p>
+                    </div>
+                  </label>
+                  <input type="file" id="court-booking-proof" name="court_booking_proof" accept="image/*" class="file-upload-input">
+                  <div id="court-booking-preview" class="file-preview"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="mt-8 flex justify-end space-x-4">
-        <button id="cancel-button"
-          class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
-          Cancel
-        </button>
-        <button id="confirm-button"
-          class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all">
-          Confirm
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Payment proof upload modal-->
-  <div id="payment-proof-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-2/3 lg:w-1/2 p-6 scrollable-modal">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold text-gray-800">Upload Payment Proof</h2>
-        <button class="close-modal text-gray-400 hover:text-gray-600">
-          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      
-      <div class="mb-6">
-        <p class="text-gray-600 mb-4">Please upload proof of payment for your booking.</p>
-        
-        <form id="payment-proof-form" enctype="multipart/form-data">
-          <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="proof-type">
-              Payment Type
-            </label>
-            <select id="proof-type" name="proof_type" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="coaching">Coach Payment</option>
-              <option value="court" id="court-payment-option" class="hidden">Court Payment</option>
-            </select>
-          </div>
-          
-          <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="proof-image">
-              Payment Screenshot/Image
-            </label>
-            <input type="file" id="proof-image" name="proof_image" accept="image/*" 
-                  class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-          
-          <input type="hidden" id="booking-id" name="booking_id">
-          
-          <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">
-            Upload Payment Proof
+        <div class="flex flex-col md:flex-row justify-end space-y-3 md:space-y-0 md:space-x-4">
+          <button type="button" id="cancel-button" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+            Cancel
           </button>
-        </form>
-      </div>
-      
-      <div id="payment-status" class="hidden">
-        <div class="flex items-center mb-4">
-          <div class="flex-shrink-0">
-            <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-          <div class="ml-3">
-            <h3 class="text-lg font-medium text-green-800">Payment Proof Uploaded</h3>
-            <p class="text-sm text-green-700">Your payment proof has been submitted successfully!</p>
-          </div>
+          <button type="submit" id="confirm-button" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all">
+            Complete Booking
+          </button>
         </div>
-        
-        <button id="view-bookings-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-all">
-          View My Bookings
-        </button>
-      </div>
+      </form>
     </div>
   </div>
 
-  <!-- Password Section -->
+  <!-- Success Modal -->
+  <div id="success-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-1/2 max-w-lg p-8 text-center">
+      <div class="mb-6">
+        <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold mb-2 text-gray-800">Booking Successful!</h2>
+      <p class="text-lg text-gray-600 mb-4">Your sessions have been booked successfully.</p>
+      <p class="text-sm text-gray-500 mb-6">Confirmation number: <span id="confirmation-number" class="font-bold"></span></p>
+      <p class="text-sm text-gray-500 mb-6">A confirmation email has been sent to your email address.</p>
+      
+      <button id="success-done-btn" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+        Done
+      </button>
+    </div>
+  </div>
+
+  <!-- Password Section Modal -->
   <div id="password-modal"
     class="custom-modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
     <div class="relative top-20 mx-auto p-8 border w-96 shadow-lg rounded-xl bg-white">
@@ -598,43 +729,16 @@
 
           <button type="submit"
             class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all">Continue
-            to Payment</button>
+            to Booking</button>
         </form>
         <p class="mt-4 text-gray-600">Already have an account? <a href="#"
             class="login-link text-blue-500 font-medium hover:underline">Login</a></p>
       </div>
     </div>
   </div>
-
-  <!-- Success Modal -->
-  <div id="success-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-1/2 max-w-lg p-8 text-center">
-      <div class="mb-6">
-        <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-        </svg>
-      </div>
-      <h2 class="text-2xl font-bold mb-2 text-gray-800">Booking Successful!</h2>
-      <p class="text-lg text-gray-600 mb-4">Your sessions have been booked successfully.</p>
-      <p class="text-sm text-gray-500 mb-6">Confirmation number: <span id="confirmation-number" class="font-bold"></span></p>
-      <p class="text-sm text-gray-500 mb-6">A confirmation email has been sent to your email address.</p>
-      
-      <div class="flex flex-col space-y-4">
-        <button id="upload-payment-btn" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
-          Upload Payment Proof
-        </button>
-        <button id="success-done-btn" class="bg-gray-500 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transition-all">
-          Done
-        </button>
-      </div>
-    </div>
-  </div>
-
-
 {% endblock %}
 
 {% block scripts %}
-
   <!-- Script for Profile and Booking Functionality -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -652,13 +756,12 @@
 
       // Coach profile elements
       const coachName = document.getElementById('coach-name');
-      const coachImage = document.getElementById('coach-image');
-      const duprBadge = document.getElementById('dupr-badge');
-      const coachStars = document.getElementById('coach-stars');
+      const coachFirstName = document.getElementById('coach-first-name');
       const coachRating = document.getElementById('coach-rating');
       const coachRate = document.getElementById('coach-rate');
       const coachSessions = document.getElementById('coach-sessions');
       const coachCourts = document.getElementById('coach-courts');
+      const coachTags = document.getElementById('coach-tags');
       const coachBio = document.getElementById('coach-bio');
       const scheduleBtn = document.getElementById('schedule-btn');
 
@@ -673,6 +776,20 @@
       const currentTotalCopy = document.getElementById('current-total-copy');
       const scheduleButton = document.getElementById('schedule-button');
 
+      // Payment elements
+      const coachBankName = document.getElementById('coach-bank-name');
+      const coachAccountName = document.getElementById('coach-account-name');
+      const coachAccountNumber = document.getElementById('coach-account-number');
+      const qrPaymentDetails = document.getElementById('qr-payment-details');
+      const coachQrCode = document.getElementById('coach-qr-code');
+
+      // Form file inputs
+      const coachPaymentProof = document.getElementById('coach-payment-proof');
+      const courtBookingProof = document.getElementById('court-booking-proof');
+      const coachPaymentPreview = document.getElementById('coach-payment-preview');
+      const courtBookingPreview = document.getElementById('court-booking-preview');
+      const bookingPaymentForm = document.getElementById('booking-payment-form');
+
       // Global state
       let coachData = null;
       let selectedCourtId = null;
@@ -681,11 +798,11 @@
       let selectedSlots = [];
       let selectedPricingPlan = null;
       let availablePricingPlans = [];
-      const isUserLoggedIn = {% if current_user.is_authenticated %}true{% else %}false{% endif %};
       let studentPackages = [];
       let selectedPackage = null;
       let bookingResponsibilities = {}; // Track who books the court for each availability
       let successfulBookingId = null; // Store the ID of a successful booking
+      const isUserLoggedIn = {% if current_user.is_authenticated %}true{% else %}false{% endif %};
 
       // Utility Functions
       function formatMoney(amount) {
@@ -740,128 +857,35 @@
         });
       }
 
-      // Mobile menu toggle
-      mobileMenuButton.addEventListener('click', () => {
-        mobileMenu.classList.toggle('hidden');
-      });
-
-      // Login/register modal toggles
-      document.querySelectorAll('.login-btn, .login-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          showModal(loginModal);
-        });
-      });
-
-      document.querySelectorAll('.register-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          showModal(registerModal);
-        });
-      });
-
-      document.querySelector('.back-to-registration').addEventListener('click', (e) => {
-        e.preventDefault();
-        showModal(registerModal);
-      });
-
-      // Close modal buttons
-      document.querySelectorAll('.close-modal').forEach(button => {
-        button.addEventListener('click', () => {
-          hideAllModals();
-        });
-      });
-
-      // Close modals when clicking outside
-      window.addEventListener('click', (event) => {
-        if (event.target.classList.contains('custom-modal')) {
-          hideAllModals();
-        }
-      });
-
-      // Password form validation
-      document.getElementById('continue-to-password').addEventListener('click', (e) => {
-        e.preventDefault();
-
-        // Form validation
-        const registrationForm = document.getElementById('registration-form');
-        const formIsValid = registrationForm.checkValidity();
-
-        if (formIsValid) {
-          showModal(passwordModal);
-        } else {
-          // Trigger browser's form validation UI
-          registrationForm.reportValidity();
-        }
-      });
-
-      // Password match validation
-      const passwordForm = document.getElementById('password-form');
-      passwordForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirm-password').value;
-        const passwordMatchError = document.getElementById('password-match-error');
-
-        if (password !== confirmPassword) {
-          passwordMatchError.classList.remove('hidden');
-        } else {
-          passwordMatchError.classList.add('hidden');
-          // Registration would happen here in a real app
-          alert('Registration successful! You can now log in.');
-          hideAllModals();
-          showModal(loginModal);
-        }
-      });
-
-      // Guest account checkbox toggle
-      document.getElementById('create-account-checkbox').addEventListener('change', function () {
-        const accountFields = document.getElementById('create-account-fields');
-        if (this.checked) {
-          accountFields.classList.remove('hidden');
-
-          // Make password fields required when checkbox is checked
-          document.getElementById('guest-password').required = true;
-          document.getElementById('guest-confirm-password').required = true;
-        } else {
-          accountFields.classList.add('hidden');
-
-          // Remove required attribute when checkbox is unchecked
-          document.getElementById('guest-password').required = false;
-          document.getElementById('guest-confirm-password').required = false;
-        }
-      });
-
-      // Guest info form submission
-      document.getElementById('guest-info-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        // Check if user wants to create an account
-        const createAccount = document.getElementById('create-account-checkbox').checked;
-
-        if (createAccount) {
-          // Validate passwords match
-          const password = document.getElementById('guest-password').value;
-          const confirmPassword = document.getElementById('guest-confirm-password').value;
-
-          if (password !== confirmPassword) {
-            alert('Passwords do not match');
-            return;
+      // Set up file upload previews
+      function setupFileUploadPreview(fileInput, previewContainer) {
+        fileInput.addEventListener('change', function(e) {
+          previewContainer.innerHTML = '';
+          
+          if (this.files && this.files[0]) {
+            const file = this.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+              const img = document.createElement('img');
+              img.src = e.target.result;
+              img.className = 'rounded-lg shadow-sm';
+              previewContainer.appendChild(img);
+            }
+            
+            reader.readAsDataURL(file);
           }
-        }
+        });
+      }
 
-        // Collect form data
-        const formData = new FormData(this);
-        const userData = Object.fromEntries(formData.entries());
-
-        // Submit booking
-        submitBooking(userData);
-      });
+      // Set up payment preview functionality
+      setupFileUploadPreview(coachPaymentProof, coachPaymentPreview);
+      setupFileUploadPreview(courtBookingProof, courtBookingPreview);
 
       // Fetch coach data
       async function fetchCoachData(coachId) {
         try {
+          console.log("Fetching coach data for ID:", coachId);
           const response = await fetch(`/coach/api/coach/${coachId}`);
           if (!response.ok) {
             throw new Error('Failed to fetch coach data');
@@ -869,6 +893,7 @@
           
           const coach = await response.json();
           coachData = coach;
+          console.log("Coach data received:", coach);
           
           // Update profile image
           const profileImageContainer = document.getElementById('coach-profile-image');
@@ -885,13 +910,13 @@
           }
           
           // Update coach details
-          document.getElementById('coach-name').textContent = `${coach.first_name} ${coach.last_name}`;
-          document.getElementById('coach-first-name').textContent = coach.first_name;
-          document.getElementById('coach-rate').textContent = `$${coach.hourly_rate}/hour`;
+          coachName.textContent = `${coach.first_name} ${coach.last_name}`;
+          coachFirstName.textContent = coach.first_name;
+          coachRate.textContent = `$${coach.hourly_rate}/hour`;
           document.getElementById('coach-dupr').textContent = `DUPR Rating: ${coach.dupr_rating || 'N/A'}`;
           document.getElementById('coach-experience').textContent = `${coach.years_experience || '0'} Years Experience`;
-          document.getElementById('coach-sessions').textContent = `${coach.sessions_completed || '0'} Sessions Completed`;
-          document.getElementById('coach-bio').textContent = coach.biography || 'No biography available.';
+          coachSessions.textContent = `${coach.sessions_completed || '0'} Sessions Completed`;
+          coachBio.textContent = coach.biography || 'No biography available.';
 
           // Format courts list
           const courtNames = coach.courts.map(court => court.name).join(', ');
@@ -912,28 +937,8 @@
             document.getElementById('coach-location-container').classList.remove('hidden');
           }
           
-          // Update specialties if available
-          if (coach.specialties) {
-            document.getElementById('coach-specialties').textContent = coach.specialties;
-            document.getElementById('coach-specialties-container').classList.remove('hidden');
-          }
-          
           // Update rating stars
-          const ratingContainer = document.getElementById('coach-rating');
-          ratingContainer.innerHTML = '';
-          
-          for (let i = 1; i <= 5; i++) {
-            const star = document.createElement('i');
-            if (i <= Math.floor(coach.avg_rating)) {
-              star.className = 'fas fa-star';
-            } else if (i === Math.ceil(coach.avg_rating) && coach.avg_rating % 1 > 0) {
-              star.className = 'fas fa-star-half-alt';
-            } else {
-              star.className = 'far fa-star';
-            }
-            ratingContainer.appendChild(star);
-          }
-          
+          coachRating.innerHTML = generateStars(coach.avg_rating || 0);
           document.getElementById('rating-count').textContent = `(${coach.rating_count || 0} reviews)`;
           
           // Update courts list
@@ -989,6 +994,9 @@
             document.getElementById('coach-academy-container').classList.remove('hidden');
           }
           
+          // Set payment information in confirmation modal
+          updateCoachPaymentInfo();
+          
           // Fetch student packages if user is logged in
           if (isUserLoggedIn) {
             fetchStudentPackages();
@@ -1004,12 +1012,12 @@
           loadingOverlay.classList.add('hidden');
         } catch (error) {
           console.error('Error fetching coach data:', error);
-          document.getElementById('coach-bio').textContent = 'Failed to load coach information. Please try again later.';
+          coachBio.textContent = 'Failed to load coach information. Please try again later.';
           // Hide loading overlay
           loadingOverlay.classList.add('hidden');
         }
       }
-            
+    
       async function fetchStudentPackages() {
         if (!isUserLoggedIn) return;
         
@@ -1351,7 +1359,7 @@
 
           try {
             // Try to fetch previous bookings with this coach
-            const response = await fetch(`/api/student/has-previous-bookings/${coachData.id}`);
+            const response = await fetch(`/student/api/student/has-previous-bookings/${coachData.id}`);
             if (!response.ok) {
               throw new Error('Failed to check booking history');
             }
@@ -1481,12 +1489,17 @@
       
       // Add this function to update prices with selected discount
       function updatePricesWithDiscount() {
-        if (!selectedPricingPlan) {
+        if (!selectedPricingPlan && !selectedPackage) {
           // No discount applied, reset to base prices
           selectedSlots.forEach(slot => {
             slot.discounted_price = slot.price;
           });
-        } else {
+        } else if (selectedPackage) {
+          // Apply package discount (coach fee becomes 0)
+          selectedSlots.forEach(slot => {
+            slot.discounted_price = slot.court_fee;
+          });
+        } else if (selectedPricingPlan) {
           // Apply discount based on the selected plan
           if (selectedPricingPlan.discount_type_amount === 'percentage') {
             const discount = selectedPricingPlan.discount_amount / 100;
@@ -1676,7 +1689,7 @@
           sessionCount.textContent = selectedSlots.length;
         }
 
-        // If we have a package selected, update the prices
+        // Update pricing based on what's selected
         if (selectedPackage) {
           applyPackageDiscount();
         } else if (selectedPricingPlan) {
@@ -1689,6 +1702,7 @@
         // Update package eligibility statuses
         updatePricingPlanOptions();
 
+        // Refresh the availability grid
         populateAvailabilityGrid(date);
       }
       
@@ -1713,17 +1727,12 @@
         }
 
         // Update pricing and UI
-        if (selectedPricingPlan) {
-          updatePricesWithDiscount();
-        } else {
-          updatePricesWithDiscount();
-          updateSelectedTimeslotsUI();
-          updateTotalPrice();
-        }
+        updatePricesWithDiscount();
 
         // Update package eligibility statuses
         updatePricingPlanOptions();
 
+        // Refresh the availability grid
         populateAvailabilityGrid(date);
       }
 
@@ -1853,13 +1862,25 @@
 
         const savingsElement = document.getElementById('total-savings');
         const savingsContainer = document.getElementById('savings-container');
+        const discountInfoElement = document.getElementById('discount-info');
+        const discountAmountElement = document.getElementById('discount-amount');
 
         if (savingsElement && savingsContainer) {
           if (savings > 0) {
             savingsElement.textContent = formatMoney(savings);
             savingsContainer.classList.remove('hidden');
+            
+            // Also update the discount info in fee breakdown
+            if (discountInfoElement && discountAmountElement) {
+              discountInfoElement.classList.remove('hidden');
+              discountAmountElement.textContent = formatMoney(savings);
+            }
           } else {
             savingsContainer.classList.add('hidden');
+            
+            if (discountInfoElement) {
+              discountInfoElement.classList.add('hidden');
+            }
           }
         }
 
@@ -1878,27 +1899,6 @@
         // Check if any selected slots have student court booking responsibility
         const studentResponsible = selectedSlots.some(slot => slot.student_books_court);
         
-        // Update payment instructions based on responsibility
-        const courtPaymentInstructions = document.getElementById('court-payment-instructions');
-        if (studentResponsible) {
-          courtPaymentInstructions.classList.remove('hidden');
-          
-          // Get the court info for booking link
-          if (selectedCourtId) {
-            const selectedCourt = coachData.courts.find(court => court.id === parseInt(selectedCourtId));
-            if (selectedCourt && selectedCourt.booking_link) {
-              document.getElementById('court-payment-method').innerHTML = `
-                Please pay and book the court through their system: 
-                <a href="${selectedCourt.booking_link}" target="_blank" class="text-blue-600 hover:underline">
-                  ${selectedCourt.name} Booking Link
-                </a>
-              `;
-            }
-          }
-        } else {
-          courtPaymentInstructions.classList.add('hidden');
-        }
-
         // Sort slots by date and time
         const sortedSlots = [...selectedSlots].sort((a, b) => {
           const dateA = new Date(a.date + ' ' + a.time);
@@ -1939,38 +1939,48 @@
         // Calculate subtotals
         const coachTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.coach_fee), 0);
         const courtTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
-
-        // Calculate total with any discounts applied
+        const discountedCoachTotal = selectedPackage ? 0 : 
+          selectedSlots.reduce((sum, slot) => sum + (parseFloat(slot.discounted_price) - parseFloat(slot.court_fee)), 0);
         const grandTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.discounted_price), 0);
+        const originalTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
+        const savings = originalTotal - grandTotal;
+        
+        const coachPaymentStep = document.querySelector('.payment-steps .payment-step:first-child h4');
+        if (coachPaymentStep) {
+          coachPaymentStep.innerHTML = `Coach Payment <span class="text-blue-600">($${formatMoney(coachTotal)})</span>`;
+        }
+
+        // Update court payment amount in instructions if applicable
+        if (studentResponsible && courtTotal > 0) {
+          const courtBookingStep = document.querySelector('.payment-steps .payment-step:nth-child(2) h4');
+          if (courtBookingStep) {
+            courtBookingStep.innerHTML = `Court Booking <span class="text-blue-600">($${formatMoney(courtTotal)})</span>`;
+          }
+        }
 
         // Add subtotals section
         const subtotalsDiv = document.createElement('div');
         subtotalsDiv.className = 'mt-4 p-4 bg-gray-50 rounded-lg';
 
         subtotalsDiv.innerHTML = `
-    <div class="flex justify-between mb-2">
-      <span class="text-gray-600">Coach Fees:</span>
-      <span>$${formatMoney(coachTotal)}</span>
-    </div>
-    <div class="flex justify-between mb-2">
-      <span class="text-gray-600">Court Fees:</span>
-      <span>$${formatMoney(courtTotal)}</span>
-    </div>
-  `;
+          <div class="flex justify-between mb-2">
+            <span class="text-gray-600">Coach Fees:</span>
+            <span>$${formatMoney(coachTotal)}</span>
+          </div>
+          <div class="flex justify-between mb-2">
+            <span class="text-gray-600">Court Fees:</span>
+            <span>$${formatMoney(courtTotal)}</span>
+          </div>
+        `;
 
         // Add discount info if applicable
-        if (selectedPricingPlan) {
-          const originalTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
-          const savings = originalTotal - grandTotal;
-
-          if (savings > 0) {
-            subtotalsDiv.innerHTML += `
-        <div class="flex justify-between mb-2 text-green-600">
-          <span>Discount (${selectedPricingPlan.name}):</span>
-          <span>-$${formatMoney(savings)}</span>
-        </div>
-      `;
-          }
+        if (savings > 0) {
+          subtotalsDiv.innerHTML += `
+            <div class="flex justify-between mb-2 text-green-600">
+              <span>Discount ${selectedPricingPlan ? `(${selectedPricingPlan.name})` : ''}:</span>
+              <span>-$${formatMoney(savings)}</span>
+            </div>
+          `;
         }
 
         container.appendChild(subtotalsDiv);
@@ -1982,6 +1992,253 @@
         const sessionCountElement = document.getElementById('confirmation-session-count');
         if (sessionCountElement) {
           sessionCountElement.textContent = selectedSlots.length;
+        }
+
+        // Get all required payment and booking proof elements
+        const coachPaymentSection = document.getElementById('coach-payment-methods');
+        const coachPaymentProofSection = document.getElementById('coach-payment-proof').closest('.mb-4');
+        const courtBookingSection = document.getElementById('court-booking-section');
+        const courtPaymentInstructions = document.getElementById('court-payment-instructions');
+        const courtBookingProofSection = document.getElementById('court-booking-proof').closest('.mb-4');
+        
+        // 1. Coach Payment Section
+        if (discountedCoachTotal <= 0) {
+          // No coach payment needed
+          if (coachPaymentSection) {
+            coachPaymentSection.innerHTML = `
+              <div class="bg-green-100 p-4 rounded-lg mb-3">
+                <div class="flex items-center text-green-800">
+                  <i class="fas fa-check-circle mr-2"></i>
+                  <p class="font-medium">No coach payment required for this booking</p>
+                </div>
+                <p class="text-sm text-green-700 mt-1">
+                  This package has pre-paid coaching fees or you are using package sessions.
+                </p>
+              </div>
+            `;
+          }
+          
+          // Hide payment proof upload
+          if (coachPaymentProofSection) {
+            coachPaymentProofSection.classList.add('hidden');
+          }
+          
+          // Make the coach payment proof not required
+          const coachPaymentProof = document.getElementById('coach-payment-proof');
+          if (coachPaymentProof) {
+            coachPaymentProof.required = false;
+          }
+        } else {
+          // Coach payment required - show amount
+          // Update bank account details with amount to pay
+          const coachBankInfo = document.getElementById('coach-bank-info');
+          if (coachBankInfo && coachData.payment_info) {
+            const paymentInfo = coachData.payment_info;
+            if (paymentInfo.bank_name && paymentInfo.account_name && paymentInfo.account_number) {
+              coachBankInfo.innerHTML = `
+                ${paymentInfo.bank_name} - ${paymentInfo.account_name} - ${paymentInfo.account_number}
+                <br><span class="font-bold text-blue-700">Amount to pay: $${formatMoney(discountedCoachTotal)}</span>
+              `;
+            } else {
+              coachBankInfo.innerHTML = `
+                ${coachData.first_name} ${coachData.last_name} - Please request account details
+                <br><span class="font-bold text-blue-700">Amount to pay: $${formatMoney(discountedCoachTotal)}</span>
+              `;
+            }
+          }
+          
+          // Show payment proof upload and make it required
+          if (coachPaymentProofSection) {
+            coachPaymentProofSection.classList.remove('hidden');
+          }
+          
+          // Make the coach payment proof required
+          const coachPaymentProof = document.getElementById('coach-payment-proof');
+          if (coachPaymentProof) {
+            coachPaymentProof.required = true;
+          }
+        }
+
+        // 2. Court Booking Section
+        if (studentResponsible) {
+          // Show court booking section
+          if (courtBookingSection) {
+            courtBookingSection.classList.remove('hidden');
+          }
+          
+          // Get the selected court
+          const selectedCourt = coachData.courts.find(court => court.id === parseInt(selectedCourtId));
+          
+          if (courtPaymentInstructions) {
+            courtPaymentInstructions.classList.remove('hidden');
+            
+            // Add court fee amount to the instructions
+            const courtPaymentMethod = document.getElementById('court-payment-method');
+            if (courtPaymentMethod && selectedCourt) {
+              if (selectedCourt.booking_link) {
+                courtPaymentMethod.innerHTML = `
+                  Please pay $${formatMoney(courtTotal)} and book through their system: 
+                  <a href="${selectedCourt.booking_link}" target="_blank" class="text-blue-600 hover:underline">
+                    ${selectedCourt.name} Booking Link
+                  </a>
+                `;
+              } else {
+                courtPaymentMethod.innerHTML = `
+                  Please pay $${formatMoney(courtTotal)} directly at the venue before your session.
+                `;
+              }
+            }
+          }
+          
+          // Show court booking proof section if court fee > 0
+          if (courtTotal > 0) {
+            if (courtBookingProofSection) {
+              courtBookingProofSection.classList.remove('hidden');
+            }
+            
+            // Make court booking proof required
+            const courtBookingProof = document.getElementById('court-booking-proof');
+            if (courtBookingProof) {
+              courtBookingProof.required = true;
+            }
+          } else {
+            // Hide court booking proof section if no fee
+            if (courtBookingProofSection) {
+              courtBookingProofSection.classList.add('hidden');
+            }
+            
+            // Make court booking proof not required
+            const courtBookingProof = document.getElementById('court-booking-proof');
+            if (courtBookingProof) {
+              courtBookingProof.required = false;
+            }
+          }
+          
+          // Update court booking instructions with times and amount
+          updateCourtBookingSectionWithAmounts(courtTotal);
+          
+        } else {
+          // Hide court booking section
+          if (courtBookingSection) {
+            courtBookingSection.classList.add('hidden');
+          }
+          
+          // Make court booking proof not required
+          const courtBookingProof = document.getElementById('court-booking-proof');
+          if (courtBookingProof) {
+            courtBookingProof.required = false;
+          }
+        }
+
+        // Reset the file upload forms and previews
+        const coachPaymentPreview = document.getElementById('coach-payment-preview');
+        const courtBookingPreview = document.getElementById('court-booking-preview');
+        if (coachPaymentPreview) coachPaymentPreview.innerHTML = '';
+        if (courtBookingPreview) courtBookingPreview.innerHTML = '';
+        
+        // Reset the file inputs
+        const coachPaymentProof = document.getElementById('coach-payment-proof');
+        const courtBookingProof = document.getElementById('court-booking-proof');
+        if (coachPaymentProof) coachPaymentProof.value = '';
+        if (courtBookingProof) courtBookingProof.value = '';
+      }
+
+      // Add a new function to update court booking section with amounts
+      function updateCourtBookingSectionWithAmounts(courtTotal) {
+        const specificCourtInstructions = document.getElementById('specific-court-instructions');
+        if (!specificCourtInstructions) return;
+        
+        // Get court booking instructions from coach data or use defaults
+        let courtBookingInstructions = "Please book the VIP courts for your session. Regular courts may not be suitable for coaching.";
+        
+        if (coachData.court_booking_instructions) {
+          courtBookingInstructions = coachData.court_booking_instructions;
+        }
+        
+        // Add the instructions
+        specificCourtInstructions.innerHTML = `
+          <div class="text-sm text-gray-700 mb-3">
+            <p class="mb-2">${courtBookingInstructions}</p>
+            <p class="font-bold text-blue-700">Total court fee: $${formatMoney(courtTotal)}</p>
+          </div>
+        `;
+        
+        // Add specific court booking details
+        const courtsThatNeedBooking = selectedSlots.filter(slot => slot.student_books_court);
+        if (courtsThatNeedBooking.length > 0) {
+          const bookingList = document.createElement('ul');
+          bookingList.className = 'list-disc list-inside text-sm text-gray-700 space-y-2';
+          
+          // Create a map to group by court and date
+          const courtDateMap = new Map();
+          
+          courtsThatNeedBooking.forEach(slot => {
+            const courtKey = `${slot.courtId}-${slot.date}`;
+            if (!courtDateMap.has(courtKey)) {
+              courtDateMap.set(courtKey, {
+                courtName: slot.courtName,
+                date: slot.date,
+                times: [],
+                fees: 0
+              });
+            }
+            
+            const entry = courtDateMap.get(courtKey);
+            entry.times.push(slot.time);
+            entry.fees += parseFloat(slot.court_fee);
+          });
+          
+          // Create list items for each court and date
+          courtDateMap.forEach(entry => {
+            const prettyDate = new Date(entry.date).toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric'
+            });
+            
+            // Format each time with start-end (assuming 1 hour sessions)
+            const formattedTimes = entry.times.map(time => {
+              const startTimeParts = time.match(/(\d+):(\d+) ([AP]M)/);
+              
+              if (startTimeParts) {
+                let startHour = parseInt(startTimeParts[1]);
+                const startMinute = parseInt(startTimeParts[2]);
+                const period = startTimeParts[3];
+                
+                // Convert to 24-hour format
+                if (period === 'PM' && startHour < 12) startHour += 12;
+                if (period === 'AM' && startHour === 12) startHour = 0;
+                
+                // Calculate end time (add 1 hour)
+                let endHour = startHour + 1;
+                let endPeriod = period;
+                
+                // Handle period change
+                if (endHour === 12 && period === 'AM') endPeriod = 'PM';
+                else if (endHour === 24) {
+                  endHour = 12;
+                  endPeriod = 'AM';
+                }
+                // Convert back to 12-hour format
+                if (endHour > 12) endHour -= 12;
+                
+                const endTime = `${endHour}:${startMinute.toString().padStart(2, '0')} ${endPeriod}`;
+                return `${time}-${endTime}`;
+              } else {
+                return time;
+              }
+            });
+            
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+              <span class="font-medium">${prettyDate} at ${entry.courtName}</span><br>
+              <span>Times: ${formattedTimes.join(', ')}</span><br>
+              <span class="text-blue-600">Fee: $${formatMoney(entry.fees)}</span>
+            `;
+            bookingList.appendChild(listItem);
+          });
+          
+          specificCourtInstructions.appendChild(bookingList);
         }
       }
 
@@ -2027,86 +2284,174 @@
         container.innerHTML = html;
       }
 
+      if (coachPaymentProof) {
+        coachPaymentProof.addEventListener('change', function(e) {
+          handleFilePreview(this, coachPaymentPreview);
+        });
+      }
+  
+      if (courtBookingProof) {
+        courtBookingProof.addEventListener('change', function(e) {
+          handleFilePreview(this, courtBookingPreview);
+        });
+      }
+  
+      function handleFilePreview(input, previewContainer) {
+        previewContainer.innerHTML = '';
+        
+        if (input.files && input.files[0]) {
+          const file = input.files[0];
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'max-h-32 rounded-lg shadow-sm';
+            previewContainer.appendChild(img);
+          }
+          
+          reader.readAsDataURL(file);
+        }
+      }
 
-      // Submit the booking to the server
+      function updateCoachPaymentInfo() {
+        // Check if we have payment info in coach data
+        if (coachData.payment_info) {
+          const paymentInfo = coachData.payment_info;
+          
+          // Bank transfer details
+          if (paymentInfo.bank_name && paymentInfo.account_name && paymentInfo.account_number) {
+            const coachBankName = document.getElementById('coach-bank-name');
+            const coachAccountName = document.getElementById('coach-account-name');
+            const coachAccountNumber = document.getElementById('coach-account-number');
+            
+            if (coachBankName) coachBankName.textContent = paymentInfo.bank_name;
+            if (coachAccountName) coachAccountName.textContent = paymentInfo.account_name;
+            if (coachAccountNumber) coachAccountNumber.textContent = paymentInfo.account_number;
+            
+            document.getElementById('bank-transfer-details').classList.remove('hidden');
+          } else {
+            // Fallback values
+            const coachBankName = document.getElementById('coach-bank-name');
+            const coachAccountName = document.getElementById('coach-account-name');
+            const coachAccountNumber = document.getElementById('coach-account-number');
+            
+            if (coachBankName) coachBankName.textContent = "Example Bank";
+            if (coachAccountName) coachAccountName.textContent = `${coachData.first_name} ${coachData.last_name}`;
+            if (coachAccountNumber) coachAccountNumber.textContent = "Please ask coach";
+          }
+          
+          // QR code if available
+          if (paymentInfo.qr_code_url) {
+            const coachQrCode = document.getElementById('coach-qr-code');
+            const qrPaymentDetails = document.getElementById('qr-payment-details');
+            
+            if (coachQrCode) {
+              coachQrCode.innerHTML = `<img src="${paymentInfo.qr_code_url}" alt="Payment QR Code" class="w-full h-full object-contain">`;
+            }
+            if (qrPaymentDetails) {
+              qrPaymentDetails.classList.remove('hidden');
+            }
+          }
+        } else {
+          // Fallback values if no payment info
+          const coachBankName = document.getElementById('coach-bank-name');
+          const coachAccountName = document.getElementById('coach-account-name');
+          const coachAccountNumber = document.getElementById('coach-account-number');
+          
+          if (coachBankName) coachBankName.textContent = "Example Bank";
+          if (coachAccountName) coachAccountName.textContent = `${coachData.first_name} ${coachData.last_name}`;
+          if (coachAccountNumber) coachAccountNumber.textContent = "Please ask coach";
+        }
+      }
+
+      // Add this function to handle booking submissions with payment proofs
       async function submitBooking(userData = null) {
         try {
+          // Show loading overlay
+          loadingOverlay.classList.remove('hidden');
+          
+          // Prepare the FormData object for file uploads
+          const formData = new FormData();
+          
+          // Get the file inputs
+          const coachPaymentProofFile = document.getElementById('coach-payment-proof').files[0];
+          const courtBookingProofFile = document.getElementById('court-booking-proof')?.files[0];
+          
+          // Append files if available
+          if (coachPaymentProofFile) {
+            formData.append('coach_payment_proof', coachPaymentProofFile);
+          } else {
+            throw new Error('Coach payment proof is required');
+          }
+          
+          // Check if court booking proof is required and provided
+          const courtBookingSection = document.getElementById('court-booking-section');
+          const courtBookingRequired = !courtBookingSection.classList.contains('hidden');
+          
+          if (courtBookingRequired && !courtBookingProofFile) {
+            throw new Error('Court booking proof is required');
+          } else if (courtBookingRequired && courtBookingProofFile) {
+            formData.append('court_booking_proof', courtBookingProofFile);
+          }
+          
           // Group availabilities by court
           const courtAvailabilities = {};
-
+          
           selectedSlots.forEach(slot => {
             if (!courtAvailabilities[slot.courtId]) {
               courtAvailabilities[slot.courtId] = [];
             }
             courtAvailabilities[slot.courtId].push(slot.availabilityId);
           });
-
-          // Prepare the bookings data - now an array of bookings
+          
+          // Prepare the bookings data
           const bookingsData = Object.keys(courtAvailabilities).map(courtId => ({
             coach_id: coachData.id,
             court_id: parseInt(courtId),
             availability_ids: courtAvailabilities[courtId],
             pricing_plan_id: selectedPricingPlan ? selectedPricingPlan.id : null,
-            package_id: selectedPackage ? selectedPackage.id : null // Add package ID if using a package
+            package_id: selectedPackage ? selectedPackage.id : null
           }));
-
+          
+          // Add the bookings data to the form
+          formData.append('bookings', JSON.stringify(bookingsData));
+          
           // Add user data if provided (for guest booking)
-          const requestData = {
-            bookings: bookingsData
-          };
-
           if (userData) {
-            requestData.user_data = userData;
-
-            // Include account creation flag if checked
-            if (document.getElementById('create-account-checkbox').checked) {
-              requestData.user_data.create_account = true;
-              requestData.user_data.password = document.getElementById('guest-password').value;
-            }
+            formData.append('user_data', JSON.stringify(userData));
           }
-
-          if (!requestData.user_data?.dupr_rating) {
-            if (requestData.user_data) {
-              requestData.user_data.dupr_rating = 0.0;
-            }
-          }
-
-          // Show loading overlay
-          loadingOverlay.classList.remove('hidden');
-
-          // Send the booking request
-          const response = await fetch('/booking/api/bookings/create', {
+          
+          // Send the booking request to a new endpoint that handles file uploads
+          const response = await fetch('/booking/api/bookings/create-with-proofs', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestData)
+            body: formData
           });
-
+          
           // Hide loading overlay
           loadingOverlay.classList.add('hidden');
-
+          
           if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Failed to create booking');
           }
-
+          
           const result = await response.json();
-
-          // Store the booking ID for payment proof
+          
+          // Store the booking ID for reference
           successfulBookingId = result.bookings && result.bookings.length > 0 
             ? result.bookings[0].id 
             : null;
-
+          
           // Show success message
           hideAllModals();
-
+          
           // Update confirmation number in success modal
           document.getElementById('confirmation-number').textContent = result.confirmation_number;
-
+          
           // Show success modal
           showModal(successModal);
-
+          
           // Reset state
           selectedSlots = [];
           selectedPricingPlan = null;
@@ -2115,37 +2460,17 @@
           bookingResponsibilities = {};
           updateSelectedTimeslotsUI();
           updateTotalPrice();
-
+          
+          return result;
+          
         } catch (error) {
           console.error('Error creating booking:', error);
           loadingOverlay.classList.add('hidden');
           alert(`Booking failed: ${error.message}`);
+          throw error;
         }
       }
 
-      function showPaymentProofModal(bookingId) {
-        // Set booking ID in form
-        document.getElementById('booking-id').value = bookingId;
-        
-        // Check if any selected slots had student court booking responsibility
-        const studentResponsible = Object.values(bookingResponsibilities).some(val => val === true);
-        
-        // Show/hide court payment option based on responsibility
-        const courtPaymentOption = document.getElementById('court-payment-option');
-        if (studentResponsible) {
-          courtPaymentOption.classList.remove('hidden');
-        } else {
-          courtPaymentOption.classList.add('hidden');
-        }
-        
-        // Reset form and show it
-        document.getElementById('payment-proof-form').reset();
-        document.getElementById('payment-proof-form').classList.remove('hidden');
-        document.getElementById('payment-status').classList.add('hidden');
-        
-        showModal(document.getElementById('payment-proof-modal'));
-      }     
-      
       // Event Listeners
 
       // Court selection change
@@ -2330,62 +2655,6 @@
       // Success modal done button
       document.getElementById('success-done-btn').addEventListener('click', () => {
         hideAllModals();
-      });
-
-      // event listener for upload payment button in success modal
-      document.getElementById('upload-payment-btn').addEventListener('click', function() {
-        hideAllModals();
-        if (successfulBookingId) {
-          showPaymentProofModal(successfulBookingId);
-        } else {
-          alert('Booking ID not found. Please go to your bookings page to upload payment proof.');
-        }
-      });
-
-      // event listener for payment proof form submission
-      document.getElementById('payment-proof-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        const bookingId = formData.get('booking_id');
-        
-        if (!bookingId) {
-          alert('Booking ID is missing.');
-          return;
-        }
-        
-        try {
-          // Show loading overlay
-          loadingOverlay.classList.remove('hidden');
-          
-          // Submit form data to server
-          const response = await fetch(`/upload-payment-proof/${bookingId}`, {
-            method: 'POST',
-            body: formData
-          });
-          
-          // Hide loading overlay
-          loadingOverlay.classList.add('hidden');
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to upload payment proof');
-          }
-          
-          // Show success state
-          document.getElementById('payment-proof-form').classList.add('hidden');
-          document.getElementById('payment-status').classList.remove('hidden');
-          
-        } catch (error) {
-          console.error('Error uploading payment proof:', error);
-          loadingOverlay.classList.add('hidden');
-          alert(`Upload failed: ${error.message}`);
-        }
-      });
-
-      // event listener for "View My Bookings" button
-      document.getElementById('view-bookings-btn').addEventListener('click', function() {
-        window.location.href = '/student/bookings';
       });
 
       // Scroll animations

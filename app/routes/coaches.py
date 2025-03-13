@@ -431,6 +431,17 @@ def profile(coach_id):
             'id': image.id,
             'url': url_for('static', filename=image.image_path)
         })
+        
+    # Get coach's tags
+    coach_tags = []
+    tag_associations = CoachTag.query.filter_by(coach_id=coach_id).all()
+    for tag_assoc in tag_associations:
+        tag = Tag.query.get(tag_assoc.tag_id)
+        if tag:
+            coach_tags.append({
+                'id': tag.id,
+                'name': tag.name
+            })
 
     return render_template(
         'coaches/profile.html', 
@@ -439,6 +450,7 @@ def profile(coach_id):
         avg_rating=round(avg_rating, 1), 
         rating_count=rating_count,
         courts=courts,
+        coach_tags=coach_tags,  # Pass coach tags to the template
         userIsLoggedIn=current_user.is_authenticated # Pass login status to template
     )
 

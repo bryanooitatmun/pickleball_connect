@@ -1927,7 +1927,8 @@
                 <div class="text-sm">${slot.courtName}</div>
                 <div class="text-xs mt-1">Coach: $${slot.coach_fee.toFixed(2)} | Court: $${slot.court_fee.toFixed(2)}</div>
                 ${slot.student_books_court ? 
-                  '<div class="text-xs text-orange-600 mt-1"><i class="fas fa-info-circle"></i> You need to book this court</div>' : ''}
+                  '<div class="text-xs text-orange-600 mt-1"><i class="fas fa-info-circle"></i> You need to book this court</div>' : 
+                  '<div class="text-xs text-blue-600 mt-1"><i class="fas fa-info-circle"></i> Coach will book this court</div>'}
               </div>
               <div class="font-bold">${priceDisplay}</div>
             </div>
@@ -1945,17 +1946,10 @@
         const originalTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
         const savings = originalTotal - grandTotal;
         
+        // Update coach payment step title
         const coachPaymentStep = document.querySelector('.payment-steps .payment-step:first-child h4');
         if (coachPaymentStep) {
-          coachPaymentStep.innerHTML = `Coach Payment <span class="text-blue-600">($${formatMoney(coachTotal)})</span>`;
-        }
-
-        // Update court payment amount in instructions if applicable
-        if (studentResponsible && courtTotal > 0) {
-          const courtBookingStep = document.querySelector('.payment-steps .payment-step:nth-child(2) h4');
-          if (courtBookingStep) {
-            courtBookingStep.innerHTML = `Court Booking <span class="text-blue-600">($${formatMoney(courtTotal)})</span>`;
-          }
+          coachPaymentStep.innerHTML = `Coach Payment <span class="text-blue-600">($${formatMoney(discountedCoachTotal)})</span>`;
         }
 
         // Add subtotals section
@@ -2001,15 +1995,15 @@
         const courtPaymentInstructions = document.getElementById('court-payment-instructions');
         const courtBookingProofSection = document.getElementById('court-booking-proof').closest('.mb-4');
         
-        // 1. Coach Payment Section
+        // 1. Coach Payment Section (for coaching fees)
         if (discountedCoachTotal <= 0) {
-          // No coach payment needed
+          // No coach payment needed for coaching (using a package)
           if (coachPaymentSection) {
             coachPaymentSection.innerHTML = `
               <div class="bg-green-100 p-4 rounded-lg mb-3">
                 <div class="flex items-center text-green-800">
                   <i class="fas fa-check-circle mr-2"></i>
-                  <p class="font-medium">No coach payment required for this booking</p>
+                  <p class="font-medium">No coaching fee payment required</p>
                 </div>
                 <p class="text-sm text-green-700 mt-1">
                   This package has pre-paid coaching fees or you are using package sessions.
@@ -2018,7 +2012,7 @@
             `;
           }
           
-          // Hide payment proof upload
+          // Hide coaching payment proof upload if no coaching fee
           if (coachPaymentProofSection) {
             coachPaymentProofSection.classList.add('hidden');
           }
@@ -2029,27 +2023,65 @@
             coachPaymentProof.required = false;
           }
         } else {
-          // Coach payment required - show amount
+          // Coach payment required for coaching fee
           // Update bank account details with amount to pay
-          const coachBankInfo = document.getElementById('coach-bank-info');
-          if (coachBankInfo && coachData.payment_info) {
-            const paymentInfo = coachData.payment_info;
-            if (paymentInfo.bank_name && paymentInfo.account_name && paymentInfo.account_number) {
-              coachBankInfo.innerHTML = `
-                ${paymentInfo.bank_name} - ${paymentInfo.account_name} - ${paymentInfo.account_number}
-                <br><span class="font-bold text-blue-700">Amount to pay: $${formatMoney(discountedCoachTotal)}</span>
-              `;
-            } else {
-              coachBankInfo.innerHTML = `
-                ${coachData.first_name} ${coachData.last_name} - Please request account details
-                <br><span class="font-bold text-blue-700">Amount to pay: $${formatMoney(discountedCoachTotal)}</span>
+          if (coachPaymentSection) {
+            // Generate HTML for coach's bank details
+            let bankDetailsHTML = '';
+            
+            if (coachData.payment_info) {
+              const paymentInfo = coachData.payment_info;
+              if (paymentInfo.bank_name && paymentInfo.account_name && paymentInfo.account_number) {
+                bankDetailsHTML = `
+                  <div id="bank-transfer-details" class="bg-white p-4 rounded-lg mb-3">
+                    <h5 class="font-medium text-gray-800 mb-2">Bank Transfer for Coaching Fee</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <p class="text-sm text-gray-600 mb-1">Bank Name:</p>
+                        <p class="font-medium">${paymentInfo.bank_name}</p>
+                      </div>
+                      <div>
+                        <p class="text-sm text-gray-600 mb-1">Account Holder:</p>
+                        <p class="font-medium">${paymentInfo.account_name}</p>
+                      </div>
+                      <div>
+                        <p class="text-sm text-gray-600 mb-1">Account Number:</p>
+                        <p class="font-medium">${paymentInfo.account_number}</p>
+                      </div>
+                      <div>
+                        <p class="text-sm text-gray-600 mb-1">Reference:</p>
+                        <p class="font-medium">PBC Coaching</p>
+                      </div>
+                    </div>
+                    <p class="font-bold text-blue-700 mt-2">Amount to pay: $${formatMoney(discountedCoachTotal)} (coaching fee only)</p>
+                  </div>
+                `;
+              }
+            }
+            
+            if (!bankDetailsHTML) {
+              // Fallback if no payment info
+              bankDetailsHTML = `
+                <div id="bank-transfer-details" class="bg-white p-4 rounded-lg mb-3">
+                  <h5 class="font-medium text-gray-800 mb-2">Bank Transfer for Coaching Fee</h5>
+                  <p>Please contact coach for payment details.</p>
+                  <p class="font-bold text-blue-700 mt-2">Amount to pay: $${formatMoney(discountedCoachTotal)}</p>
+                </div>
               `;
             }
+            
+            coachPaymentSection.innerHTML = bankDetailsHTML;
           }
           
-          // Show payment proof upload and make it required
+          // Show coaching payment proof upload
           if (coachPaymentProofSection) {
             coachPaymentProofSection.classList.remove('hidden');
+            
+            // Update label to clarify this is for coaching fee only
+            const coachPaymentLabel = coachPaymentProofSection.querySelector('label');
+            if (coachPaymentLabel) {
+              coachPaymentLabel.textContent = "Upload Coach Payment Proof (Coaching Fee)";
+            }
           }
           
           // Make the coach payment proof required
@@ -2059,74 +2091,153 @@
           }
         }
 
-        // 2. Court Booking Section
-        if (studentResponsible) {
-          // Show court booking section
-          if (courtBookingSection) {
-            courtBookingSection.classList.remove('hidden');
+        // 2. Court Payment/Booking Section
+        if (courtBookingSection) {
+          // Always show the section, but with different content based on who books
+          courtBookingSection.classList.remove('hidden');
+          
+          // Update section title based on who books the court
+          const courtSectionTitle = courtBookingSection.querySelector('h4');
+          if (courtSectionTitle) {
+            if (studentResponsible) {
+              courtSectionTitle.innerHTML = `Court Booking <span class="text-blue-600">($${formatMoney(courtTotal)})</span>`;
+            } else {
+              courtSectionTitle.innerHTML = `Court Payment <span class="text-blue-600">($${formatMoney(courtTotal)})</span>`;
+            }
           }
           
-          // Get the selected court
-          const selectedCourt = coachData.courts.find(court => court.id === parseInt(selectedCourtId));
-          
-          if (courtPaymentInstructions) {
-            courtPaymentInstructions.classList.remove('hidden');
-            
-            // Add court fee amount to the instructions
-            const courtPaymentMethod = document.getElementById('court-payment-method');
-            if (courtPaymentMethod && selectedCourt) {
-              if (selectedCourt.booking_link) {
-                courtPaymentMethod.innerHTML = `
-                  Please pay $${formatMoney(courtTotal)} and book through their system: 
-                  <a href="${selectedCourt.booking_link}" target="_blank" class="text-blue-600 hover:underline">
-                    ${selectedCourt.name} Booking Link
+          // Get the court booking instructions div
+          const courtInstructions = document.getElementById('court-booking-instructions');
+          if (courtInstructions) {
+            if (studentResponsible) {
+              // Student books court - show booking instructions
+              courtInstructions.innerHTML = `
+                <div class="text-amber-700 bg-amber-50 p-3 rounded-lg mb-3">
+                  <div class="flex">
+                    <div class="flex-shrink-0">
+                      <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                      </svg>
+                    </div>
+                    <div class="ml-3">
+                      <h5 class="text-sm font-medium">Important Notice</h5>
+                      <p class="text-xs mt-1">You must book the courts as specified below. Bookings on regular courts may be cancelled by the coach.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <p id="court-booking-text" class="text-sm text-gray-700 mb-3">Please book your court and pay the venue directly:</p>
+                <div id="specific-court-instructions" class="pl-4 border-l-2 border-blue-200 mb-3"></div>
+                
+                <div id="court-booking-link-box" class="mb-3">
+                  <a id="confirmation-court-link" href="#" target="_blank" class="text-blue-600 hover:underline flex items-center">
+                    <i class="fas fa-external-link-alt mr-2"></i> Book court now
                   </a>
+                </div>
+              `;
+              
+              // Update court booking instructions with times and amount
+              updateCourtBookingSectionWithAmounts(courtTotal);
+              
+              // Show court booking link if available
+              const courtLinkBox = document.getElementById('court-booking-link-box');
+              const confirmationCourtLink = document.getElementById('confirmation-court-link');
+              
+              if (courtLinkBox && confirmationCourtLink) {
+                const selectedCourt = coachData.courts.find(court => court.id === parseInt(selectedCourtId));
+                
+                if (selectedCourt && selectedCourt.booking_link) {
+                  confirmationCourtLink.href = selectedCourt.booking_link;
+                  courtLinkBox.classList.remove('hidden');
+                } else {
+                  courtLinkBox.classList.add('hidden');
+                }
+              }
+            } else {
+              // Coach books court - show payment instructions for court fee
+              courtInstructions.innerHTML = `
+                <div class="text-blue-700 bg-blue-50 p-3 rounded-lg mb-3">
+                  <div class="flex">
+                    <div class="flex-shrink-0">
+                      <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                    </div>
+                    <div class="ml-3">
+                      <h5 class="text-sm font-medium">Court Booking Information</h5>
+                      <p class="text-xs mt-1">The coach will handle booking the court, but you need to pay for the court fee separately.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <p class="text-sm text-gray-700 mb-3">Please transfer the court fee to the coach:</p>
+              `;
+              
+              // Add court payment details (could be different from coaching payment)
+              // This could be different bank details or same as coaching fee payment
+              if (coachData.payment_info && coachData.payment_info.court_payment_details) {
+                // If coach has specific court payment details
+                const courtPayInfo = coachData.payment_info.court_payment_details;
+                courtInstructions.innerHTML += `
+                  <div class="bg-white p-3 rounded-lg mb-3 border border-blue-200">
+                    <h6 class="font-medium text-sm mb-1">Court Fee Payment Details:</h6>
+                    <p class="text-sm">${courtPayInfo}</p>
+                  </div>
                 `;
               } else {
-                courtPaymentMethod.innerHTML = `
-                  Please pay $${formatMoney(courtTotal)} directly at the venue before your session.
+                // Default to same payment details as coaching
+                courtInstructions.innerHTML += `
+                  <div class="bg-white p-3 rounded-lg mb-3 border border-blue-200">
+                    <h6 class="font-medium text-sm mb-1">Court Fee Payment Details:</h6>
+                    <p class="text-sm">Use the same payment details as above for coaching payment.</p>
+                  </div>
                 `;
+              }
+              
+              courtInstructions.innerHTML += `
+                <p class="font-bold text-blue-700">Amount to pay: $${formatMoney(courtTotal)} (court fee only)</p>
+              `;
+              
+              // Hide court booking link since coach will book
+              const courtLinkBox = document.getElementById('court-booking-link-box');
+              if (courtLinkBox) {
+                courtLinkBox.classList.add('hidden');
               }
             }
           }
           
-          // Show court booking proof section if court fee > 0
+          // Court booking/payment proof upload - needed in both scenarios
           if (courtTotal > 0) {
             if (courtBookingProofSection) {
               courtBookingProofSection.classList.remove('hidden');
+              
+              // Update label based on who books
+              const courtProofLabel = courtBookingProofSection.querySelector('label');
+              if (courtProofLabel) {
+                if (studentResponsible) {
+                  courtProofLabel.textContent = "Upload Court Booking Proof";
+                } else {
+                  courtProofLabel.textContent = "Upload Court Fee Payment Proof";
+                }
+              }
             }
             
-            // Make court booking proof required
+            // Make court proof required
             const courtBookingProof = document.getElementById('court-booking-proof');
             if (courtBookingProof) {
               courtBookingProof.required = true;
             }
           } else {
-            // Hide court booking proof section if no fee
+            // Hide court proof section if no fee
             if (courtBookingProofSection) {
               courtBookingProofSection.classList.add('hidden');
             }
             
-            // Make court booking proof not required
+            // Make court proof not required
             const courtBookingProof = document.getElementById('court-booking-proof');
             if (courtBookingProof) {
               courtBookingProof.required = false;
             }
-          }
-          
-          // Update court booking instructions with times and amount
-          updateCourtBookingSectionWithAmounts(courtTotal);
-          
-        } else {
-          // Hide court booking section
-          if (courtBookingSection) {
-            courtBookingSection.classList.add('hidden');
-          }
-          
-          // Make court booking proof not required
-          const courtBookingProof = document.getElementById('court-booking-proof');
-          if (courtBookingProof) {
-            courtBookingProof.required = false;
           }
         }
 
@@ -2146,6 +2257,7 @@
       // Add a new function to update court booking section with amounts
       function updateCourtBookingSectionWithAmounts(courtTotal) {
         const specificCourtInstructions = document.getElementById('specific-court-instructions');
+        console.log(specificCourtInstructions);
         if (!specificCourtInstructions) return;
         
         // Get court booking instructions from coach data or use defaults

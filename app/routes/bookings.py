@@ -380,12 +380,27 @@ def create_booking_with_proofs():
         if not bookings_data:
             return jsonify({'error': 'No booking data provided'}), 400
         
-        if not coach_payment_proof:
-            return jsonify({'error': 'Coach payment proof is required'}), 400
-
-        if not court_booking_proof:
-            return jsonify({'error': 'Court payment proof is required'}), 400
+        # Check if coach payment is required
+        coach_payment_required = True
+        # Check if this is a package booking with no coaching fee
+        package_id = None
+        for booking_item in bookings_data:
+            package_id = booking_item.get('package_id')
+            if package_id:
+                # If using a package, coach payment might not be needed
+                break
+                
+        if package_id:
+            # Get package to check if it's valid and covers coaching fee
+            package = BookingPackage.query.get(package_id)
+            if package and package.sessions_booked < package.total_sessions:
+                # Package is valid and has remaining sessions - no coach payment needed
+                coach_payment_required = False
         
+        # Only require coach payment proof if coaching fee is due
+        if coach_payment_required and not coach_payment_proof:
+            return jsonify({'error': 'Coach payment proof is required'}), 400
+            
         # Check if user is authenticated or we need to create a guest user
         if current_user.is_authenticated:
             user_id = current_user.id
@@ -431,10 +446,12 @@ def create_booking_with_proofs():
         proofs_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'payment_proofs')
         os.makedirs(proofs_dir, exist_ok=True)
         
-        # Save coach payment proof
-        coach_proof_filename = f"coach_payment_{unique_id}_{secure_filename(coach_payment_proof.filename)}"
-        coach_proof_path = os.path.join(proofs_dir, coach_proof_filename)
-        coach_payment_proof.save(coach_proof_path)
+        # Save coach payment proof if provided
+        coach_proof_path = None
+        if coach_payment_proof:
+            coach_proof_filename = f"coach_payment_{unique_id}_{secure_filename(coach_payment_proof.filename)}"
+            coach_proof_path = os.path.join(proofs_dir, coach_proof_filename)
+            coach_payment_proof.save(coach_proof_path)
         
         # Save court booking proof if provided
         court_proof_path = None
@@ -516,11 +533,21 @@ def create_booking_with_proofs():
                 # Mark availability as booked
                 availability.is_booked = True
                 
+                # Determine if coaching payment is required for this booking
+                coaching_payment_required = not package  # No coaching payment needed if using package
+                
                 # Determine court payment status
+                student_books_court = availability.student_books_court
                 court_payment_required = True
                 court_payment_status = 'uploaded' if court_booking_proof else 'not_required'
-                if not court_booking_proof:
-                    court_payment_status = 'pending'
+                
+                if student_books_court:
+                    # Student books court directly
+                    if not court_booking_proof:
+                        court_payment_status = 'pending'
+                else:
+                    # Coach books court, student pays coach
+                    court_payment_status = 'uploaded' if court_booking_proof else 'pending'
 
                 # Create booking
                 booking = Booking(
@@ -541,7 +568,8 @@ def create_booking_with_proofs():
                     discount_amount=discount_amount,
                     court_payment_required=court_payment_required,
                     court_payment_status=court_payment_status,
-                    coaching_payment_status='uploaded'  # Since proof was provided
+                    coaching_payment_required=coaching_payment_required,
+                    coaching_payment_status='uploaded' if coach_payment_proof else ('not_required' if not coaching_payment_required else 'pending')
                 )
                 
                 db.session.add(booking)
@@ -551,18 +579,18 @@ def create_booking_with_proofs():
                 if package:
                     package.bookings.append(booking)
             
+                # Add payment proofs if provided
+                if coach_payment_proof and coach_proof_path:
+                    coach_proof = PaymentProof(
+                        booking_id=booking.id,
+                        image_path=coach_proof_path.replace(current_app.config['UPLOAD_FOLDER'] + '/', ''),
+                        proof_type='coaching',
+                        status='pending'
+                    )
+                    db.session.add(coach_proof)
                 
-                # Coach payment proof
-                coach_proof = PaymentProof(
-                    booking_id=booking.id,
-                    image_path=coach_proof_path.replace(current_app.config['UPLOAD_FOLDER'] + '/', ''),
-                    proof_type='coaching',
-                    status='pending'
-                )
-                db.session.add(coach_proof)
-                
-                # Court booking proof if provided
-                if court_booking_proof:
+                # Court booking proof
+                if court_booking_proof and court_proof_path:
                     court_proof = PaymentProof(
                         booking_id=booking.id,
                         image_path=court_proof_path.replace(current_app.config['UPLOAD_FOLDER'] + '/', ''),
@@ -612,7 +640,7 @@ def create_booking_with_proofs():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
-
+        
 @bp.route('/book/<int:coach_id>', methods=['GET', 'POST'])
 @login_required
 def book_session(coach_id):

@@ -1803,8 +1803,72 @@ def get_student_packages():
     coach_id = request.args.get('coach_id', type=int)
     
     if not coach_id:
-        return jsonify([])
+        # Get all student packages (both coach and academy packages)
+        all_packages = BookingPackage.query.filter_by(student_id=current_user.id).all()
     
+        result = []
+        for package in all_packages:
+            package_data = {
+                'id': package.id,
+                'package_type': package.package_type,
+                'total_sessions': package.total_sessions,
+                'sessions_booked': package.sessions_booked,
+                'sessions_completed': package.sessions_completed,
+                'total_price': float(package.total_price),
+                'original_price': float(package.original_price),
+                'discount_amount': float(package.discount_amount) if package.discount_amount else None,
+                'purchase_date': package.purchase_date.isoformat(),
+                'expires_at': package.expires_at.isoformat() if package.expires_at else None
+            }
+            
+            # Add pricing plan info
+            if package.package_type == 'coach' and package.pricing_plan:
+                package_data['pricing_plan'] = {
+                    'id': package.pricing_plan_id,
+                    'name': package.pricing_plan.name,
+                    'description': package.pricing_plan.description
+                }
+            elif package.package_type == 'academy' and package.academy_pricing_plan:
+                package_data['pricing_plan'] = {
+                    'id': package.academy_pricing_plan_id,
+                    'name': package.academy_pricing_plan.name,
+                    'description': package.academy_pricing_plan.description
+                }
+            else:
+                package_data['pricing_plan'] = {
+                    'id': None,
+                    'name': 'Standard Package',
+                    'description': 'Basic coaching package'
+                }
+            
+            # Add coach info if it's a coach package
+            if package.package_type == 'coach' and package.coach_id:
+                coach = Coach.query.get(package.coach_id)
+                if coach and coach.user_id:
+                    coach_user = User.query.get(coach.user_id)
+                    package_data['coach_id'] = package.coach_id
+                    package_data['coach'] = {
+                        'id': coach.id,
+                        'user': {
+                            'first_name': coach_user.first_name,
+                            'last_name': coach_user.last_name
+                        }
+                    }
+            
+            # Add academy info if it's an academy package
+            if package.package_type == 'academy' and package.academy_id:
+                academy = Academy.query.get(package.academy_id)
+                if academy:
+                    package_data['academy_id'] = package.academy_id
+                    package_data['academy'] = {
+                        'id': academy.id,
+                        'name': academy.name,
+                        'description': academy.description
+                    }
+            
+            result.append(package_data)
+        return jsonify(result)
+
     # Get packages created specifically for this coach
     coach_packages = BookingPackage.query.filter(
         BookingPackage.student_id == current_user.id,

@@ -142,12 +142,12 @@
                 <span>My Profile</span>
               </a>
             </li>
-            <li>
+            {# <li>
               <a href="#coaches" class="coaches-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-user-tie w-5"></i>
                 <span>Find Coaches</span>
               </a>
-            </li>
+            </li> #}
           </ul>
         </div>
 
@@ -178,12 +178,12 @@
                 <span>Session Logs</span>
               </a>
             </li>
-            <li>
+            {# <li>
               <a href="{{ url_for('students.connect_points') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-money-bill w-5"></i>
                 <span>Connect Points</span>
               </a>
-            </li>
+            </li> #}
           </ul>
         </div>
 
@@ -293,7 +293,7 @@
         </div>
 
         <!-- Quick Find Coaches -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        {# <div class="bg-white rounded-xl shadow-sm p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="font-semibold">Quick Find Coaches</h3>
             <a href="#coaches" class="tab-link text-sm text-blue-600 hover:underline">View All Coaches</a>
@@ -305,10 +305,10 @@
               <p>Loading coaches...</p>
             </div>
           </div>
-        </div>
+        </div> #}
 
         <!-- Connect Points Widget for Student Dashboard -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        {# <div class="bg-white rounded-xl shadow-sm p-6">
           <div class="flex justify-between items-center mb-4">
             <h3 class="font-semibold">Connect Points</h3>
             <a href="{{ url_for('students.connect_points') }}" class="text-sm text-blue-600 hover:underline">View All</a>
@@ -355,7 +355,7 @@
           <a href="{{ url_for('students.connect_points') }}#vouchers" class="block w-full text-center bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700">
             Redeem Points
           </a>
-        </div>
+        </div> #}
       </div>
 
       <!-- Profile Tab -->
@@ -469,7 +469,7 @@
       </div>
 
       <!-- Find Coaches Tab -->
-      <div id="coaches-tab" class="tab-content">
+      {# <div id="coaches-tab" class="tab-content">
         <div class="mb-6">
           <h1 class="text-2xl font-bold text-gray-800">Find Coaches</h1>
           <p class="text-gray-600">Browse and book sessions with our expert pickleball coaches</p>
@@ -509,7 +509,7 @@
             <p>Loading coaches...</p>
           </div>
         </div>
-      </div>
+      </div> #}
 
       <!-- Bookings Tab -->
       <div id="bookings-tab" class="tab-content">
@@ -1170,9 +1170,6 @@
   
         // Load initial data
         loadDashboardData();
-
-        // Load court filters
-        loadCourtsFilter();
         
         // Setup form submit event listeners
         setupForms();
@@ -1214,9 +1211,6 @@
           
           // Populate profile form
           populateProfileForm(studentProfile);
-          
-          // Load coaches
-          loadCoaches();
           
           // Load bookings
           loadBookings();
@@ -1319,29 +1313,6 @@
         }
       }
 
-      // Load coaches
-      async function loadCoaches() {
-        try {
-          const coaches = await getCoaches();
-          
-          // Store the original data
-          originalCoachesData = coaches;
-          
-          // Populate coaches filter dropdowns
-          populateCoachFilters(coaches);
-          
-          // Populate featured coaches on dashboard
-          populateFeaturedCoaches(coaches);
-          
-          // Populate coaches list on Find Coaches tab
-          populateCoachesList(coaches);
-          
-        } catch (error) {
-          console.error('Error loading coaches:', error);
-          showToast('Error', 'Failed to load coaches data.', 'error');
-        }
-      }
-        
       // Display bookings in the respective containers
       function displayBookings(bookings, status) {
         const container = document.getElementById(`${status}-bookings-container`);
@@ -1906,18 +1877,7 @@
         filterSessionLogs();
       });
       
-      // Coaches search and filter
-      document.getElementById('coach-search').addEventListener('input', function() {
-        filterCoaches();
-      });
-      
-      document.getElementById('court-filter').addEventListener('change', function() {
-        filterCoaches();
-      });
-      
-      document.getElementById('rating-filter').addEventListener('change', function() {
-        filterCoaches();
-      });
+
     }
 
     // Populate profile form with student data
@@ -1931,143 +1891,6 @@
       document.getElementById('dupr_rating').value = studentData.dupr_rating || '';
       document.getElementById('experience_level').value = studentData.experience_level || '';
       document.getElementById('bio').value = studentData.bio || '';
-    }
-
-    // Populate coach filters in various forms
-    function populateCoachFilters(coaches) {
-      // Booking filters
-      const upcomingFilter = document.getElementById('upcoming-filter-coach');
-      const completedFilter = document.getElementById('completed-filter-coach');
-      const cancelledFilter = document.getElementById('cancelled-filter-coach');
-      
-      [upcomingFilter, completedFilter, cancelledFilter].forEach(filter => {
-        filter.innerHTML = '<option value="">All Coaches</option>';
-        
-        coaches.forEach(coach => {
-          const option = document.createElement('option');
-          option.value = coach.id;
-          option.textContent = `${coach.user.first_name} ${coach.user.last_name}`;
-          filter.appendChild(option);
-        });
-      });
-      
-      // Session logs filter
-      const sessionLogsFilter = document.getElementById('session-logs-filter-coach');
-      sessionLogsFilter.innerHTML = '<option value="">All Coaches</option>';
-      
-      coaches.forEach(coach => {
-        const option = document.createElement('option');
-        option.value = coach.id;
-        option.textContent = `${coach.user.first_name} ${coach.user.last_name}`;
-        sessionLogsFilter.appendChild(option);
-      });
-    }
-
-    // Populate featured coaches on dashboard
-    function populateFeaturedCoaches(coaches) {
-      const container = document.getElementById('featured-coaches');
-      
-      if (coaches.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-6 text-gray-500 col-span-3">
-            <p>No coaches available</p>
-          </div>
-        `;
-        return;
-      }
-      
-      // Display up to 3 coaches
-      container.innerHTML = '';
-      
-      const featuredCoaches = coaches.slice(0, 3);
-      
-      featuredCoaches.forEach(coach => {
-        const coachCard = document.createElement('div');
-        coachCard.className = 'bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow';
-        
-        // Compute average rating
-        const ratings = coach.ratings || [];
-        const avgRating = ratings.length > 0 
-          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length 
-          : 0;
-        
-        // Generate stars
-        let starsHtml = '';
-        for (let i = 1; i <= 5; i++) {
-          if (i <= Math.floor(avgRating)) {
-            starsHtml += '<i class="fas fa-star text-yellow-400"></i>';
-          } else if (i === Math.ceil(avgRating) && avgRating % 1 > 0) {
-            starsHtml += '<i class="fas fa-star-half-alt text-yellow-400"></i>';
-          } else {
-            starsHtml += '<i class="far fa-star text-yellow-400"></i>';
-          }
-        }
-        
-        coachCard.innerHTML = `
-          <div class="flex items-center mb-3">
-            <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-              <span class="text-blue-600 font-semibold">${coach.user.first_name.charAt(0)}</span>
-            </div>
-            <div>
-              <h3 class="font-semibold">${coach.user.first_name} ${coach.user.last_name}</h3>
-              <div class="flex items-center">
-                <div class="flex mr-1">${starsHtml}</div>
-                <span class="text-sm text-gray-500">(${ratings.length})</span>
-              </div>
-            </div>
-          </div>
-          <p class="text-gray-600 text-sm mb-3">${coach.biography.substring(0, 100)}...</p>
-          <div class="flex justify-between items-center">
-            <span class="font-medium">${formatCurrency(coach.hourly_rate)}/hr</span>
-            <a href="#coach-${coach.id}" class="text-blue-600 hover:underline view-coach-btn" data-coach-id="${coach.id}">View Profile</a>
-          </div>
-        `;
-        
-        container.appendChild(coachCard);
-      });
-      
-      // Add event listeners to view coach buttons
-      document.querySelectorAll('.view-coach-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          const coachId = this.getAttribute('data-coach-id');
-          
-          // Activate coaches tab
-          document.querySelector('.coaches-tab').click();
-          
-          // Highlight the coach in the list
-          setTimeout(() => {
-            const coachElement = document.getElementById(`coach-${coachId}`);
-            if (coachElement) {
-              coachElement.scrollIntoView({ behavior: 'smooth' });
-              coachElement.classList.add('ring-2', 'ring-blue-500');
-              
-              setTimeout(() => {
-                coachElement.classList.remove('ring-2', 'ring-blue-500');
-              }, 2000);
-            }
-          }, 500);
-        });
-      });
-    }
-
-    // Load courts filter
-    async function loadCourtsFilter() {
-      try {
-        const courts = await getCourts();
-        
-        const courtFilter = document.getElementById('court-filter');
-        courtFilter.innerHTML = '<option value="">All Courts</option>';
-        
-        courts.forEach(court => {
-          const option = document.createElement('option');
-          option.value = court.id;
-          option.textContent = court.name;
-          courtFilter.appendChild(option);
-        });
-      } catch (error) {
-        console.error('Error loading courts:', error);
-      }
     }
 
     // Filter bookings based on search and filters
@@ -2297,19 +2120,7 @@
     
     displaySessionLogs(originalSessionLogsData);
   });
-  
-  // Reset coaches filters
-  document.getElementById('reset-coaches-filters')?.addEventListener('click', function() {
-    const searchInput = document.getElementById('coach-search');
-    const courtFilter = document.getElementById('court-filter');
-    const ratingFilter = document.getElementById('rating-filter');
-    
-    if (searchInput) searchInput.value = '';
-    if (courtFilter) courtFilter.value = '';
-    if (ratingFilter) ratingFilter.value = '';
-    
-    populateCoachesList(originalCoachesData);
-  });
+
 }
     
     // Update upcoming bookings list on dashboard

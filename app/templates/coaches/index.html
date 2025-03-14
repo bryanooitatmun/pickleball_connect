@@ -1041,7 +1041,7 @@
           
           // If we have academy data and we're in academy mode, display pricing plans
           if (data.academy && PAGE_MODE === 'academy_page') {
-            renderAcademyPricingPlans(data.academy);
+            //renderAcademyPricingPlans(data.academy);
           }
           
           loadingIndicator.classList.add('hidden');
@@ -1052,131 +1052,6 @@
           loadingIndicator.classList.add('hidden');
           alert('Error loading coaches. Please try again later.');
         }
-      }
-
-      // New function to render academy pricing plans
-      function renderAcademyPricingPlans(academy) {
-        // Check if we have a container for pricing plans
-        const plansContainer = document.getElementById('academy-pricing-plans');
-        if (!plansContainer) return;
-        
-        // Clear existing content
-        plansContainer.innerHTML = '';
-        
-        // Check if we have pricing plans to display
-        if (!academy.pricing_plans || academy.pricing_plans.length === 0) {
-          plansContainer.classList.add('hidden');
-          return;
-        }
-        
-        // Show the container
-        plansContainer.classList.remove('hidden');
-        
-        // Create heading
-        const heading = document.createElement('h2');
-        heading.className = 'text-3xl font-bold mb-8 text-center';
-        heading.textContent = 'Academy Packages';
-        plansContainer.appendChild(heading);
-        
-        // Create plans grid
-        const grid = document.createElement('div');
-        grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8';
-        
-        // Add each plan
-        academy.pricing_plans.forEach(plan => {
-          const planCard = document.createElement('div');
-          planCard.className = 'bg-white rounded-lg shadow-lg overflow-hidden transition-transform hover:transform hover:scale-105';
-          
-          // Card header
-          const cardHeader = document.createElement('div');
-          cardHeader.className = 'bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4 text-white';
-          const planName = document.createElement('h3');
-          planName.className = 'text-xl font-bold';
-          planName.textContent = plan.name;
-          cardHeader.appendChild(planName);
-          
-          // Card body
-          const cardBody = document.createElement('div');
-          cardBody.className = 'p-6';
-          
-          // Description
-          const description = document.createElement('p');
-          description.className = 'text-gray-600 mb-6';
-          description.textContent = plan.description;
-          cardBody.appendChild(description);
-          
-          // Features
-          const features = document.createElement('div');
-          features.className = 'mb-6';
-          
-          // Sessions
-          const sessionsFeature = document.createElement('div');
-          sessionsFeature.className = 'flex items-center mb-2';
-          sessionsFeature.innerHTML = `
-            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <span>${plan.sessions_required} Sessions</span>
-          `;
-          features.appendChild(sessionsFeature);
-          
-          // Discount
-          if (plan.percentage_discount) {
-            const discountFeature = document.createElement('div');
-            discountFeature.className = 'flex items-center mb-2';
-            discountFeature.innerHTML = `
-              <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 6v12M17 6v12"></path>
-              </svg>
-              <span>${plan.percentage_discount}% Discount</span>
-            `;
-            features.appendChild(discountFeature);
-          } else if (plan.fixed_discount) {
-            const discountFeature = document.createElement('div');
-            discountFeature.className = 'flex items-center mb-2';
-            discountFeature.innerHTML = `
-              <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 6v12M17 6v12"></path>
-              </svg>
-              <span>$${plan.fixed_discount} Off</span>
-            `;
-            features.appendChild(discountFeature);
-          }
-          
-          // Validity period if any
-          if (plan.valid_from && plan.valid_to) {
-            const validityFeature = document.createElement('div');
-            validityFeature.className = 'flex items-center mb-2 text-sm text-gray-500';
-            validityFeature.innerHTML = `
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-              <span>Valid: ${new Date(plan.valid_from).toLocaleDateString()} - ${new Date(plan.valid_to).toLocaleDateString()}</span>
-            `;
-            features.appendChild(validityFeature);
-          }
-          
-          cardBody.appendChild(features);
-          
-          // Purchase button
-          const purchaseBtn = document.createElement('a');
-          purchaseBtn.className = 'block w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-3 rounded-lg font-medium text-center hover:shadow-lg transition-all';
-          purchaseBtn.textContent = 'Purchase Package';
-          purchaseBtn.href = `/bookings/purchase-academy-package/${academy.id}/${plan.id}`;
-          cardBody.appendChild(purchaseBtn);
-          
-          // Add card sections to the card
-          planCard.appendChild(cardHeader);
-          planCard.appendChild(cardBody);
-          
-          // Add card to the grid
-          grid.appendChild(planCard);
-        });
-        
-        // Add grid to the container
-        plansContainer.appendChild(grid);
       }
       
       function updatePageTitle() {

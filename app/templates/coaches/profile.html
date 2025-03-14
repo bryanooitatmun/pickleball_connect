@@ -186,6 +186,44 @@
   justify-content: center;
   font-weight: bold;
 }
+
+/* Package card styles */
+.package-card {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.package-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.package-card-header {
+  padding: 1.25rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.package-card-body {
+  padding: 1.25rem;
+}
+
+.package-card-footer {
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-top: 1px solid #f3f4f6;
+}
+
+.badge-discount {
+  background-color: #fee2e2;
+  color: #ef4444;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
 {% endblock %}
 
 {% block head_scripts %}
@@ -299,14 +337,30 @@
         </div>
         
         <!-- Image showcase section -->
-        <div id="showcase-container" class="bg-white rounded-xl shadow-sm p-6 hidden">
+        <div id="showcase-container" class="bg-white rounded-xl shadow-sm p-6 mb-8 hidden">
           <h2 class="text-xl font-semibold mb-4">Showcase</h2>
           <div id="showcase-images" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Showcase images will be inserted here by JavaScript -->
           </div>
         </div>
         
-        <!-- Ratings and reviews could go here -->
+        <!-- Coach Packages Section -->
+        <div id="coach-packages-container" class="bg-white rounded-xl shadow-sm p-6 mb-8 hidden">
+          <h2 class="text-xl font-semibold mb-4">Available Packages</h2>
+          <div id="coach-packages" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Coach packages will be inserted here by JavaScript -->
+            <p class="text-gray-500 text-sm col-span-full">Loading packages...</p>
+          </div>
+        </div>
+        
+        <!-- Academy Packages Section -->
+        <div id="academy-packages-container" class="bg-white rounded-xl shadow-sm p-6 mb-8 hidden">
+          <h2 class="text-xl font-semibold mb-4">Academy Packages</h2>
+          <div id="academy-packages" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Academy packages will be inserted here by JavaScript -->
+            <p class="text-gray-500 text-sm col-span-full">Loading packages...</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -637,6 +691,86 @@
     </div>
   </div>
 
+  <!-- Package Purchase Modal -->
+  <div id="package-purchase-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-2/3 max-w-3xl p-8 scrollable-modal">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-800">Purchase Package</h2>
+        <button id="close-package-modal" class="text-gray-400 hover:text-gray-600">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <form id="package-purchase-form" enctype="multipart/form-data">
+        <input type="hidden" id="package-id" name="package_id">
+        <input type="hidden" id="package-type" name="package_type">
+        <input type="hidden" id="package-coach-id" name="coach_id">
+        <input type="hidden" id="package-academy-id" name="academy_id">
+        
+        <div class="mb-6">
+          <div id="package-details" class="bg-blue-50 p-6 rounded-lg">
+            <!-- Package details will be populated here -->
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <h3 class="text-xl font-bold text-blue-800 mb-4">Payment Instructions</h3>
+          <div id="package-payment-details" class="bg-white p-4 rounded-lg mb-4">
+            <!-- Payment details will be populated here -->
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">Upload Payment Proof</h3>
+          <p class="text-sm text-gray-600 mb-4">Please upload proof of your payment for this package.</p>
+          
+          <div class="file-upload-container">
+            <label for="package-payment-proof" class="file-upload-label">
+              <div class="flex flex-col items-center justify-center py-4">
+                <svg class="w-8 h-8 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p class="text-sm text-gray-600">Click to upload or drag and drop</p>
+                <p class="text-xs text-gray-500">PNG, JPG or JPEG (max. 5MB)</p>
+              </div>
+            </label>
+            <input type="file" id="package-payment-proof" name="payment_proof" accept="image/*" class="file-upload-input" required>
+            <div id="package-payment-preview" class="file-preview"></div>
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-4">
+          <button type="button" id="package-cancel-button" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+            Cancel
+          </button>
+          <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all">
+            Complete Purchase
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Package Purchase Success Modal -->
+  <div id="package-success-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-1/2 max-w-lg p-8 text-center">
+      <div class="mb-6">
+        <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold mb-2 text-gray-800">Package Purchase Submitted!</h2>
+      <p class="text-lg text-gray-600 mb-4">Your package purchase request has been submitted successfully.</p>
+      <p class="text-sm text-gray-500 mb-6">The coach/academy will review your payment and activate your package soon.</p>
+      
+      <button id="package-success-done-btn" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+        Done
+      </button>
+    </div>
+  </div>
+
   <!-- Password Section Modal -->
   <div id="password-modal"
     class="custom-modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
@@ -748,6 +882,8 @@
       const confirmationModal = document.getElementById('confirmation-modal');
       const guestInfoModal = document.getElementById('guest-info-modal');
       const successModal = document.getElementById('success-modal');
+      const packagePurchaseModal = document.getElementById('package-purchase-modal');
+      const packageSuccessModal = document.getElementById('package-success-modal');
 
       // Coach profile elements
       const coachName = document.getElementById('coach-name');
@@ -784,6 +920,14 @@
       const coachPaymentPreview = document.getElementById('coach-payment-preview');
       const courtBookingPreview = document.getElementById('court-booking-preview');
       const bookingPaymentForm = document.getElementById('booking-payment-form');
+      
+      // Package purchase elements
+      const packagePaymentProof = document.getElementById('package-payment-proof');
+      const packagePaymentPreview = document.getElementById('package-payment-preview');
+      const packagePurchaseForm = document.getElementById('package-purchase-form');
+      const closePackageModal = document.getElementById('close-package-modal');
+      const packageCancelButton = document.getElementById('package-cancel-button');
+      const packageSuccessDoneBtn = document.getElementById('package-success-done-btn');
 
       // Global state
       let coachData = null;
@@ -799,6 +943,11 @@
       let successfulBookingId = null; // Store the ID of a successful booking
       let previousCourtId = null; 
       const isUserLoggedIn = {% if current_user.is_authenticated %}true{% else %}false{% endif %};
+      
+      // Package data
+      let coachPackages = [];
+      let academyPackages = [];
+      let currentPackageData = null; // Store the currently selected package for purchase
 
       // Utility Functions
       function formatMoney(amount) {
@@ -877,6 +1026,7 @@
       // Set up payment preview functionality
       setupFileUploadPreview(coachPaymentProof, coachPaymentPreview);
       setupFileUploadPreview(courtBookingProof, courtBookingPreview);
+      setupFileUploadPreview(packagePaymentProof, packagePaymentPreview);
 
       // Fetch coach data
       async function fetchCoachData(coachId) {
@@ -993,6 +1143,15 @@
           // Set payment information in confirmation modal
           updateCoachPaymentInfo();
           
+          // Fetch coach packages
+          fetchCoachPackages(coachId);
+          
+          // Fetch academy packages if coach has academy affiliations
+          if (coach.academy_affiliations && coach.academy_affiliations.length > 0) {
+            const academyIds = coach.academy_affiliations.map(academy => academy.id);
+            fetchAcademyPackages(academyIds);
+          }
+          
           // Fetch student packages if user is logged in
           if (isUserLoggedIn) {
             fetchStudentPackages();
@@ -1012,6 +1171,456 @@
           // Hide loading overlay
           loadingOverlay.classList.add('hidden');
         }
+      }
+      
+      // Fetch coach packages
+      async function fetchCoachPackages(coachId) {
+        try {
+          const response = await fetch(`/api/coach/pricing-plans/${coachId}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch coach packages');
+          }
+          
+          const packages = await response.json();
+          coachPackages = packages.filter(pkg => pkg.discount_type === 'package');
+          
+          // Update packages UI
+          updateCoachPackagesUI();
+        } catch (error) {
+          console.error('Error fetching coach packages:', error);
+          const coachPackagesContainer = document.getElementById('coach-packages-container');
+          if (coachPackagesContainer) {
+            const packagesContainer = document.getElementById('coach-packages');
+            packagesContainer.innerHTML = `
+              <p class="text-sm text-red-500 col-span-full">Could not load coach packages. Please try again later.</p>
+            `;
+          }
+        }
+      }
+      
+      // Fetch academy packages
+      async function fetchAcademyPackages(academyIds) {
+        try {
+          // Create a comma-separated list of academy IDs
+          academyPackages = []
+          for (const idParam of academyIds){
+
+            const response = await fetch(`/api/academy/${idParam}/pricing-plans`);
+            if (!response.ok) {
+              throw new Error('Failed to fetch academy packages');
+            }
+            
+            const packages = await response.json();
+            for (const package of packages){
+              academyPackages.push(package);
+            }
+          }
+
+          // Update academy packages UI
+          updateAcademyPackagesUI();
+        } catch (error) {
+          console.error('Error fetching academy packages:', error);
+          const academyPackagesContainer = document.getElementById('academy-packages-container');
+          if (academyPackagesContainer) {
+            const packagesContainer = document.getElementById('academy-packages');
+            packagesContainer.innerHTML = `
+              <p class="text-sm text-red-500 col-span-full">Could not load academy packages. Please try again later.</p>
+            `;
+          }
+        }
+      }
+      
+      // Update coach packages UI
+      function updateCoachPackagesUI() {
+        const container = document.getElementById('coach-packages-container');
+        const packagesContainer = document.getElementById('coach-packages');
+        
+        if (!container || !packagesContainer) return;
+        
+        if (!coachPackages || coachPackages.length === 0) {
+          container.classList.add('hidden');
+          return;
+        }
+        
+        // Show container
+        container.classList.remove('hidden');
+        
+        // Clear previous content
+        packagesContainer.innerHTML = '';
+        
+        // Create a card for each package
+        coachPackages.forEach(pkg => {
+
+          const discount_type_amount = pkg.percentage_discount  
+            ? 'percentage' 
+            : 'fixed';
+
+          const discountText = discount_type_amount === 'percentage' 
+            ? `${pkg.percentage_discount}% off` 
+            : `$${pkg.fixed_discount} off`;
+          
+          // Calculate original price and discounted price
+          const originalPrice = coachData.hourly_rate * pkg.sessions_required;
+          let discountedPrice = originalPrice;
+          
+          if (discount_type_amount === 'percentage') {
+            discountedPrice = originalPrice * (1 - pkg.percentage_discount / 100);
+          } else if (discount_type_amount === 'fixed') {
+            discountedPrice = originalPrice - pkg.fixed_discount;
+          }
+          
+          // Calculate savings
+          const savings = originalPrice - discountedPrice;
+          const savingsPercent = Math.round((savings / originalPrice) * 100);
+          
+          const packageCard = document.createElement('div');
+          packageCard.className = 'package-card';
+          packageCard.innerHTML = `
+            <div class="package-card-header">
+              <h3 class="text-lg font-bold text-gray-800">${pkg.name}</h3>
+              <p class="text-sm text-gray-600">${pkg.description || 'Package deal with coach'}</p>
+            </div>
+            <div class="package-card-body">
+              <div class="flex justify-between mb-2">
+                <span class="text-gray-600">Sessions:</span>
+                <span class="font-medium">${pkg.sessions_required}</span>
+              </div>
+              <div class="flex justify-between mb-2">
+                <span class="text-gray-600">Original Price:</span>
+                <span class="font-medium line-through text-gray-600">$${formatMoney(originalPrice)}</span>
+              </div>
+              <div class="flex justify-between mb-2">
+                <span class="text-gray-600">Package Price:</span>
+                <span class="font-bold text-green-600">$${formatMoney(discountedPrice)}</span>
+              </div>
+              <div class="mb-4">
+                <span class="badge-discount">${discountText} (Save ${savingsPercent}%)</span>
+              </div>
+              <div class="text-sm text-gray-600">
+                <p>Valid for 90 days after purchase</p>
+              </div>
+            </div>
+            <div class="package-card-footer">
+              <button class="w-full py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all buy-package-btn" data-package-id="${pkg.id}" data-package-type="coach">
+                Buy Package
+              </button>
+            </div>
+          `;
+          
+          packagesContainer.appendChild(packageCard);
+        });
+        
+        // Add event listeners to the buy buttons
+        document.querySelectorAll('.buy-package-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const packageId = parseInt(this.getAttribute('data-package-id'));
+            const packageType = this.getAttribute('data-package-type');
+            
+            // Find the package
+            const packageData = packageType === 'coach' 
+              ? coachPackages.find(p => p.id === packageId)
+              : academyPackages.find(p => p.id === packageId);
+            
+            if (packageData) {
+              openPackagePurchaseModal(packageData, packageType);
+            }
+          });
+        });
+      }
+      
+      // Update academy packages UI
+      function updateAcademyPackagesUI() {
+        const container = document.getElementById('academy-packages-container');
+        const packagesContainer = document.getElementById('academy-packages');
+        
+        if (!container || !packagesContainer) return;
+        
+        if (!academyPackages || academyPackages.length === 0) {
+          container.classList.add('hidden');
+          return;
+        }
+        
+        // Show container
+        container.classList.remove('hidden');
+        
+        // Clear previous content
+        packagesContainer.innerHTML = '';
+        
+        // Group packages by academy
+        const packagesByAcademy = {};
+        academyPackages.forEach(pkg => {
+          if (!packagesByAcademy[pkg.academy_id]) {
+            packagesByAcademy[pkg.academy_id] = [];
+          }
+          packagesByAcademy[pkg.academy_id].push(pkg);
+        });
+        
+        // Create a section for each academy
+        Object.keys(packagesByAcademy).forEach(academyId => {
+          // Find academy info
+          const academyAffiliation = coachData.academy_affiliations.find(a => a.id === parseInt(academyId));
+          
+          if (!academyAffiliation) return;
+          
+          // Create academy header
+          const academyHeader = document.createElement('div');
+          academyHeader.className = 'col-span-full mb-4';
+          academyHeader.innerHTML = `
+            <h3 class="text-lg font-semibold text-gray-800">${academyAffiliation.name} Packages</h3>
+          `;
+          
+          packagesContainer.appendChild(academyHeader);
+          
+          // Create cards for each package in this academy
+          packagesByAcademy[academyId].forEach(pkg => {
+            const discount_type_amount = pkg.percentage_discount  
+              ? 'percentage' 
+              : 'fixed';
+
+            const discountText = discount_type_amount === 'percentage'
+              ? `${pkg.percentage_discount}% off` 
+              : `$${pkg.fixed_discount} off`;
+            
+            // Use academy rate or default to coach rate
+            const hourlyRate = pkg.academy_rate || coachData.hourly_rate;
+            
+            // Calculate original price and discounted price
+            const originalPrice = hourlyRate * pkg.sessions_required;
+            let discountedPrice = originalPrice;
+            
+            if (discount_type_amount === 'percentage') {
+              discountedPrice = originalPrice * (1 - pkg.percentage_discount / 100);
+            } else if (discount_type_amount === 'fixed') {
+              discountedPrice = originalPrice - pkg.fixed_discount;
+            }
+            
+            // Calculate savings
+            const savings = originalPrice - discountedPrice;
+            const savingsPercent = Math.round((savings / originalPrice) * 100);
+            
+            const packageCard = document.createElement('div');
+            packageCard.className = 'package-card';
+            packageCard.innerHTML = `
+              <div class="package-card-header">
+                <h3 class="text-lg font-bold text-gray-800">${pkg.name}</h3>
+                <p class="text-sm text-gray-600">${pkg.description || 'Academy package deal'}</p>
+              </div>
+              <div class="package-card-body">
+                <div class="flex justify-between mb-2">
+                  <span class="text-gray-600">Sessions:</span>
+                  <span class="font-medium">${pkg.sessions_required}</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-gray-600">Original Price:</span>
+                  <span class="font-medium line-through text-gray-600">$${formatMoney(originalPrice)}</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-gray-600">Package Price:</span>
+                  <span class="font-bold text-green-600">$${formatMoney(discountedPrice)}</span>
+                </div>
+                <div class="mb-4">
+                  <span class="badge-discount">${discountText} (Save ${savingsPercent}%)</span>
+                </div>
+                <div class="text-sm text-gray-600">
+                  <p>Valid for 90 days after purchase</p>
+                  <p>Use with any coach in ${academyAffiliation.name}</p>
+                </div>
+              </div>
+              <div class="package-card-footer">
+                <button class="w-full py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all buy-package-btn" data-package-id="${pkg.id}" data-package-type="academy" data-academy-id="${academyId}">
+                  Buy Package
+                </button>
+              </div>
+            `;
+            
+            packagesContainer.appendChild(packageCard);
+          });
+        });
+        
+        // Add event listeners to the buy buttons
+        document.querySelectorAll('.buy-package-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const packageId = parseInt(this.getAttribute('data-package-id'));
+            const packageType = this.getAttribute('data-package-type');
+            const academyId = parseInt(this.getAttribute('data-academy-id') || '0');
+            
+            // Find the package
+            const packageData = packageType === 'coach' 
+              ? coachPackages.find(p => p.id === packageId)
+              : academyPackages.find(p => p.id === packageId);
+            
+            if (packageData) {
+              if (packageType === 'academy') {
+                packageData.academy_id = academyId;
+              }
+              openPackagePurchaseModal(packageData, packageType);
+            }
+          });
+        });
+      }
+      
+      // Open package purchase modal
+      function openPackagePurchaseModal(packageData, packageType) {
+        if (!isUserLoggedIn) {
+          alert('Please log in to purchase packages.');
+          return;
+        }
+        
+        currentPackageData = packageData;
+        
+        // Set hidden form fields
+        document.getElementById('package-id').value = packageData.id;
+        document.getElementById('package-type').value = packageType;
+        document.getElementById('package-coach-id').value = packageType === 'coach' ? coachData.id : '';
+        document.getElementById('package-academy-id').value = packageType === 'academy' ? packageData.academy_id : '';
+        
+        // Calculate pricing details
+        const hourlyRate = packageType === 'academy' && packageData.academy_rate 
+          ? packageData.academy_rate 
+          : coachData.hourly_rate;
+        
+        const originalPrice = hourlyRate * packageData.sessions_required;
+        let discountedPrice = originalPrice;
+        
+        const discount_type_amount = packageData.percentage_discount  
+          ? 'percentage' 
+          : 'fixed';
+
+        if (discount_type_amount === 'percentage') {
+          discountedPrice = originalPrice * (1 - packageData.percentage_discount / 100);
+        } else if (discount_type_amount === 'fixed') {
+          discountedPrice = originalPrice - packageData.fixed_discount;
+        }
+        
+        // Fill package details
+        const packageDetails = document.getElementById('package-details');
+        packageDetails.innerHTML = `
+          <h3 class="text-xl font-bold text-gray-800 mb-4">${packageData.name}</h3>
+          <p class="text-gray-600 mb-4">${packageData.description || 'Package deal for coaching sessions'}</p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 class="font-semibold text-gray-700 mb-2">Package Details</h4>
+              <ul class="space-y-2">
+                <li class="flex justify-between">
+                  <span class="text-gray-600">Provider:</span>
+                  <span class="font-medium">${packageType === 'coach' ? `${coachData.first_name} ${coachData.last_name}` : findAcademyName(packageData.academy_id)}</span>
+                </li>
+                <li class="flex justify-between">
+                  <span class="text-gray-600">Sessions Included:</span>
+                  <span class="font-medium">${packageData.sessions_required}</span>
+                </li>
+                <li class="flex justify-between">
+                  <span class="text-gray-600">Regular Price:</span>
+                  <span class="font-medium line-through text-gray-500">$${formatMoney(originalPrice)}</span>
+                </li>
+                <li class="flex justify-between">
+                  <span class="text-gray-600">Discount:</span>
+                  <span class="font-medium text-green-600">${discount_type_amount === 'percentage' ? `${packageData.percentage_discount}%` : `$${formatMoney(packageData.fixed_discount)}`}</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold text-gray-700 mb-2">Package Benefits</h4>
+              <ul class="space-y-1 text-gray-600">
+                <li class="flex items-start">
+                  <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  <span>Save ${Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)}% off regular price</span>
+                </li>
+                <li class="flex items-start">
+                  <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  <span>Valid for 90 days after purchase</span>
+                </li>
+                <li class="flex items-start">
+                  <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  <span>${packageType === 'academy' ? 'Can be used with any coach in the academy' : 'Exclusive coaching sessions with this coach'}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+            <div class="flex justify-between items-center">
+              <span class="text-lg font-bold text-gray-800">Total Package Price:</span>
+              <span class="text-xl font-bold text-blue-600">$${formatMoney(discountedPrice)}</span>
+            </div>
+          </div>
+        `;
+        
+        // Fill payment details
+        const paymentDetails = document.getElementById('package-payment-details');
+        if (packageType === 'coach' && coachData.payment_info) {
+          const paymentInfo = coachData.payment_info;
+          
+          paymentDetails.innerHTML = `
+            <h4 class="font-medium text-gray-800 mb-4">Please transfer the package payment to:</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-600 mb-1">Bank Name:</p>
+                <p class="font-medium">${paymentInfo.bank_name || 'Please ask coach'}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600 mb-1">Account Holder:</p>
+                <p class="font-medium">${paymentInfo.account_name || `${coachData.first_name} ${coachData.last_name}`}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600 mb-1">Account Number:</p>
+                <p class="font-medium">${paymentInfo.account_number || 'Please ask coach'}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600 mb-1">Reference:</p>
+                <p class="font-medium">PBC Package: ${packageData.name}</p>
+              </div>
+            </div>
+            <p class="font-bold text-blue-700 mt-4">Amount to pay: $${formatMoney(discountedPrice)}</p>
+          `;
+          
+          // Add QR code if available
+          if (paymentInfo.qr_code_url) {
+            paymentDetails.innerHTML += `
+              <div class="mt-4 p-4 border border-gray-200 rounded-lg">
+                <h5 class="font-medium text-gray-800 mb-2">QR Payment</h5>
+                <div class="flex justify-center">
+                  <img src="${paymentInfo.qr_code_url}" alt="Payment QR Code" class="h-48 object-contain">
+                </div>
+                <p class="text-center text-sm text-gray-600 mt-2">Scan the QR code to make payment</p>
+              </div>
+            `;
+          }
+        } else if (packageType === 'academy') {
+          // Academy payment details - this would need to be fetched from the academy
+          paymentDetails.innerHTML = `
+            <h4 class="font-medium text-gray-800 mb-4">Academy Package Payment Instructions</h4>
+            <p class="text-gray-600 mb-2">Please contact ${findAcademyName(packageData.academy_id)} for payment details or use the details below if provided.</p>
+            <div class="p-4 bg-yellow-50 rounded-lg">
+              <p class="font-medium text-amber-800">Package Price: $${formatMoney(discountedPrice)}</p>
+              <p class="text-sm text-amber-700 mt-1">Include your name and "${packageData.name} Package" as reference</p>
+            </div>
+          `;
+        } else {
+          // Fallback payment instructions
+          paymentDetails.innerHTML = `
+            <h4 class="font-medium text-gray-800 mb-4">Payment Instructions</h4>
+            <p class="text-gray-600 mb-2">Please contact ${packageType === 'coach' ? `${coachData.first_name} ${coachData.last_name}` : findAcademyName(packageData.academy_id)} for payment details.</p>
+            <p class="font-bold text-blue-700 mt-2">Amount to pay: $${formatMoney(discountedPrice)}</p>
+          `;
+        }
+        
+        // Show the modal
+        showModal(packagePurchaseModal);
+      }
+      
+      // Helper function to find academy name by ID
+      function findAcademyName(academyId) {
+        const academyAffiliation = coachData.academy_affiliations.find(a => a.id === parseInt(academyId));
+        return academyAffiliation ? academyAffiliation.name : 'the Academy';
       }
     
       async function fetchStudentPackages() {
@@ -1110,8 +1719,9 @@
             if (!pkg) return;
             
             // Check if there are enough sessions remaining in the package
-            if (pkg.total_sessions - pkg.sessions_booked < selectedSlots.length) {
-              alert(`You've selected ${selectedSlots.length} sessions but only have ${pkg.total_sessions - pkg.sessions_booked} sessions remaining in this package.`);
+            const sessionsRemaining = pkg.total_sessions - pkg.sessions_booked;
+            if (sessionsRemaining < selectedSlots.length) {
+              alert(`You've selected ${selectedSlots.length} sessions but only have ${sessionsRemaining} sessions remaining in this package.`);
               return;
             }
             
@@ -1128,13 +1738,30 @@
       }
 
       function applyPackageDiscount() {
+        debugger;
         if (!selectedPackage) return;
         
-        // If using a package, set price to 0 for each slot
-        selectedSlots.forEach(slot => {
-          // Keep court fee, but set coach fee to 0
-          slot.discounted_price = slot.court_fee;
+        // Check how many sessions we can apply the package to
+        const sessionsRemaining = selectedPackage.total_sessions - selectedPackage.sessions_booked;
+        const sessionsToApply = Math.min(sessionsRemaining, selectedSlots.length);
+        
+        // Sort slots by date and time so we apply the package to the earliest slots first
+        const sortedSlots = [...selectedSlots].sort((a, b) => {
+          const dateA = new Date(a.date + ' ' + a.time);
+          const dateB = new Date(b.date + ' ' + b.time);
+          return dateA - dateB;
         });
+        
+        // Apply package discount to the first N slots where N is sessionsToApply
+        for (let i = 0; i < sortedSlots.length; i++) {
+          if (i < sessionsToApply) {
+            // Keep court fee, but set coach fee to 0
+            sortedSlots[i].discounted_price = sortedSlots[i].court_fee;
+          } else {
+            // Reset any remaining slots to regular price
+            sortedSlots[i].discounted_price = sortedSlots[i].price;
+          }
+        }
         
         // Update UI
         updateSelectedTimeslotsUI();
@@ -1492,9 +2119,27 @@
           });
         } else if (selectedPackage) {
           // Apply package discount (coach fee becomes 0)
-          selectedSlots.forEach(slot => {
-            slot.discounted_price = slot.court_fee;
+          // Check how many sessions we can apply the package to
+          const sessionsRemaining = selectedPackage.total_sessions - selectedPackage.sessions_booked;
+          const sessionsToApply = Math.min(sessionsRemaining, selectedSlots.length);
+          
+          // Sort slots by date and time so we apply the package to the earliest slots first
+          const sortedSlots = [...selectedSlots].sort((a, b) => {
+            const dateA = new Date(a.date + ' ' + a.time);
+            const dateB = new Date(b.date + ' ' + b.time);
+            return dateA - dateB;
           });
+          
+          // Apply package discount to the first N slots where N is sessionsToApply
+          for (let i = 0; i < sortedSlots.length; i++) {
+            if (i < sessionsToApply) {
+              // Keep court fee, but set coach fee to 0
+              sortedSlots[i].discounted_price = sortedSlots[i].court_fee;
+            } else {
+              // Reset any remaining slots to regular price
+              sortedSlots[i].discounted_price = sortedSlots[i].price;
+            }
+          }
         } else if (selectedPricingPlan) {
           // Apply discount based on the selected plan
           if (selectedPricingPlan.discount_type_amount === 'percentage') {
@@ -1878,385 +2523,6 @@
       }
 
       // Populate confirmation modal
-      /*function populateConfirmationModal() {
-        const container = document.getElementById('confirmation-timeslots');
-        container.innerHTML = "";
-
-        // Instead of a simple boolean, count different booking types
-        const studentBookedSlots = selectedSlots.filter(slot => slot.student_books_court);
-        const coachBookedSlots = selectedSlots.filter(slot => !slot.student_books_court);
-        
-        const hasStudentBookedCourts = studentBookedSlots.length > 0;
-        const hasCoachBookedCourts = coachBookedSlots.length > 0;
-        
-        // Calculate court fees for each type
-        const studentBookedCourtFees = studentBookedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
-        const coachBookedCourtFees = coachBookedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
-        
-        // Sort slots by date and time
-        const sortedSlots = [...selectedSlots].sort((a, b) => {
-          const dateA = new Date(a.date + ' ' + a.time);
-          const dateB = new Date(b.date + ' ' + b.time);
-          return dateA - dateB;
-        });
-        
-        // Sort slots by date and time
-        const sortedSlots = [...selectedSlots].sort((a, b) => {
-          const dateA = new Date(a.date + ' ' + a.time);
-          const dateB = new Date(b.date + ' ' + b.time);
-          return dateA - dateB;
-        });
-
-        // Create UI elements for each selected slot
-        sortedSlots.forEach(slot => {
-          const slotDiv = document.createElement("div");
-          slotDiv.className = "bg-blue-100 text-blue-800 px-4 py-3 rounded-lg mb-2";
-
-          // Format price display
-          let priceDisplay = '';
-          if (slot.discounted_price < slot.price) {
-            // Show discount
-            priceDisplay = `<span class="line-through text-gray-500">$${slot.price.toFixed(2)}</span> $${slot.discounted_price.toFixed(2)}`;
-          } else {
-            priceDisplay = `$${slot.price.toFixed(2)}`;
-          }
-
-          slotDiv.innerHTML = `
-            <div class="flex justify-between">
-              <div>
-                <span class="font-medium">${formatDate(slot.date)} at ${slot.time}</span>
-                <div class="text-sm">${slot.courtName}</div>
-                <div class="text-xs mt-1">Coach: $${slot.coach_fee.toFixed(2)} | Court: $${slot.court_fee.toFixed(2)}</div>
-                ${slot.student_books_court ? 
-                  '<div class="text-xs text-orange-600 mt-1"><i class="fas fa-info-circle"></i> You need to book this court</div>' : 
-                  '<div class="text-xs text-blue-600 mt-1"><i class="fas fa-info-circle"></i> Coach will book this court</div>'}
-              </div>
-              <div class="font-bold">${priceDisplay}</div>
-            </div>
-          `;
-
-          container.appendChild(slotDiv);
-        });
-
-        // Calculate subtotals
-        const coachTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.coach_fee), 0);
-        const courtTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
-        const discountedCoachTotal = selectedPackage ? 0 : 
-          selectedSlots.reduce((sum, slot) => sum + (parseFloat(slot.discounted_price) - parseFloat(slot.court_fee)), 0);
-        const grandTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.discounted_price), 0);
-        const originalTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
-        const savings = originalTotal - grandTotal;
-        
-        // Update coach payment step title
-        const coachPaymentStep = document.querySelector('.payment-steps .payment-step:first-child h4');
-        if (coachPaymentStep) {
-          coachPaymentStep.innerHTML = `Coach Payment <span class="text-blue-600">($${formatMoney(discountedCoachTotal)})</span>`;
-        }
-
-        // Add subtotals section
-        const subtotalsDiv = document.createElement('div');
-        subtotalsDiv.className = 'mt-4 p-4 bg-gray-50 rounded-lg';
-
-        subtotalsDiv.innerHTML = `
-          <div class="flex justify-between mb-2">
-            <span class="text-gray-600">Coach Fees:</span>
-            <span>$${formatMoney(coachTotal)}</span>
-          </div>
-          <div class="flex justify-between mb-2">
-            <span class="text-gray-600">Court Fees:</span>
-            <span>$${formatMoney(courtTotal)}</span>
-          </div>
-        `;
-
-        // Add discount info if applicable
-        if (savings > 0) {
-          subtotalsDiv.innerHTML += `
-            <div class="flex justify-between mb-2 text-green-600">
-              <span>Discount ${selectedPricingPlan ? `(${selectedPricingPlan.name})` : ''}:</span>
-              <span>-$${formatMoney(savings)}</span>
-            </div>
-          `;
-        }
-
-        container.appendChild(subtotalsDiv);
-
-        // Update total price
-        document.getElementById('total-price').textContent = formatMoney(grandTotal);
-
-        // Update session count if available
-        const sessionCountElement = document.getElementById('confirmation-session-count');
-        if (sessionCountElement) {
-          sessionCountElement.textContent = selectedSlots.length;
-        }
-
-        // Get all required payment and booking proof elements
-        const coachPaymentSection = document.getElementById('coach-payment-methods');
-        const coachPaymentProofSection = document.getElementById('coach-payment-proof').closest('.mb-4');
-        const courtBookingSection = document.getElementById('court-booking-section');
-        const courtPaymentInstructions = document.getElementById('court-payment-instructions');
-        const courtBookingProofSection = document.getElementById('court-booking-proof').closest('.mb-4');
-        
-        // 1. Coach Payment Section (for coaching fees)
-        if (discountedCoachTotal <= 0) {
-          // No coach payment needed for coaching (using a package)
-          if (coachPaymentSection) {
-            coachPaymentSection.innerHTML = `
-              <div class="bg-green-100 p-4 rounded-lg mb-3">
-                <div class="flex items-center text-green-800">
-                  <i class="fas fa-check-circle mr-2"></i>
-                  <p class="font-medium">No coaching fee payment required</p>
-                </div>
-                <p class="text-sm text-green-700 mt-1">
-                  This package has pre-paid coaching fees or you are using package sessions.
-                </p>
-              </div>
-            `;
-          }
-          
-          // Hide coaching payment proof upload if no coaching fee
-          if (coachPaymentProofSection) {
-            coachPaymentProofSection.classList.add('hidden');
-          }
-          
-          // Make the coach payment proof not required
-          const coachPaymentProof = document.getElementById('coach-payment-proof');
-          if (coachPaymentProof) {
-            coachPaymentProof.required = false;
-          }
-        } else {
-          // Coach payment required for coaching fee
-          // Update bank account details with amount to pay
-          if (coachPaymentSection) {
-            // Generate HTML for coach's bank details
-            let bankDetailsHTML = '';
-            
-            if (coachData.payment_info) {
-              const paymentInfo = coachData.payment_info;
-              if (paymentInfo.bank_name && paymentInfo.account_name && paymentInfo.account_number) {
-                bankDetailsHTML = `
-                  <div id="bank-transfer-details" class="bg-white p-4 rounded-lg mb-3">
-                    <h5 class="font-medium text-gray-800 mb-2">Bank Transfer for Coaching Fee</h5>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <p class="text-sm text-gray-600 mb-1">Bank Name:</p>
-                        <p class="font-medium">${paymentInfo.bank_name}</p>
-                      </div>
-                      <div>
-                        <p class="text-sm text-gray-600 mb-1">Account Holder:</p>
-                        <p class="font-medium">${paymentInfo.account_name}</p>
-                      </div>
-                      <div>
-                        <p class="text-sm text-gray-600 mb-1">Account Number:</p>
-                        <p class="font-medium">${paymentInfo.account_number}</p>
-                      </div>
-                      <div>
-                        <p class="text-sm text-gray-600 mb-1">Reference:</p>
-                        <p class="font-medium">PBC Coaching</p>
-                      </div>
-                    </div>
-                    <p class="font-bold text-blue-700 mt-2">Amount to pay: $${formatMoney(discountedCoachTotal)} (coaching fee only)</p>
-                  </div>
-                `;
-              }
-            }
-            
-            if (!bankDetailsHTML) {
-              // Fallback if no payment info
-              bankDetailsHTML = `
-                <div id="bank-transfer-details" class="bg-white p-4 rounded-lg mb-3">
-                  <h5 class="font-medium text-gray-800 mb-2">Bank Transfer for Coaching Fee</h5>
-                  <p>Please contact coach for payment details.</p>
-                  <p class="font-bold text-blue-700 mt-2">Amount to pay: $${formatMoney(discountedCoachTotal)}</p>
-                </div>
-              `;
-            }
-            
-            coachPaymentSection.innerHTML = bankDetailsHTML;
-          }
-          
-          // Show coaching payment proof upload
-          if (coachPaymentProofSection) {
-            coachPaymentProofSection.classList.remove('hidden');
-            
-            // Update label to clarify this is for coaching fee only
-            const coachPaymentLabel = coachPaymentProofSection.querySelector('label');
-            if (coachPaymentLabel) {
-              coachPaymentLabel.textContent = "Upload Coach Payment Proof (Coaching Fee)";
-            }
-          }
-          
-          // Make the coach payment proof required
-          const coachPaymentProof = document.getElementById('coach-payment-proof');
-          if (coachPaymentProof) {
-            coachPaymentProof.required = true;
-          }
-        }
-
-        // 2. Court Payment/Booking Section
-        if (courtBookingSection) {
-          // Always show the section, but with different content based on who books
-          courtBookingSection.classList.remove('hidden');
-          
-          // Update section title based on who books the court
-          const courtSectionTitle = courtBookingSection.querySelector('h4');
-          if (courtSectionTitle) {
-            if (studentResponsible) {
-              courtSectionTitle.innerHTML = `Court Booking <span class="text-blue-600">($${formatMoney(courtTotal)})</span>`;
-            } else {
-              courtSectionTitle.innerHTML = `Court Payment <span class="text-blue-600">($${formatMoney(courtTotal)})</span>`;
-            }
-          }
-          
-          // Get the court booking instructions div
-          const courtInstructions = document.getElementById('court-booking-instructions');
-          if (courtInstructions) {
-            if (studentResponsible) {
-              // Student books court - show booking instructions
-              courtInstructions.innerHTML = `
-                <div class="text-amber-700 bg-amber-50 p-3 rounded-lg mb-3">
-                  <div class="flex">
-                    <div class="flex-shrink-0">
-                      <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                      </svg>
-                    </div>
-                    <div class="ml-3">
-                      <h5 class="text-sm font-medium">Important Notice</h5>
-                      <p class="text-xs mt-1">You must book the courts as specified below. Bookings on regular courts may be cancelled by the coach.</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <p id="court-booking-text" class="text-sm text-gray-700 mb-3">Please book your court and pay the venue directly:</p>
-                <div id="specific-court-instructions" class="pl-4 border-l-2 border-blue-200 mb-3"></div>
-                
-                <div id="court-booking-link-box" class="mb-3">
-                  <a id="confirmation-court-link" href="#" target="_blank" class="text-blue-600 hover:underline flex items-center">
-                    <i class="fas fa-external-link-alt mr-2"></i> Book court now
-                  </a>
-                </div>
-              `;
-              
-              // Update court booking instructions with times and amount
-              updateCourtBookingSectionWithAmounts(courtTotal);
-              
-              // Show court booking link if available
-              const courtLinkBox = document.getElementById('court-booking-link-box');
-              const confirmationCourtLink = document.getElementById('confirmation-court-link');
-              
-              if (courtLinkBox && confirmationCourtLink) {
-                const selectedCourt = coachData.courts.find(court => court.id === parseInt(selectedCourtId));
-                
-                if (selectedCourt && selectedCourt.booking_link) {
-                  confirmationCourtLink.href = selectedCourt.booking_link;
-                  courtLinkBox.classList.remove('hidden');
-                } else {
-                  courtLinkBox.classList.add('hidden');
-                }
-              }
-            } else {
-              // Coach books court - show payment instructions for court fee
-              courtInstructions.innerHTML = `
-                <div class="text-blue-700 bg-blue-50 p-3 rounded-lg mb-3">
-                  <div class="flex">
-                    <div class="flex-shrink-0">
-                      <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
-                    </div>
-                    <div class="ml-3">
-                      <h5 class="text-sm font-medium">Court Booking Information</h5>
-                      <p class="text-xs mt-1">The coach will handle booking the court, but you need to pay for the court fee separately.</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <p class="text-sm text-gray-700 mb-3">Please transfer the court fee to the coach:</p>
-              `;
-              
-              // Add court payment details (could be different from coaching payment)
-              // This could be different bank details or same as coaching fee payment
-              if (coachData.payment_info && coachData.payment_info.court_payment_details) {
-                // If coach has specific court payment details
-                const courtPayInfo = coachData.payment_info.court_payment_details;
-                courtInstructions.innerHTML += `
-                  <div class="bg-white p-3 rounded-lg mb-3 border border-blue-200">
-                    <h6 class="font-medium text-sm mb-1">Court Fee Payment Details:</h6>
-                    <p class="text-sm">${courtPayInfo}</p>
-                  </div>
-                `;
-              } else {
-                // Default to same payment details as coaching
-                courtInstructions.innerHTML += `
-                  <div class="bg-white p-3 rounded-lg mb-3 border border-blue-200">
-                    <h6 class="font-medium text-sm mb-1">Court Fee Payment Details:</h6>
-                    <p class="text-sm">Use the same payment details as above for coaching payment.</p>
-                  </div>
-                `;
-              }
-              
-              courtInstructions.innerHTML += `
-                <p class="font-bold text-blue-700">Amount to pay: $${formatMoney(courtTotal)} (court fee only)</p>
-              `;
-              
-              // Hide court booking link since coach will book
-              const courtLinkBox = document.getElementById('court-booking-link-box');
-              if (courtLinkBox) {
-                courtLinkBox.classList.add('hidden');
-              }
-            }
-          }
-          
-          // Court booking/payment proof upload - needed in both scenarios
-          if (courtTotal > 0) {
-            if (courtBookingProofSection) {
-              courtBookingProofSection.classList.remove('hidden');
-              
-              // Update label based on who books
-              const courtProofLabel = courtBookingProofSection.querySelector('label');
-              if (courtProofLabel) {
-                if (studentResponsible) {
-                  courtProofLabel.textContent = "Upload Court Booking Proof";
-                } else {
-                  courtProofLabel.textContent = "Upload Court Fee Payment Proof";
-                }
-              }
-            }
-            
-            // Make court proof required
-            const courtBookingProof = document.getElementById('court-booking-proof');
-            if (courtBookingProof) {
-              courtBookingProof.required = true;
-            }
-          } else {
-            // Hide court proof section if no fee
-            if (courtBookingProofSection) {
-              courtBookingProofSection.classList.add('hidden');
-            }
-            
-            // Make court proof not required
-            const courtBookingProof = document.getElementById('court-booking-proof');
-            if (courtBookingProof) {
-              courtBookingProof.required = false;
-            }
-          }
-        }
-
-        // Reset the file upload forms and previews
-        const coachPaymentPreview = document.getElementById('coach-payment-preview');
-        const courtBookingPreview = document.getElementById('court-booking-preview');
-        if (coachPaymentPreview) coachPaymentPreview.innerHTML = '';
-        if (courtBookingPreview) courtBookingPreview.innerHTML = '';
-        
-        // Reset the file inputs
-        const coachPaymentProof = document.getElementById('coach-payment-proof');
-        const courtBookingProof = document.getElementById('court-booking-proof');
-        if (coachPaymentProof) coachPaymentProof.value = '';
-        if (courtBookingProof) courtBookingProof.value = '';
-      }
-
-*/
-
       function populateConfirmationModal() {
         const container = document.getElementById('confirmation-timeslots');
         container.innerHTML = "";
@@ -2313,12 +2579,12 @@
         // Calculate subtotals
         const coachTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.coach_fee), 0);
         const courtTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
-        const discountedCoachTotal = selectedPackage ? 0 : 
-          selectedSlots.reduce((sum, slot) => sum + (parseFloat(slot.discounted_price) - parseFloat(slot.court_fee)), 0);
+        
         const grandTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.discounted_price), 0);
         const originalTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
         const savings = originalTotal - grandTotal;
-        
+        const discountedCoachTotal = grandTotal - courtTotal;
+
         // Update coach payment step title
         const coachPaymentStep = document.querySelector('.payment-steps .payment-step:first-child h4');
         if (coachPaymentStep) {
@@ -2633,7 +2899,6 @@
       // Add a new function to update court booking section with amounts
       function updateCourtBookingSectionWithAmounts(courtTotal) {
         const specificCourtInstructions = document.getElementById('specific-court-instructions');
-        console.log(specificCourtInstructions);
         if (!specificCourtInstructions) return;
         
         // Get court booking instructions from coach data or use defaults
@@ -2958,6 +3223,64 @@
           throw error;
         }
       }
+      
+      // Add function to handle package purchase submission
+      async function submitPackagePurchase(event) {
+        event.preventDefault();
+        
+        if (!isUserLoggedIn) {
+          alert('Please log in to purchase packages.');
+          return;
+        }
+        
+        try {
+          // Show loading overlay
+          loadingOverlay.classList.remove('hidden');
+          
+          // Get form data
+          const formData = new FormData(packagePurchaseForm);
+          
+          // Verify payment proof is uploaded
+          if (!packagePaymentProof.files[0]) {
+            alert('Please upload payment proof for the package.');
+            loadingOverlay.classList.add('hidden');
+            return;
+          }
+          
+          // Send the package purchase request
+          const response = await fetch('/api/packages/purchase', {
+            method: 'POST',
+            body: formData
+          });
+          
+          // Hide loading overlay
+          loadingOverlay.classList.add('hidden');
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to purchase package');
+          }
+          
+          const result = await response.json();
+          
+          // Show success message
+          hideAllModals();
+          
+          // Show package success modal
+          showModal(packageSuccessModal);
+          
+          // Reset form
+          packagePurchaseForm.reset();
+          packagePaymentPreview.innerHTML = '';
+          
+          return result;
+          
+        } catch (error) {
+          console.error('Error purchasing package:', error);
+          loadingOverlay.classList.add('hidden');
+          alert(`Package purchase failed: ${error.message}`);
+        }
+      }
 
       // Event Listeners
 
@@ -3153,6 +3476,31 @@
       document.getElementById('success-done-btn').addEventListener('click', () => {
         hideAllModals();
       });
+      
+      // Package purchase form submission
+      if (packagePurchaseForm) {
+        packagePurchaseForm.addEventListener('submit', submitPackagePurchase);
+      }
+      
+      // Close package modal buttons
+      if (closePackageModal) {
+        closePackageModal.addEventListener('click', () => {
+          hideAllModals();
+        });
+      }
+      
+      if (packageCancelButton) {
+        packageCancelButton.addEventListener('click', () => {
+          hideAllModals();
+        });
+      }
+      
+      // Package success done button
+      if (packageSuccessDoneBtn) {
+        packageSuccessDoneBtn.addEventListener('click', () => {
+          hideAllModals();
+        });
+      }
 
       // Scroll animations
       const scrollSections = document.querySelectorAll('.scroll-section');
@@ -3169,30 +3517,10 @@
         observer.observe(section);
       });
 
-      // Back to top button
-      const backToTopButton = document.getElementById('back-to-top');
-
-      window.addEventListener('scroll', () => {
-        if (window.scrollY > 500) {
-          backToTopButton.classList.remove('opacity-0', 'invisible');
-          backToTopButton.classList.add('opacity-100', 'visible');
-        } else {
-          backToTopButton.classList.add('opacity-0', 'invisible');
-          backToTopButton.classList.remove('opacity-100', 'visible');
-        }
-      });
-
-      backToTopButton.addEventListener('click', () => {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      });
-
       // Initialize
       // Extract coach id from URL
       const coachId =  {{ coach.id }}  || 1; // Default to 1 if no ID is provided
       fetchCoachData(coachId);
    });
   </script>
-  {% endblock %}
+{% endblock %}

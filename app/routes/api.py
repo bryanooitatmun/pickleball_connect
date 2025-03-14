@@ -149,6 +149,34 @@ def get_pricing_plans():
     
     return jsonify(result)
 
+@bp.route('/coach/pricing-plans/<int:coach_id>')
+@login_required
+def get_pricing_plans_by_coachid(coach_id):
+    """API endpoint to get coach pricing plans"""
+    
+    coach = Coach.query.filter_by(user_id=coach_id).first_or_404()
+    
+    plans = PricingPlan.query.filter_by(coach_id=coach.id).all()
+    
+    result = []
+    for plan in plans:
+        plan_data = {
+            'id': plan.id,
+            'name': plan.name,
+            'description': plan.description,
+            'discount_type': plan.discount_type,
+            'is_active': plan.is_active,
+            'sessions_required': plan.sessions_required,
+            'percentage_discount': plan.percentage_discount,
+            'fixed_discount': plan.fixed_discount,
+            'first_time_only': plan.first_time_only,
+            'valid_from': plan.valid_from.isoformat() if plan.valid_from else None,
+            'valid_to': plan.valid_to.isoformat() if plan.valid_to else None
+        }
+        result.append(plan_data)
+    
+    return jsonify(result)
+
 @bp.route('/coach/pricing-plans/add', methods=['POST'])
 @login_required
 def add_pricing_plan():
@@ -2466,6 +2494,7 @@ def get_academy_pricing_plans(academy_id):
     for plan in plans:
         plan_data = {
             'id': plan.id,
+            'academy_id': plan.academy_id,
             'name': plan.name,
             'description': plan.description,
             'discount_type': plan.discount_type,
@@ -2480,62 +2509,18 @@ def get_academy_pricing_plans(academy_id):
     
     return jsonify(result)
 
-@bp.route('/academy/<int:academy_id>/packages/purchase', methods=['POST'])
+@bp.route('/packages/purchase', methods=['POST'])
 @login_required
-def purchase_academy_package(academy_id):
+def purchase_package():
     """API endpoint to purchase an academy package"""
-    data = request.get_json()
-    academy_plan_id = data.get('plan_id')
-    
-    if not academy_plan_id:
-        return jsonify({'error': 'Plan ID is required'}), 400
-    
-    # Get the academy and plan
-    academy = Academy.query.get_or_404(academy_id)
-    pricing_plan = AcademyPricingPlan.query.get_or_404(academy_plan_id)
-    
-    # Calculate package price
-    # This is simplified - you'll need to calculate based on average coach rates
-    # or set a fixed academy rate
-    base_rate = 50.0  # Example base rate
-    total_sessions = pricing_plan.sessions_required
-    original_price = base_rate * total_sessions
-    
-    discount_amount = None
-    if pricing_plan.percentage_discount:
-        discount_amount = original_price * (pricing_plan.percentage_discount / 100)
-    elif pricing_plan.fixed_discount:
-        discount_amount = pricing_plan.fixed_discount
-    
-    total_price = original_price - (discount_amount or 0)
-    
-    # Create the package
-    package = BookingPackage(
-        student_id=current_user.id,
-        academy_id=academy_id,
-        academy_pricing_plan_id=academy_plan_id,
-        package_type='academy',
-        total_sessions=total_sessions,
-        sessions_booked=0,
-        sessions_completed=0,
-        total_price=total_price,
-        original_price=original_price,
-        discount_amount=discount_amount,
-        expires_at=datetime.now() + timedelta(days=90)
-    )
-    
-    try:
-        db.session.add(package)
-        db.session.commit()
-        return jsonify({
-            'success': True,
-            'package_id': package.id,
-            'total_sessions': package.total_sessions,
-            'total_price': package.total_price
-        })
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+
+    #TODO: IMPLEMENT THIS
+    return jsonify({
+        'success': True,
+        'package_id': package.id,
+        'total_sessions': package.total_sessions,
+        'total_price': package.total_price
+    })
 
 @bp.route('/academies')
 def get_academies():

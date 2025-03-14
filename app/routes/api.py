@@ -17,8 +17,11 @@ from app.models.academy_pricing import AcademyPricingPlan
 from app.models.user import User
 from app.utils.file_utils import save_uploaded_file, delete_file
 from datetime import datetime, timedelta
+from app.models.payment import PaymentProof
+from app.models.notification import Notification
 import os
 import json
+import uuid 
 from sqlalchemy import func, or_, extract 
 
 bp = Blueprint('api', __name__, url_prefix='/api')
@@ -1576,6 +1579,118 @@ def upload_qr_code():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
+@bp.route('/coach/packages/pending')
+@login_required
+def get_pending_packages():
+    """API endpoint for coaches to get pending packages"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Get pending packages for this coach
+    pending_packages = BookingPackage.query.filter_by(
+        coach_id=coach.id,
+        status='pending'
+    ).all()
+    
+    result = []
+    for package in pending_packages:
+        student = User.query.get(package.student_id)
+        pricing_plan = PricingPlan.query.get(package.pricing_plan_id)
+        
+        # Get payment proof
+        from app.models.payment import PaymentProof
+        proof = PaymentProof.query.filter_by(
+            package_id=package.id,
+            proof_type='package'
+        ).first()
+        
+        package_data = {
+            'id': package.id,
+            'student': {
+                'id': student.id,
+                'name': f"{student.first_name} {student.last_name}",
+                'email': student.email
+            },
+            'pricing_plan': {
+                'id': pricing_plan.id,
+                'name': pricing_plan.name
+            },
+            'total_sessions': package.total_sessions,
+            'total_price': float(package.total_price),
+            'purchase_date': package.purchase_date.isoformat(),
+            'status': package.status
+        }
+        
+        if proof:
+            package_data['payment_proof'] = {
+                'id': proof.id,
+                'image_url': f"/static/{proof.image_path}"
+            }
+            
+        result.append(package_data)
+    
+    return jsonify(result)
+
+@bp.route('/coach/packages/update-status', methods=['POST'])
+@login_required
+def update_package_status():
+    """API endpoint for coaches to approve/reject packages"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    data = request.get_json()
+    
+    # Validate required fields
+    if not all(key in data for key in ['package_id', 'status']):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    package_id = data['package_id']
+    new_status = data['status']
+    
+    if new_status not in ['active', 'rejected']:
+        return jsonify({'error': 'Invalid status value'}), 400
+    
+    # Get the package and verify it belongs to this coach
+    package = BookingPackage.query.filter_by(
+        id=package_id,
+        coach_id=coach.id,
+        status='pending'
+    ).first_or_404()
+    
+    # Update package status
+    package.status = new_status
+    
+    # If approved, set activation date (you might want to add this field)
+    if new_status == 'active':
+        package.activated_at = datetime.now()
+    
+    # If rejected, add rejection reason
+    if new_status == 'rejected' and 'reason' in data:
+        package.rejection_reason = data['reason']
+    
+    # Create notification for student
+    student = User.query.get(package.student_id)
+    
+    notification = Notification(
+        user_id=package.student_id,
+        title=f"Package {new_status.title()}",
+        message=f"Your package purchase has been {new_status}.",
+        notification_type="package_status",
+        related_id=package.id
+    )
+    
+    db.session.add(notification)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'package_id': package.id,
+        'status': new_status
+    })
+
 @bp.route('/student/profile', methods=['GET'])
 @login_required
 def get_student_profile():
@@ -1846,7 +1961,8 @@ def get_student_packages():
                 'original_price': float(package.original_price),
                 'discount_amount': float(package.discount_amount) if package.discount_amount else None,
                 'purchase_date': package.purchase_date.isoformat(),
-                'expires_at': package.expires_at.isoformat() if package.expires_at else None
+                'expires_at': package.expires_at.isoformat() if package.expires_at else None,
+                'status': package.status
             }
             
             # Add pricing plan info
@@ -1937,7 +2053,8 @@ def get_student_packages():
             'original_price': float(package.original_price),
             'discount_amount': float(package.discount_amount) if package.discount_amount else None,
             'purchase_date': package.purchase_date.isoformat(),
-            'expires_at': package.expires_at.isoformat() if package.expires_at else None
+            'expires_at': package.expires_at.isoformat() if package.expires_at else None,
+            'status': package.status
         }
         
         # Add pricing plan info
@@ -2512,15 +2629,187 @@ def get_academy_pricing_plans(academy_id):
 @bp.route('/packages/purchase', methods=['POST'])
 @login_required
 def purchase_package():
-    """API endpoint to purchase an academy package"""
-
-    #TODO: IMPLEMENT THIS
-    return jsonify({
-        'success': True,
-        'package_id': package.id,
-        'total_sessions': package.total_sessions,
-        'total_price': package.total_price
-    })
+    """API endpoint to purchase a package"""
+    try:
+        # Get form data and files
+        package_id = request.form.get('package_id')
+        package_type = request.form.get('package_type')
+        coach_id = request.form.get('coach_id')
+        academy_id = request.form.get('academy_id')
+        payment_proof = request.files.get('payment_proof')
+        
+        # Validate required fields
+        if not package_id or not package_type:
+            return jsonify({'error': 'Missing required fields'}), 400
+            
+        if package_type not in ['coach', 'academy']:
+            return jsonify({'error': 'Invalid package type'}), 400
+            
+        if package_type == 'coach' and not coach_id:
+            return jsonify({'error': 'Coach ID is required for coach packages'}), 400
+            
+        if package_type == 'academy' and not academy_id:
+            return jsonify({'error': 'Academy ID is required for academy packages'}), 400
+            
+        # Validate payment proof
+        if not payment_proof:
+            return jsonify({'error': 'Payment proof is required'}), 400
+            
+        # Get the appropriate pricing plan
+        if package_type == 'coach':
+            pricing_plan = PricingPlan.query.get_or_404(int(package_id))
+            coach = Coach.query.get_or_404(int(coach_id))
+            
+            # Calculate package price
+            hourly_rate = coach.hourly_rate
+            total_sessions = pricing_plan.sessions_required
+            original_price = hourly_rate * total_sessions
+            
+            # Calculate discount
+            discount_amount = 0
+            if pricing_plan.percentage_discount:
+                discount_amount = original_price * (pricing_plan.percentage_discount / 100)
+                total_price = original_price - discount_amount
+            elif pricing_plan.fixed_discount:
+                discount_amount = pricing_plan.fixed_discount
+                total_price = original_price - discount_amount
+            else:
+                total_price = original_price
+                
+            # Create package
+            package = BookingPackage(
+                student_id=current_user.id,
+                coach_id=int(coach_id),
+                pricing_plan_id=int(package_id),
+                package_type='coach',
+                total_sessions=total_sessions,
+                sessions_booked=0,
+                sessions_completed=0,
+                total_price=total_price,
+                original_price=original_price,
+                discount_amount=discount_amount,
+                status='pending',  # Set initial status to pending
+                expires_at=datetime.now() + timedelta(days=90)  # 90-day expiration
+            )
+                
+        else:  # academy package
+            pricing_plan = AcademyPricingPlan.query.get_or_404(int(package_id))
+            academy = Academy.query.get_or_404(int(academy_id))
+            
+            # Get academy rate if available, or use coach rate
+            academy_rate = getattr(pricing_plan, 'academy_rate', None)
+            if academy_rate is None:
+                # Find a coach in the academy to get their rate
+                academy_coach = AcademyCoach.query.filter_by(academy_id=int(academy_id)).first()
+                if academy_coach and academy_coach.coach:
+                    academy_rate = academy_coach.coach.hourly_rate
+                else:
+                    academy_rate = 50  # Default rate if no coach found
+            
+            # Calculate package price
+            total_sessions = pricing_plan.sessions_required
+            original_price = academy_rate * total_sessions
+            
+            # Calculate discount
+            discount_amount = 0
+            if pricing_plan.percentage_discount:
+                discount_amount = original_price * (pricing_plan.percentage_discount / 100)
+                total_price = original_price - discount_amount
+            elif pricing_plan.fixed_discount:
+                discount_amount = pricing_plan.fixed_discount
+                total_price = original_price - discount_amount
+            else:
+                total_price = original_price
+                
+            # Create package
+            package = BookingPackage(
+                student_id=current_user.id,
+                academy_id=int(academy_id),
+                academy_pricing_plan_id=int(package_id),
+                package_type='academy',
+                total_sessions=total_sessions,
+                sessions_booked=0,
+                sessions_completed=0,
+                total_price=total_price,
+                original_price=original_price,
+                discount_amount=discount_amount,
+                status='pending',  # Set initial status to pending
+                expires_at=datetime.now() + timedelta(days=90)  # 90-day expiration
+            )
+        
+        # Save the package to the database
+        db.session.add(package)
+        db.session.flush()  # Get the package ID
+        
+        # Save payment proof
+        if payment_proof:
+            # Create directory for proofs if it doesn't exist
+            proofs_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'package_proofs')
+            os.makedirs(proofs_dir, exist_ok=True)
+            
+            # Save the file with a unique name
+            unique_id = uuid.uuid4().hex
+            filename = f"package_{package.id}_{unique_id}_{secure_filename(payment_proof.filename)}"
+            file_path = os.path.join(proofs_dir, filename)
+            payment_proof.save(file_path)
+            
+            # Store the payment proof in the database
+            # Let's create a PaymentProof entry for the package
+            # This assumes we can use the same PaymentProof model with a new type
+            relative_path = os.path.join('package_proofs', filename).replace('\\', '/')
+            
+            # Create a payment proof record
+            from app.models.payment import PaymentProof
+            proof = PaymentProof(
+                booking_id=None,  # No booking associated
+                package_id=package.id,  # Associate with package
+                image_path=relative_path,
+                proof_type='package',
+                status='pending'
+            )
+            db.session.add(proof)
+        
+        # Commit the transaction
+        db.session.commit()
+        
+        # Create notification for the coach or academy
+        if package_type == 'coach':
+            notify_user_id = coach.user_id
+            name = f"{coach.user.first_name} {coach.user.last_name}"
+        else:  # academy
+            # Find an academy manager to notify
+            academy_manager = AcademyManager.query.filter_by(academy_id=int(academy_id), is_owner=True).first()
+            if academy_manager:
+                notify_user_id = academy_manager.user_id
+            else:
+                # If no owner found, get any manager
+                academy_manager = AcademyManager.query.filter_by(academy_id=int(academy_id)).first()
+                notify_user_id = academy_manager.user_id if academy_manager else None
+            
+            name = academy.name
+            
+        if notify_user_id:
+            notification = Notification(
+                user_id=notify_user_id,
+                title="New Package Purchase",
+                message=f"{current_user.first_name} {current_user.last_name} purchased a package requiring approval.",
+                notification_type="package_purchase",
+                related_id=package.id
+            )
+            db.session.add(notification)
+            db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'package_id': package.id,
+            'total_sessions': package.total_sessions,
+            'total_price': float(package.total_price),
+            'status': 'pending'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @bp.route('/academies')
 def get_academies():

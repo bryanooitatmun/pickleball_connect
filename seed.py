@@ -528,7 +528,8 @@ def seed_database():
                 original_price=500.0,
                 discount_amount=100.0,
                 purchase_date=datetime.now() - timedelta(days=random.randint(5, 30)),
-                expires_at=datetime.now() + timedelta(days=random.randint(30, 90))
+                expires_at=datetime.now() + timedelta(days=random.randint(30, 90)),
+                status='active'
             )
             db.session.add(elite_package)
             
@@ -546,7 +547,8 @@ def seed_database():
                     original_price=250.0,
                     discount_amount=30.0,
                     purchase_date=datetime.now() - timedelta(days=random.randint(5, 30)),
-                    expires_at=datetime.now() + timedelta(days=random.randint(30, 90))
+                    expires_at=datetime.now() + timedelta(days=random.randint(30, 90)),
+                    status='active'
                 )
                 db.session.add(city_package)
 
@@ -1075,7 +1077,8 @@ def seed_database():
                         original_price=original_price,
                         discount_amount=discount_amount,
                         purchase_date=datetime.now() - timedelta(days=random.randint(5, 30)),
-                        expires_at=datetime.now() + timedelta(days=random.randint(30, 90))
+                        expires_at=datetime.now() + timedelta(days=random.randint(30, 90)),
+                        status='active'
                     )
                     
                     db.session.add(package)

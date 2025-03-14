@@ -48,3 +48,5 @@ instance/
 /logs
 .env
 /app/static/uploads
+/migrations
+/migrations

@@ -22,6 +22,8 @@ class BookingPackage(db.Model):
     
     purchase_date = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, nullable=True)
+
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'active', 'rejected', 'expired', 'completed'
     
     # Relationships
     coach = db.relationship('Coach', foreign_keys=[coach_id])

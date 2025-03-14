@@ -389,12 +389,38 @@ def create_booking_with_proofs():
         
         if len(unique_court_ids) > 1:
             return jsonify({'error': 'All bookings must be for the same court. Please book one court at a time.'}), 400
-            
+
         # Analyze all availability slots to determine requirements
         all_availability_ids = []
+        total_availability_slots = 0
         for booking_item in bookings_data:
             all_availability_ids.extend(booking_item.get('availability_ids', []))
+            total_availability_slots += len(booking_item.get('availability_ids', []))
         
+        # Check if a package is being used and has enough sessions
+        package = None
+        package_id = None
+        for booking_item in bookings_data:
+            if booking_item.get('package_id'):
+                package_id = booking_item.get('package_id')
+                break
+
+        if package_id:
+            package = BookingPackage.query.get(package_id)
+            if package:
+                # Verify package belongs to this user and has sessions remaining
+                if package.student_id != user_id:
+                    return jsonify({'error': 'This package does not belong to you'}), 400
+                    
+                # Verify package is active
+                if package.status != 'active':
+                    return jsonify({'error': 'This package is not active yet. Please wait for approval.'}), 400
+
+                # Check if package has enough remaining sessions
+                sessions_remaining = package.total_sessions - package.sessions_booked
+                if sessions_remaining < total_availability_slots:
+                    return jsonify({'error': f'Not enough sessions remaining in package. You have {sessions_remaining} sessions left, but are trying to book {total_availability_slots} sessions.'}), 400
+                    
         # Get all availabilities to check booking responsibilities
         availabilities = Availability.query.filter(Availability.id.in_(all_availability_ids)).all()
         
@@ -494,6 +520,9 @@ def create_booking_with_proofs():
         # Process each booking
         bookings_created = []
         
+        # Initialize package session counter
+        package_sessions_used = 0
+
         for booking_item in bookings_data:
             coach_id = booking_item.get('coach_id')
             court_id = booking_item.get('court_id')
@@ -557,10 +586,12 @@ def create_booking_with_proofs():
                             price = base_price - per_session_discount
                 
                 # If using package, set coach fee to 0
-                if package:
+                if package and package_sessions_used < (package.total_sessions - package.sessions_booked):
                     price = court_fee  # Only pay for court
-                    package.sessions_booked += 1
+                    package_sessions_used += 1  # Increment package session counter
                 
+                    package.bookings.append(booking)
+
                 # Mark availability as booked
                 availability.is_booked = True
                 
@@ -646,6 +677,10 @@ def create_booking_with_proofs():
                     'student_books_court': availability.student_books_court
                 })
         
+        # After all bookings are processed, update the package sessions count ONCE
+        if package and package_sessions_used > 0:
+            package.sessions_booked += package_sessions_used
+
         # Generate confirmation number
         confirmation_number = f"PBC-{uuid.uuid4().hex[:8].upper()}"
         

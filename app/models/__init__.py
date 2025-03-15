@@ -14,3 +14,4 @@ from app.models.academy_pricing import AcademyPricingPlan  # New model
 from app.models.payment import PaymentProof
 from app.models.notification import Notification
 from app.models.tag import Tag, CoachTag
+from app.models.booking import Availability, Booking, AvailabilityReservation

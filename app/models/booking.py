@@ -110,3 +110,20 @@ class AvailabilityTemplate(db.Model):
     
     def __repr__(self):
         return f'<AvailabilityTemplate {self.name}>'
+
+class AvailabilityReservation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    availability_id = db.Column(db.Integer, db.ForeignKey('availability.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    reservation_token = db.Column(db.String(64), unique=True, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)  # Typically 15 minutes from creation
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    availability = db.relationship('Availability', backref='reservations')
+    student = db.relationship('User', backref='availability_reservations')
+    
+    # Create a unique constraint to prevent multiple reservations for the same availability
+    __table_args__ = (
+        db.UniqueConstraint('availability_id', name='unique_availability_reservation'),
+    )

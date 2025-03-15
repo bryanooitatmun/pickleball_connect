@@ -86,7 +86,7 @@ def config():
                 return redirect(url_for('admin_connect_points.config'))
             
             # Save changes
-            config.updated_at = datetime.utcnow()
+            config.updated_at = datetime.now()
             db.session.commit()
             
             flash('Connect Points configuration updated successfully!', 'success')
@@ -258,7 +258,7 @@ def edit_voucher(voucher_id):
                 voucher.discount_percentage = discount_value
                 voucher.discount_amount = None
             
-            voucher.updated_at = datetime.utcnow()
+            voucher.updated_at = datetime.now()
             db.session.commit()
             
             flash(f'Voucher "{voucher.name}" updated successfully!', 'success')
@@ -506,7 +506,7 @@ def reports():
     period = request.args.get('period', 'all_time')
     
     # Define time ranges
-    now = datetime.utcnow()
+    now = datetime.now()
     
     if period == 'today':
         start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)

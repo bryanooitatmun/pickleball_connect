@@ -1202,7 +1202,7 @@ def update_session_log():
     log.title = data.get('title', log.title)
     log.notes = data.get('notes', log.notes)
     log.coach_notes = data.get('coach_notes', log.coach_notes)
-    log.updated_at = datetime.utcnow()
+    log.updated_at = datetime.now()
     
     try:
         db.session.commit()

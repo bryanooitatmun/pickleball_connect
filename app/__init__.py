@@ -8,6 +8,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from flask_mail import Mail
+from flask_apscheduler import APScheduler
 
 mail = Mail()
 
@@ -15,6 +16,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
 login.login_view = 'auth.login'
+scheduler = APScheduler()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -24,6 +26,8 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     login.init_app(app)
     mail.init_app(app)  # Initialize mail
+    scheduler.init_app(app)
+    scheduler.start()
     
     from app.routes.main import bp as main_bp
     from app.routes.auth import bp as auth_bp
@@ -47,6 +51,11 @@ def create_app(config_class=Config):
     app.register_blueprint(connect_points_bp, url_prefix='/api/connect-points')
     app.register_blueprint(academy_bp)
 
+    # Schedule jobs
+    from app.utils.scheduler import init_scheduler_jobs
+    with app.app_context():
+        init_scheduler_jobs(scheduler)
+        
     # Ensure the upload directories exist
     os.makedirs(app.config['PROFILE_PICS_FOLDER'], exist_ok=True)
     os.makedirs(app.config['SHOWCASE_IMAGES_FOLDER'], exist_ok=True)

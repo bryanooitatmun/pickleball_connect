@@ -539,6 +539,8 @@
   <!-- Enhanced Confirmation Modal with Payment Process -->
   <div id="confirmation-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-3/4 max-w-4xl p-8 scrollable-modal">
+      <div id="reservation-timer" class="mb-4 hidden"></div>
+
       <form id="booking-payment-form" enctype="multipart/form-data">
         <h2 class="text-2xl font-bold mb-2 text-gray-800">Complete Your Booking</h2>
         <p class="text-gray-600 mb-4">You are booking <span id="confirmation-session-count" class="font-bold">0</span> sessions.</p>
@@ -870,7 +872,7 @@
 {% block scripts %}
   <!-- Script for Profile and Booking Functionality -->
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
+//    document.addEventListener('DOMContentLoaded', function () {
       // DOM Elements
       const mobileMenuButton = document.getElementById('mobile-menu-button');
       const mobileMenu = document.getElementById('mobile-menu');
@@ -948,6 +950,9 @@
       let coachPackages = [];
       let academyPackages = [];
       let currentPackageData = null; // Store the currently selected package for purchase
+      let reservationToken = null;
+      let reservationExpiry = null;
+      let countdownInterval = null;
 
       // Utility Functions
       function formatMoney(amount) {
@@ -1198,6 +1203,133 @@
         }
       }
       
+      // When a student selects time slots and clicks "Continue to Booking"
+      async function reserveSelectedSlots() {
+          try {
+              // Show loading spinner
+              loadingOverlay.classList.remove('hidden');
+              
+              const availabilityIds = selectedSlots.map(slot => slot.availabilityId);
+              
+
+              if (availabilityIds.length === 0) {
+                  alert('Please select at least one time slot');
+                  loadingOverlay.classList.add('hidden');
+                  return false;
+              }
+
+              // Make reservation request
+              const response = await fetch('/booking/api/reserve-slots', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                      availability_ids: availabilityIds
+                  })
+              });
+              
+              const data = await response.json();
+              
+              if (!response.ok) {
+                  // Handle error - another student may have booked the slot
+                  if (response.status === 409) {
+                      // Conflict - slot no longer available
+                      alert(`The slot at ${data.start_time} ${data.availability_date} are no longer available. Please choose different times.`);
+                      
+                      // Refresh availability display
+                      await fetchAvailability(selectedCourtId, currentDate.getFullYear(), currentDate.getMonth());
+
+                      if (selectedDate.dataset.date) {
+                        populateAvailabilityGrid(selectedDate.dataset.date);
+                      }
+
+                      // Remove the unavailable slot from selection
+                      if (data.availability_id) {
+                          // Find and remove the slot
+                          selectedSlots = selectedSlots.filter(slot => slot.availabilityId !== data.availability_id);
+                          updateSelectedTimeslotsUI();
+                          updateTotalPrice();
+                          const sessionCount = document.getElementById('session-count');
+                          sessionCount.textContent = sessionCount.textContent - 1;
+
+                      }
+
+                      loadingOverlay.classList.add('hidden');
+                      return false;
+                  } else {
+                      alert(data.error || 'Failed to reserve time slots');
+                      loadingOverlay.classList.add('hidden');
+                      return false;
+                  }
+              }
+              
+              // Store reservation token for booking submission
+              reservationToken = data.reservation_token;
+              reservationExpiry = new Date(data.expires_at);
+              
+              // Clear any existing countdown
+              if (countdownInterval) {
+                  clearInterval(countdownInterval);
+              }
+
+              // Start countdown timer
+              startReservationCountdown();
+              
+              // Show confirmation modal
+              populateConfirmationModal();
+              hideAllModals();
+              showModal(confirmationModal);
+              
+              loadingOverlay.classList.add('hidden');
+              return true;
+              
+          } catch (error) {
+              console.error('Error reserving slots:', error);
+              alert('An error occurred while submitting your booking. Please try again.');
+              return false;
+          } finally {
+              loadingOverlay.classList.add('hidden');
+          }
+      }
+
+      // Add a countdown timer to show when reservation expires
+      function startReservationCountdown() {
+          const timerElement = document.getElementById('reservation-timer');
+          if (!timerElement) return;
+          
+          timerElement.classList.remove('hidden');
+          
+          const countdownInterval = setInterval(() => {
+              const now = new Date().getTime();
+              const timeRemaining = Math.max(0, Math.floor((reservationExpiry - now) / 1000));
+              
+              if (timeRemaining <= 0) {
+                  clearInterval(countdownInterval);
+                  timerElement.innerHTML = `<div class="bg-red-100 text-red-700 p-2 rounded border border-red-300">
+                      <i class="fas fa-exclamation-circle mr-1"></i> Reservation expired! Please go back and select time slots again.
+                  </div>`;
+                  
+                  // Disable booking button
+                  const confirmButton = document.getElementById('confirm-button');
+                  if (confirmButton) {
+                      confirmButton.disabled = true;
+                      confirmButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+                      confirmButton.classList.remove('bg-gradient-to-r', 'from-blue-500', 'to-purple-600');
+                  }
+                  
+                  return;
+              }
+              
+              const minutes = Math.floor(timeRemaining / 60);
+              const seconds = timeRemaining % 60;
+              
+              timerElement.innerHTML = `<div class="bg-blue-50 p-2 rounded border border-blue-200 ${timeRemaining < 60 ? 'text-red-600' : 'text-blue-600'}">
+                  <i class="fas fa-clock mr-1"></i> Your reservation expires in <strong>${minutes}:${seconds.toString().padStart(2, '0')}</strong>
+              </div>`;
+          }, 1000);
+      }
+
       // Fetch academy packages
       async function fetchAcademyPackages(academyIds) {
         try {
@@ -3163,9 +3295,15 @@
           // Show loading overlay
           loadingOverlay.classList.remove('hidden');
           
+          if (!reservationToken) {
+              alert('Your session has expired. Please go back and select time slots again.');
+              return;
+          }
+
           // Prepare the FormData object for file uploads
           const formData = new FormData();
-          
+          formData.append('reservation_token', reservationToken);
+
           // Get the file inputs
           const coachPaymentProofFile = document.getElementById('coach-payment-proof').files[0];
           const courtBookingProofFile = document.getElementById('court-booking-proof')?.files[0];
@@ -3224,8 +3362,27 @@
           loadingOverlay.classList.add('hidden');
           
           if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to create booking');
+              // Handle specific error codes
+              if (result.code === 'RESERVATION_EXPIRED') {
+                  alert('Your reservation has expired. Please go back and select time slots again.');
+                  hideAllModals();
+                  showModal(scheduleModal);
+              } else if (result.code === 'SLOT_UNAVAILABLE') {
+                  alert('One or more selected slots are no longer available. Please choose different times.');
+                  hideAllModals();
+                  showModal(scheduleModal);
+                  
+                  // Refresh availability
+                  await fetchAvailability(selectedCourtId, currentDate.getFullYear(), currentDate.getMonth());
+                  if (selectedDate.dataset.date) {
+                      populateAvailabilityGrid(selectedDate.dataset.date);
+                  }
+              } else {
+                  alert(result.error || 'Booking failed. Please try again.');
+              }
+              
+              loadingOverlay.classList.add('hidden');
+              return;
           }
           
           const result = await response.json();
@@ -3235,6 +3392,11 @@
             ? result.bookings[0].id 
             : null;
           
+          // Clear countdown timer
+          if (countdownInterval) {
+              clearInterval(countdownInterval);
+          }
+
           // Show success message
           hideAllModals();
           
@@ -3250,6 +3412,8 @@
           selectedPackage = null;
           selectedCourtId = null;
           bookingResponsibilities = {};
+          reservationToken = null;
+          reservationExpiry = null;
           updateSelectedTimeslotsUI();
           updateTotalPrice();
           
@@ -3485,14 +3649,13 @@
       });
 
       // Continue to booking button
-      scheduleButton.addEventListener('click', () => {
+      scheduleButton.addEventListener('click', async function() {
         if (selectedSlots.length === 0) {
           alert('Please select at least one time slot to continue.');
           return;
         }
 
-        populateConfirmationModal();
-        showModal(confirmationModal);
+        await reserveSelectedSlots();
       });
 
       // Cancel button
@@ -3556,10 +3719,55 @@
         observer.observe(section);
       });
 
+      // Add this function to periodically refresh availability data
+      function setupAvailabilityRefresh() {
+          // Refresh availability data every 30 seconds
+          setInterval(async function() {
+              if (selectedCourtId && selectedDate.dataset.date) {
+                  // Only refresh if court and date are selected
+                  const currentDateObj = new Date(selectedDate.dataset.date);
+                  
+                  // Store previously available slots for comparison
+                  const previouslyAvailable = allAvailabilities[selectedDate.dataset.date]?.available || [];
+                  
+                  // Fetch updated availability data
+                  await fetchAvailability(selectedCourtId, currentDateObj.getFullYear(), currentDateObj.getMonth());
+                  
+                  // Update grid without clearing selection
+                  populateAvailabilityGrid(selectedDate.dataset.date);
+                  
+                  // Check if any selected slots are no longer available
+                  const newlyAvailable = allAvailabilities[selectedDate.dataset.date]?.available || [];
+                  const newAvailIds = newlyAvailable.map(a => a.id);
+                  
+                  // Filter out any selected slots that are no longer available
+                  selectedSlots = selectedSlots.filter(slot => {
+                      // Skip slots from other dates or courts
+                      if (slot.date !== selectedDate.dataset.date || slot.courtId !== selectedCourtId) {
+                          return true;
+                      }
+                      
+                      // Check if the availability ID is still present in the updated data
+                      if (!newAvailIds.includes(slot.availabilityId)) {
+                          // No longer available - remove it
+                          return false;
+                      }
+                      
+                      return true;
+                  });
+                  
+                  // Update UI to reflect any changes
+                  updateSelectedTimeslotsUI();
+                  updateTotalPrice();
+              }
+          }, 30000); // Every 30 seconds
+      }
+
       // Initialize
       // Extract coach id from URL
       const coachId =  {{ coach.id }}  || 1; // Default to 1 if no ID is provided
       fetchCoachData(coachId);
-   });
+      setupAvailabilityRefresh();
+//   });
   </script>
 {% endblock %}

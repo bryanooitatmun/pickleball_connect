@@ -7,7 +7,7 @@ from app.models.coach import Coach
 from app.models.court import Court, CoachCourt
 from app.models.court_fee import CourtFee
 from app.models.pricing import PricingPlan
-from app.models.booking import Availability, Booking
+from app.models.booking import Availability, Booking, AvailabilityReservation
 from app.models.package import BookingPackage
 from app.forms.booking import BookingForm
 from datetime import datetime, timedelta
@@ -134,240 +134,15 @@ def get_court_fee_for_time(court_fees, slot_time):
     # Default fee if no matching time range is found
     return 0.0
 
-
-# @bp.route('/api/bookings/create', methods=['POST'])
-# def create_booking():
-#     """API endpoint to create bookings"""
-#     data = request.json
-    
-#     # Extract booking data
-#     bookings_data = data.get('bookings', [])
-#     user_data = data.get('user_data', {})
-    
-#     # Check if we have booking data
-#     if not bookings_data:
-#         return jsonify({'error': 'No booking data provided'}), 400
-    
-#     # Check if user is authenticated or we need to create a guest user
-#     if current_user.is_authenticated:
-#         user_id = current_user.id
-#     else:
-#         # Create or get temporary user
-#         email = user_data.get('email')
-#         if not email:
-#             return jsonify({'error': 'Email is required for guest bookings'}), 400
-            
-#         # Check if user with this email already exists
-#         existing_user = User.query.filter_by(email=email).first()
-        
-#         if existing_user:
-#             user_id = existing_user.id
-#         else:
-#             # Create temporary user
-#             temp_user = User(
-#                 first_name=user_data.get('first_name', ''),
-#                 last_name=user_data.get('last_name', ''),
-#                 email=email,
-#                 phone=user_data.get('phone', ''),
-#                 is_temporary=True,  # Mark as temporary user
-#                 dupr_rating=user_data.get('dupr_rating'),
-#                 location=user_data.get('location', ''),
-#                 bio=user_data.get('bio', '')
-#             )
-            
-#             # Set password if creating account
-#             if user_data.get('create_account'):
-#                 temp_user.is_temporary = False
-#                 temp_user.set_password(user_data.get('password'))
-            
-#             try:
-#                 db.session.add(temp_user)
-#                 db.session.flush()  # Get ID without committing
-#                 user_id = temp_user.id
-#             except IntegrityError:
-#                 db.session.rollback()
-#                 return jsonify({'error': 'Failed to create temporary user'}), 400
-    
-#     # Process each booking
-#     bookings_created = []
-    
-#     try:
-#         for booking_item in bookings_data:
-#             coach_id = booking_item.get('coach_id')
-#             court_id = booking_item.get('court_id')
-#             availability_ids = booking_item.get('availability_ids', [])
-#             package_id = booking_item.get('package_id')  # Add package ID handling
-            
-#             # Get coach hourly rate
-#             coach = Coach.query.get(coach_id)
-#             if not coach:
-#                 return jsonify({'error': f'Coach with ID {coach_id} not found'}), 404
-                
-#             hourly_rate = coach.hourly_rate
-            
-#             # Check for package
-#             package = None
-#             if package_id:
-#                 package = BookingPackage.query.get(package_id)
-                
-#                 # Verify package belongs to this user and has sessions remaining
-#                 if not package or package.student_id != user_id or package.sessions_booked >= package.total_sessions:
-#                     return jsonify({'error': 'Invalid package or insufficient sessions remaining'}), 400
-                
-#                 # Verify package can be used with this coach
-#                 if not package.can_use_for_coach(coach_id):
-#                     return jsonify({'error': 'This package cannot be used with this coach'}), 400
-            
-#            # Check if student is eligible for first-time discount
-#             is_first_time = not Booking.query.filter_by(
-#                 student_id=user_id,
-#                 coach_id=coach_id
-#             ).first()
-            
-#             # Check for applied pricing plan
-#             pricing_plan_id = booking_item.get('pricing_plan_id')
-#             pricing_plan = None
-#             discount_percentage = None
-#             discount_amount = None
-            
-#             if pricing_plan_id:
-#                 pricing_plan = PricingPlan.query.get(pricing_plan_id)
-                
-#                 # Verify eligibility
-#                 if pricing_plan and pricing_plan.is_active:
-#                     # First-time discount eligibility
-#                     if pricing_plan.first_time_only and not is_first_time:
-#                         return jsonify({'error': 'First-time discount can only be applied to new students.'}), 400
-                        
-#                     # Seasonal discount eligibility
-#                     if pricing_plan.discount_type == 'seasonal' and (
-#                         (pricing_plan.valid_from and pricing_plan.valid_from > datetime.now().date()) or
-#                         (pricing_plan.valid_to and pricing_plan.valid_to < datetime.now().date())
-#                     ):
-#                         return jsonify({'error': 'This promotional discount is not currently active.'}), 400
-                        
-#                     # Package discount eligibility
-#                     if pricing_plan.discount_type == 'package' and len(availability_ids) < pricing_plan.sessions_required:
-#                         return jsonify({
-#                             'error': f'You need to book at least {pricing_plan.sessions_required} sessions to use this package deal.'
-#                         }), 400
-                    
-#                     # Set discount values
-#                     if pricing_plan.percentage_discount:
-#                         discount_percentage = pricing_plan.percentage_discount
-#                     elif pricing_plan.fixed_discount:
-#                         discount_amount = pricing_plan.fixed_discount
-
-#             # Process each availability slot
-#             for avail_id in availability_ids:
-#                 availability = Availability.query.get(avail_id)
-                
-#                 if not availability or availability.is_booked:
-#                     return jsonify({'error': 'One or more selected slots are no longer available'}), 400
-                    
-#                 # Get court fee for this time
-#                 court_fees = CourtFee.query.filter_by(court_id=court_id).all()
-#                 court_fee = get_court_fee_for_time(court_fees, availability.start_time)
-                
-#                 # Calculate total price (coach fee + court fee)
-#                 base_price = hourly_rate + court_fee
-                
-#                 # Apply discount if any
-#                 if discount_percentage:
-#                     discount_value = base_price * (discount_percentage / 100)
-#                     price = base_price - discount_value
-#                 elif discount_amount:
-#                     # Distribute fixed discount proportionally across all booked sessions
-#                     per_session_discount = discount_amount / len(availability_ids)
-#                     price = base_price - per_session_discount
-#                 else:
-#                     price = base_price
-                
-#                 # If using package, set coach fee to 0
-#                 if package:
-#                     price = court_fee  # Only pay for court
-#                     package.sessions_booked += 1
-                
-#                 # Mark availability as booked
-#                 availability.is_booked = True
-                
-#                 court_payment_required = availability.student_books_court
-#                 court_payment_status = 'pending' if court_payment_required else 'not_required'
-
-#                 # Create booking
-#                 booking = Booking(
-#                     student_id=user_id,
-#                     coach_id=coach_id,
-#                     court_id=court_id,
-#                     availability_id=availability.id,
-#                     date=availability.date,
-#                     start_time=availability.start_time,
-#                     end_time=availability.end_time,
-#                     base_price=base_price,
-#                     price=price,
-#                     court_fee=court_fee,
-#                     coach_fee=hourly_rate,
-#                     status='upcoming',
-#                     pricing_plan_id=pricing_plan_id if pricing_plan else None,
-#                     discount_percentage=discount_percentage,
-#                     discount_amount=discount_amount,
-#                     court_payment_required=court_payment_required,
-#                     court_payment_status=court_payment_status
-#                 )
-                
-#                 db.session.add(booking)
-                
-#                 # Associate booking with package if applicable
-#                 if package:
-#                     package.bookings.append(booking)
-                
-#                 bookings_created.append({
-#                     'id': booking.id,  # Include booking ID in response
-#                     'date': availability.date.isoformat(),
-#                     'start_time': availability.start_time.strftime('%I:%M %p'),
-#                     'end_time': availability.end_time.strftime('%I:%M %p'),
-#                     'coach_fee': hourly_rate,
-#                     'court_fee': court_fee,
-#                     'base_price': base_price,
-#                     'price': price,
-#                     'student_books_court': availability.student_books_court
-#                 })
-        
-#         # Generate confirmation number
-#         confirmation_number = f"PBC-{uuid.uuid4().hex[:8].upper()}"
-        
-#         # Create notification for coach
-#         notification = Notification(
-#             user_id=coach.user_id,
-#             title="New booking",
-#             message=f"New booking on {booking.date.strftime('%Y-%m-%d')} at {booking.start_time.strftime('%I:%M %p')}",
-#             notification_type="booking",
-#             related_id=booking.id
-#         )
-#         db.session.add(notification)
-        
-#         # Send email notification
-#         send_coach_booking_notification(booking)
-        
-#         # Commit all changes
-#         db.session.commit()
-        
-#         return jsonify({
-#             'success': True,
-#             'message': 'Bookings created successfully',
-#             'confirmation_number': confirmation_number,
-#             'bookings': bookings_created
-#         })
-        
-#     except Exception as e:
-#         db.session.rollback()
-#         return jsonify({'error': str(e)}), 400
-
 @bp.route('/api/bookings/create-with-proofs', methods=['POST'])
 def create_booking_with_proofs():
     """API endpoint to create bookings with payment and booking proofs"""
     # Get form data and files
     try:
+        reservation_token = request.form.get('reservation_token')
+        if not reservation_token:
+            return jsonify({'error': 'Missing reservation token'}), 400
+
         bookings_data = json.loads(request.form.get('bookings', '[]'))
         user_data_json = request.form.get('user_data')
         user_data = json.loads(user_data_json) if user_data_json else None
@@ -396,6 +171,44 @@ def create_booking_with_proofs():
         for booking_item in bookings_data:
             all_availability_ids.extend(booking_item.get('availability_ids', []))
             total_availability_slots += len(booking_item.get('availability_ids', []))
+
+        # Start a transaction
+        db.session.begin()
+
+        # Verify all slots are reserved by this user with valid reservations
+        for avail_id in all_availability_ids:
+            reservation = AvailabilityReservation.query.filter(
+                AvailabilityReservation.availability_id == avail_id,
+                AvailabilityReservation.student_id == user_id,
+                AvailabilityReservation.reservation_token == reservation_token,
+                AvailabilityReservation.expires_at > datetime.now()
+            ).first()
+            
+            if not reservation:
+                db.session.rollback()
+                return jsonify({
+                    'error': 'Your reservation for one or more slots has expired. Please try again.',
+                    'code': 'RESERVATION_EXPIRED'
+                }), 400
+
+        # Lock and verify all slots are still available
+        unavailable = []
+        for avail_id in all_availability_ids:
+            avail = db.session.query(Availability).filter(
+                Availability.id == avail_id,
+                Availability.is_booked == False
+            ).with_for_update().first()
+            
+            if not avail:
+                unavailable.append(avail_id)
+
+        if unavailable:
+            db.session.rollback()
+            return jsonify({
+                'error': 'One or more selected slots are no longer available',
+                'code': 'SLOT_UNAVAILABLE',
+                'availability_ids': unavailable
+            }), 409
         
         # Check if a package is being used and has enough sessions
         package = None
@@ -694,6 +507,16 @@ def create_booking_with_proofs():
         )
         db.session.add(notification)
         
+        try:
+            for avail_id in all_availability_ids:
+                AvailabilityReservation.query.filter_by(
+                    availability_id=avail_id,
+                    student_id=user_id
+                ).delete()
+        except Exception as e:
+            # Just log this error, don't affect the booking success
+            current_app.logger.warning(f"Failed to clean up reservations for user {user_id}: {str(e)}")
+
         # Commit all changes
         db.session.commit()
         
@@ -707,6 +530,93 @@ def create_booking_with_proofs():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
+
+@bp.route('/api/reserve-slots', methods=['POST'])
+def reserve_availability_slots():
+    """Create temporary reservations for selected availability slots"""
+    data = request.get_json()
+    availability_ids = data.get('availability_ids', [])
+    
+    current_user_id = -1
+
+    try:
+        current_user_id = current_user.id
+    except:
+        print("Current user is an anonymous user")
+
+    if not availability_ids:
+        return jsonify({'error': 'No availability slots selected'}), 400
+    
+    # Check if any slots are already booked or reserved
+    availabilities = Availability.query.filter(
+        Availability.id.in_(availability_ids)
+    ).all()
+    
+    # Check availability
+    for avail in availabilities:
+        if avail.is_booked:
+            return jsonify({
+                'error': 'One or more selected slots are no longer available',
+                'availability_id': avail.id,
+                'start_time': avail.start_time.strftime("%H:%M"),
+                'availability_date': avail.date.strftime("%m/%d/%Y")
+            }), 409  # 409 Conflict
+        
+        # Check for existing non-expired reservations
+        existing_reservation = AvailabilityReservation.query.filter(
+            AvailabilityReservation.availability_id == avail.id,
+            AvailabilityReservation.expires_at > datetime.now()
+        ).first()
+        
+        if existing_reservation and existing_reservation.student_id != current_user_id:
+            return jsonify({
+                'error': 'One or more selected slots are currently being booked by another student',
+                'availability_id': avail.id,
+                'start_time': avail.start_time.strftime("%H:%M"),
+                'availability_date': avail.date.strftime("%m/%d/%Y")
+            }), 409  # 409 Conflict
+    
+    # Create reservations
+    reservations = []
+    reservation_token = str(uuid.uuid4())
+    expires_at = datetime.now() + timedelta(minutes=15)  # 15-minute timeout
+    
+    try:
+        for avail_id in availability_ids:
+            # Delete any existing expired reservations
+            AvailabilityReservation.query.filter(
+                AvailabilityReservation.availability_id == avail_id,
+                AvailabilityReservation.expires_at <= datetime.now()
+            ).delete()
+            
+            # Delete existing reservation by this user if any
+            AvailabilityReservation.query.filter(
+                AvailabilityReservation.availability_id == avail_id,
+                AvailabilityReservation.student_id == current_user_id
+            ).delete()
+            
+            # Create new reservation
+            reservation = AvailabilityReservation(
+                availability_id=avail_id,
+                student_id=current_user_id,
+                reservation_token=reservation_token,
+                expires_at=expires_at
+            )
+            db.session.add(reservation)
+            reservations.append(reservation)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'reservation_token': reservation_token,
+            'expires_at': expires_at.isoformat()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 
 @bp.route('/book/<int:coach_id>', methods=['GET', 'POST'])
 @login_required

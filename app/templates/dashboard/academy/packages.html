@@ -1,0 +1,65 @@
+{% extends "dashboard/base.html" %}
+
+{% block dashboard_content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">Academy Packages</h1>
+  <p class="text-gray-600">Manage academy-wide coaching packages</p>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <div class="flex items-center justify-between mb-6">
+    <h3 class="text-lg font-semibold text-gray-800">Create Package Plan</h3>
+    <button id="create-package-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none">
+      <i class="fas fa-plus mr-2"></i> Create New Package
+    </button>
+  </div>
+  
+  <div id="academy-pricing-plans-container">
+    <!-- Academy pricing plans will appear here -->
+    <div class="text-center py-12 text-gray-500">
+      <p>No package plans created yet</p>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <h3 class="text-lg font-semibold text-gray-800 mb-6">Academy Package Orders</h3>
+  
+  <div class="mb-4 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <input type="text" id="packages-search" placeholder="Search by student" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <select id="packages-filter-status" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="pending">Pending</option>
+        <option value="active">Active</option>
+        <option value="completed">Completed</option>
+        <option value="rejected">Rejected</option>
+        <option value="expired">Expired</option>
+        <option value="">All Statuses</option>
+      </select>
+    </div>
+    
+    <div>
+      <select id="packages-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="date-asc">Date: Oldest First</option>
+        <option value="date-desc" selected>Date: Newest First</option>
+      </select>
+    </div>
+    <div>
+      <button id="reset-packages-filters" type="button" class="text-blue-600 hover:text-blue-800">
+        <i class="fas fa-times-circle mr-1"></i> Reset
+      </button>
+    </div>
+  </div>
+  
+  <div id="academy-packages-container">
+    <!-- Academy packages will be dynamically inserted here -->
+    <div class="text-center py-12 text-gray-500">
+      <p>No packages found</p>
+    </div>
+  </div>
+</div>
+
+<!-- Include package-related modals -->
+{% include 'dashboard/partials/modals/package_approval_modal.html' %}
+{% include 'dashboard/partials/modals/academy_package_modal.html' %}
+{% endblock %}

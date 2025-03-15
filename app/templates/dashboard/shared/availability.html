@@ -1,4 +1,3 @@
-<!-- dashboard/shared/availability.html -->
 <div class="mb-6">
   <h1 class="text-2xl font-bold text-gray-800">Availability</h1>
   <p class="text-gray-600">Manage your coaching schedule and availability</p>
@@ -181,4 +180,68 @@
       
       <!-- Preview Button and Result Area -->
       <div class="mb-6">
-        <button type="button" id="preview-availability-btn" class="bg-gray-
+        <button type="button" id="preview-availability-btn" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-medium hover:bg-gray-300 mr-2">
+          Preview Slots
+        </button>
+        <span id="preview-count" class="text-gray-600 hidden">This will create <span id="slot-count" class="font-medium">0</span> availability slots.</span>
+      </div>
+      
+      <div id="preview-container" class="mb-6 hidden">
+        <h4 class="font-medium mb-2">Preview</h4>
+        <div id="preview-slots" class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4"></div>
+      </div>
+      
+      <div class="flex space-x-3">
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
+          Create All Slots
+        </button>
+        <button type="reset" class="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 focus:outline-none">
+          Reset
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Templates Section -->
+  <div class="bg-white rounded-xl shadow-sm py-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold">My Templates</h3>
+      <button id="create-template-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+        <i class="fas fa-plus mr-2"></i> Create Template
+      </button>
+    </div>
+    
+    <div id="templates-container" class="space-y-4">
+      <!-- Templates will be listed here -->
+      <div class="text-center py-6 text-gray-500">
+        <p>No templates created yet</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Availability Calendar Section -->
+  <div class="bg-white rounded-xl shadow-sm py-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold">Availability Calendar</h3>
+      <div class="flex space-x-2">
+        <button id="prev-month-btn" class="text-gray-600 hover:text-gray-800">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <span id="calendar-month-year" class="text-gray-700">April 2025</span>
+        <button id="next-month-btn" class="text-gray-600 hover:text-gray-800">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div id="availability-calendar" class="mb-4">
+      <!-- Calendar will be rendered here -->
+    </div>
+    
+    <div class="text-right">
+      <button id="toggle-calendar-view" class="text-blue-600 hover:text-blue-800 text-sm">
+        Switch to Week View
+      </button>
+    </div>
+  </div>
+</div>

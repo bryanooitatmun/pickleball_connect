@@ -359,3 +359,154 @@ def api_remove_academy_coach(academy_id):
     db.session.commit()
     
     return jsonify({'success': True})
+
+@bp.route('/profile')
+@login_required
+@academy_manager_required
+def profile():
+    """Academy profile management view"""
+    # Get all academies this user manages
+    managed_academies = AcademyManager.query.filter_by(user_id=current_user.id).all()
+    academy_ids = [am.academy_id for am in managed_academies]
+    
+    # Get selected academy or first in the list
+    selected_academy_id = request.args.get('academy_id', type=int)
+    if selected_academy_id and selected_academy_id not in academy_ids:
+        selected_academy_id = None
+    
+    if not selected_academy_id and academy_ids:
+        selected_academy_id = academy_ids[0]
+    
+    academy = Academy.query.get(selected_academy_id) if selected_academy_id else None
+    
+    # Get all available academies for dropdown
+    academies = Academy.query.filter(Academy.id.in_(academy_ids)).all()
+    
+    # Get academy tags
+    academy_tags = []
+    all_tags = []
+    
+    if academy:
+        academy_tags = academy.tags.all() if academy.tags else []
+        all_tags = Tag.query.all()
+    
+    profile_picture = None
+    if current_user.profile_picture:
+        profile_picture = current_user.profile_picture.replace('\\', '/')
+    
+    return render_template(
+        'dashboard/base.html',
+        active_tab='academy-profile',
+        profile_picture=profile_picture,
+        academy=academy,
+        academies=academies,
+        academy_tags=academy_tags,
+        all_tags=all_tags
+    )
+
+@bp.route('/coaches')
+@login_required
+@academy_manager_required
+def coaches():
+    """Academy coaches management view"""
+    # Get all academies this user manages
+    managed_academies = AcademyManager.query.filter_by(user_id=current_user.id).all()
+    academy_ids = [am.academy_id for am in managed_academies]
+    
+    # Get selected academy or first in the list
+    selected_academy_id = request.args.get('academy_id', type=int)
+    if selected_academy_id and selected_academy_id not in academy_ids:
+        selected_academy_id = None
+    
+    if not selected_academy_id and academy_ids:
+        selected_academy_id = academy_ids[0]
+    
+    academy = Academy.query.get(selected_academy_id) if selected_academy_id else None
+    
+    # Get all available academies for dropdown
+    academies = Academy.query.filter(Academy.id.in_(academy_ids)).all()
+    
+    # Get academy coaches
+    academy_coaches = []
+    if academy:
+        academy_coaches = AcademyCoach.query.filter_by(
+            academy_id=academy.id,
+            is_active=True
+        ).all()
+    
+    # Get all available coaches not already in the academy
+    coach_ids = [ac.coach_id for ac in academy_coaches]
+    available_coaches = []
+    
+    if academy:
+        available_coaches = Coach.query.filter(
+            ~Coach.id.in_(coach_ids) if coach_ids else True
+        ).all()
+    
+    # Get coach roles
+    coach_roles = AcademyCoachRole.query.order_by(AcademyCoachRole.ordering).all()
+    
+    profile_picture = None
+    if current_user.profile_picture:
+        profile_picture = current_user.profile_picture.replace('\\', '/')
+    
+    return render_template(
+        'dashboard/base.html',
+        active_tab='academy-coaches',
+        profile_picture=profile_picture,
+        academy=academy,
+        academies=academies,
+        academy_coaches=academy_coaches,
+        available_coaches=available_coaches,
+        coach_roles=coach_roles
+    )
+
+@bp.route('/packages')
+@login_required
+@academy_manager_required
+def packages():
+    """Academy packages management view"""
+    # Get all academies this user manages
+    managed_academies = AcademyManager.query.filter_by(user_id=current_user.id).all()
+    academy_ids = [am.academy_id for am in managed_academies]
+    
+    # Get selected academy or first in the list
+    selected_academy_id = request.args.get('academy_id', type=int)
+    if selected_academy_id and selected_academy_id not in academy_ids:
+        selected_academy_id = None
+    
+    if not selected_academy_id and academy_ids:
+        selected_academy_id = academy_ids[0]
+    
+    academy = Academy.query.get(selected_academy_id) if selected_academy_id else None
+    
+    # Get all available academies for dropdown
+    academies = Academy.query.filter(Academy.id.in_(academy_ids)).all()
+    
+    # Get academy packages
+    academy_packages = []
+    if academy:
+        academy_packages = BookingPackage.query.filter_by(
+            academy_id=academy.id,
+            package_type='academy'
+        ).order_by(BookingPackage.status, BookingPackage.purchase_date.desc()).all()
+    
+    # Get academy pricing plans
+    pricing_plans = []
+    if academy:
+        pricing_plans = AcademyPricingPlan.query.filter_by(academy_id=academy.id).all()
+    
+    profile_picture = None
+    if current_user.profile_picture:
+        profile_picture = current_user.profile_picture.replace('\\', '/')
+    
+    return render_template(
+        'dashboard/base.html',
+        active_tab='academy-packages',
+        profile_picture=profile_picture,
+        academy=academy,
+        academies=academies,
+        academy_packages=academy_packages,
+        pricing_plans=pricing_plans
+    )
+

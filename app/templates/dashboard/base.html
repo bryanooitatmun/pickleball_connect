@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Pickleball Connect - Dashboard{% endblock %}
+
+{% block extra_styles %}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.active-nav-link {
+  background: linear-gradient(90deg, rgba(65, 88, 208, 0.15) 0%, rgba(200, 80, 192, 0.15) 100%);
+  border-left: 4px solid #4158D0;
+  color: #4158D0;
+  font-weight: 600;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.loading {
+  position: relative;
+}
+
+.loading:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.loading:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  margin-top: -25px;
+  margin-left: -25px;
+  border-radius: 50%;
+  border: 5px solid rgba(65, 88, 208, 0.2);
+  border-top-color: #4158D0;
+  animation: spin 1s linear infinite;
+  z-index: 20;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Additional styles from original dashboard */
+/* ... */
+{% endblock %}
+
+{% block content %}
+  <!-- Navbar -->
+  {% include 'dashboard/shared/navbar.html' %}
+
+  <!-- Main Content -->
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    {% include 'dashboard/shared/sidebar.html' %}
+
+    <!-- Main Content Area -->
+    <div class="flex-1 p-6">
+      <!-- Mobile Navigation -->
+      <div class="md:hidden mb-6">
+        <select id="mobile-nav" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="dashboard">Dashboard</option>
+          <option value="profile">My Profile</option>
+          <option value="courts">My Courts</option>
+          <option value="bookings">Bookings</option>
+          <option value="availability">Availability</option>
+          <option value="session-logs">Session Logs</option>
+          <option value="pricing">Pricing Plans</option>
+          <option value="earnings">Earnings</option>
+          <option value="help">Help Center</option>
+          {% if current_user.is_academy_manager %}
+          <option value="academy-profile">Academy Profile</option>
+          <option value="academy-coaches">Academy Coaches</option>
+          <option value="academy-packages">Academy Packages</option>
+          {% endif %}
+        </select>
+      </div>
+
+      <!-- Dashboard Tab -->
+      {% if active_tab == 'dashboard' %}
+        {% include 'dashboard/coach/dashboard.html' %}
+      {% elif active_tab == 'profile' %}
+        {% include 'dashboard/coach/profile.html' %}
+      {% elif active_tab == 'courts' %}
+        {% include 'dashboard/shared/courts.html' %}
+      {% elif active_tab == 'availability' %}
+        {% include 'dashboard/shared/availability.html' %}
+      {% elif active_tab == 'bookings' %}
+        {% include 'dashboard/shared/bookings.html' %}
+      {% elif active_tab == 'session-logs' %}
+        {% include 'dashboard/coach/session_logs.html' %}
+      {% elif active_tab == 'pricing' %}
+        {% include 'dashboard/coach/pricing.html' %}
+      {% elif active_tab == 'packages' %}
+        {% include 'dashboard/coach/packages.html' %}
+      {% elif active_tab == 'earnings' %}
+        {% include 'dashboard/shared/earnings.html' %}
+      {% elif active_tab == 'help' %}
+        {% include 'dashboard/coach/help.html' %}
+      {% elif active_tab == 'academy-profile' %}
+        {% include 'dashboard/academy/profile.html' %}
+      {% elif active_tab == 'academy-coaches' %}
+        {% include 'dashboard/academy/coaches.html' %}
+      {% elif active_tab == 'academy-packages' %}
+        {% include 'dashboard/academy/packages.html' %}
+      {% endif %}
+
+      <!-- Modals -->
+      {% include 'dashboard/modals/session_log_modal.html' %}
+      {% include 'dashboard/modals/court_modal.html' %}
+      {% include 'dashboard/modals/pricing_modal.html' %}
+      {% include 'dashboard/modals/package_modal.html' %}
+      {% include 'dashboard/modals/availability_modal.html' %}
+      {% include 'dashboard/modals/confirm_booking_modal.html' %}
+      
+      <!-- Toast Notification -->
+      {% include 'dashboard/shared/toast.html' %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Include Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<!-- Include shared dashboard scripts -->
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<!-- Include tab-specific scripts based on active tab -->
+{% if active_tab == 'dashboard' %}
+<script src="{{ url_for('static', filename='js/dashboard_home.js') }}"></script>
+{% elif active_tab == 'availability' %}
+<script src="{{ url_for('static', filename='js/availability.js') }}"></script>
+{% elif active_tab == 'bookings' %}
+<script src="{{ url_for('static', filename='js/bookings.js') }}"></script>
+{% elif active_tab == 'earnings' %}
+<script src="{{ url_for('static', filename='js/earnings.js') }}"></script>
+{% endif %}
+{% endblock %}

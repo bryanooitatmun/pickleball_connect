@@ -14,6 +14,8 @@ class Academy(db.Model):
     website = db.Column(db.String(128))
     private_url_code = db.Column(db.String(32), unique=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    payment_info = db.Column(db.JSON, nullable=True)  # Store bank details, payment reference, etc.
+    court_payment_details = db.Column(db.JSON, nullable=True)  # For separate court payment info
     
     # Relationships
     coaches = db.relationship('AcademyCoach', back_populates='academy', lazy='dynamic')

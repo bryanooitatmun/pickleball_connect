@@ -1,0 +1,184 @@
+<!-- dashboard/shared/availability.html -->
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">Availability</h1>
+  <p class="text-gray-600">Manage your coaching schedule and availability</p>
+</div>
+
+{% if current_user.is_academy_manager and academy_coaches %}
+  <div class="mb-6 bg-white rounded-xl shadow-sm p-6">
+    <h3 class="font-semibold mb-4">Select Coach</h3>
+    <div class="flex items-center">
+      <select id="academy-coach-select" class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="">All Coaches</option>
+        {% for coach in academy_coaches %}
+          <option value="{{ coach.id }}" {% if selected_coach_id == coach.id %}selected{% endif %}>
+            {{ coach.user.first_name }} {{ coach.user.last_name }}
+          </option>
+        {% endfor %}
+      </select>
+      <button id="apply-coach-filter" class="ml-3 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none">
+        Apply
+      </button>
+    </div>
+  </div>
+{% endif %}
+
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <div class="flex items-center justify-between mb-6">
+    <h3 class="font-semibold">Add Single Availability</h3>
+  </div>
+  
+  <form id="availability-form" class="mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div>
+        <label for="availability-court" class="block text-gray-700 font-medium mb-2">Court*</label>
+        <select id="availability-court" name="court_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          <option value="">Select a court</option>
+          {% for court in coach_courts %}
+            <option value="{{ court.court_id }}">{{ court.court.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="availability-date" class="block text-gray-700 font-medium mb-2">Date*</label>
+        <input type="date" id="availability-date" name="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required min="{{ now.strftime('%Y-%m-%d') }}">
+      </div>
+      <div>
+        <label for="availability-start-time" class="block text-gray-700 font-medium mb-2">Start Time*</label>
+        <input type="time" id="availability-start-time" name="start_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+      </div>
+      <div>
+        <label for="availability-end-time" class="block text-gray-700 font-medium mb-2">End Time*</label>
+        <input type="time" id="availability-end-time" name="end_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-2">Court Booking Responsibility*</label>
+        <div class="flex space-x-4">
+          <label class="inline-flex items-center">
+            <input type="radio" name="student_books_court" value="false" class="mr-2" checked>
+            <span>Coach Books Court</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input type="radio" name="student_books_court" value="true" class="mr-2">
+            <span>Student Books Court</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
+      Add Availability
+    </button>
+  </form>
+  
+  <div class="bg-white rounded-xl shadow-sm py-6 mb-6">
+    <h3 class="font-semibold mb-4">Bulk Add Availability</h3>
+    
+    <form id="bulk-availability-form">
+      <!-- Date Range Selection -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div>
+          <label class="block text-gray-700 font-medium mb-2">Date Range*</label>
+          <div class="flex space-x-2">
+            <input type="date" id="bulk-start-date" name="start_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required min="{{ now.strftime('%Y-%m-%d') }}" />
+            <span class="flex items-center">to</span>
+            <input type="date" id="bulk-end-date" name="end_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required min="{{ now.strftime('%Y-%m-%d') }}" />
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-gray-700 font-medium mb-2">Courts*</label>
+          <select id="bulk-courts" name="courts" multiple class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
+            {% for court in coach_courts %}
+              <option value="{{ court.court_id }}" data-name="{{ court.court.name }}">{{ court.court.name }}</option>
+            {% endfor %}
+          </select>
+          <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+        </div>
+        
+        <div>
+          <label class="block text-gray-700 font-medium mb-2">Session Duration</label>
+          <select id="bulk-duration" name="duration" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+            <option value="60">1 hour</option>
+            <option value="90">1.5 hours</option>
+            <option value="120">2 hours</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Custom Duration (shown when custom is selected) -->
+      <div id="custom-duration-container" class="hidden mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">Duration (minutes)*</label>
+            <input type="number" id="custom-duration" name="custom_duration" min="30" step="15" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="60" />
+          </div>
+        </div>
+      </div>
+      
+      <!-- Days of Week and Time Range Selection -->
+      <div class="mb-6">
+        <label class="block text-gray-700 font-medium mb-2">Days of Week*</label>
+        <div class="flex flex-wrap gap-2">
+          <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+            <input type="checkbox" name="days[]" value="1" class="mr-2"> Monday
+          </label>
+          <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+            <input type="checkbox" name="days[]" value="2" class="mr-2"> Tuesday
+          </label>
+          <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+            <input type="checkbox" name="days[]" value="3" class="mr-2"> Wednesday
+          </label>
+          <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+            <input type="checkbox" name="days[]" value="4" class="mr-2"> Thursday
+          </label>
+          <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+            <input type="checkbox" name="days[]" value="5" class="mr-2"> Friday
+          </label>
+          <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+            <input type="checkbox" name="days[]" value="6" class="mr-2"> Saturday
+          </label>
+          <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg">
+            <input type="checkbox" name="days[]" value="0" class="mr-2"> Sunday
+          </label>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div>
+          <label class="block text-gray-700 font-medium mb-2">Time Range*</label>
+          <div class="flex space-x-2 items-center">
+            <input type="time" id="bulk-start-time" name="start_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required />
+            <span>to</span>
+            <input type="time" id="bulk-end-time" name="end_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required />
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-gray-700 font-medium mb-2">Time Slot Increment</label>
+          <select id="bulk-increment" name="increment" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+            <option value="60">Every hour</option>
+            <option value="30">Every 30 minutes</option>
+            <option value="15">Every 15 minutes</option>
+            <option value="duration">Based on session duration</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-gray-700 font-medium mb-2">Court Booking Responsibility*</label>
+          <div class="flex space-x-4">
+            <label class="inline-flex items-center">
+              <input type="radio" name="bulk_student_books_court" value="false" class="mr-2" checked>
+              <span>Coach Books Court</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="radio" name="bulk_student_books_court" value="true" class="mr-2">
+              <span>Student Books Court</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Preview Button and Result Area -->
+      <div class="mb-6">
+        <button type="button" id="preview-availability-btn" class="bg-gray-

@@ -21,6 +21,7 @@ class CoachCourt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     coach_id = db.Column(db.Integer, db.ForeignKey('coach.id'), nullable=False)
     court_id = db.Column(db.Integer, db.ForeignKey('court.id'), nullable=False)
+    booking_instructions = db.Column(db.Text, nullable=True)  # Added field for specific court booking instructions
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Ensure each coach-court pair is unique

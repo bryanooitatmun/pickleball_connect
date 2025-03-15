@@ -1,0 +1,24 @@
+<!-- Remove Coach Modal -->
+<div id="remove-coach-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+  <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Remove Coach from Academy</h3>
+      <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-remove-coach-modal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <p class="mb-6">Are you sure you want to remove <span id="remove-coach-name" class="font-medium"></span> from your academy? This will not delete their account, but they will no longer appear in your academy's coach list.</p>
+    
+    <input type="hidden" id="remove-coach-id" value="">
+    
+    <div class="flex justify-end space-x-3">
+      <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-remove-coach-modal">
+        Cancel
+      </button>
+      <button id="confirm-remove-coach-btn" type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
+        Remove Coach
+      </button>
+    </div>
+  </div>
+</div>

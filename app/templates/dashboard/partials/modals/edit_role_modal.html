@@ -1,0 +1,40 @@
+<!-- Edit Role Modal -->
+<div id="edit-role-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+  <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 id="role-modal-title" class="text-lg font-semibold">Add Coach Role</h3>
+      <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-role-modal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <form id="role-form">
+      <input type="hidden" id="role-id" name="role_id" value="">
+      
+      <div class="mb-4">
+        <label for="role-name" class="block text-gray-700 font-medium mb-2">Role Name*</label>
+        <input type="text" id="role-name" name="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required placeholder="e.g., Head Coach, Senior Coach">
+      </div>
+      
+      <div class="mb-4">
+        <label for="role-description" class="block text-gray-700 font-medium mb-2">Description</label>
+        <textarea id="role-description" name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Role description and responsibilities"></textarea>
+      </div>
+      
+      <div class="mb-6">
+        <label for="role-ordering" class="block text-gray-700 font-medium mb-2">Display Order</label>
+        <input type="number" id="role-ordering" name="ordering" min="1" max="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value="10">
+        <p class="text-sm text-gray-500 mt-1">Lower numbers appear first in the list</p>
+      </div>
+      
+      <div class="flex justify-end space-x-3">
+        <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-role-modal">
+          Cancel
+        </button>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+          Save Role
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

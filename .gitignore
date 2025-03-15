@@ -23,7 +23,6 @@ var/
 *.egg
 
 # Flask
-instance/
 .webassets-cache
 
 # SQLite

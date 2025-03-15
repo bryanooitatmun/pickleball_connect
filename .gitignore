@@ -26,7 +26,6 @@ var/
 .webassets-cache
 
 # SQLite
-*.db
 *.sqlite
 
 # Environment variables

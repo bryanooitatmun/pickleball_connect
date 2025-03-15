@@ -605,7 +605,7 @@ def dashboard():
 @bp.route('/profile')
 @login_required
 @coach_required
-def profile():
+def dashboard_profile():
     """Coach profile management view"""
     coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
     

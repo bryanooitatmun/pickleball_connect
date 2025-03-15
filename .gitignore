@@ -42,9 +42,10 @@ var/
 *.swo
 
 #Static files
-/static/uploads
 /logs
 .env
-/app/static/uploads
 /migrations
 /migrations
+/app/static/uploads/payment_proofs
+/static/uploads/package_proofs
+/static/uploads/payment_proofs

@@ -31,7 +31,7 @@ def dashboard():
     ).order_by(Booking.date.desc()).limit(5).all()
     
     return render_template(
-        'students/dashboard.html', 
+        'dashboard/students/dashboard.html', 
         upcoming_bookings=upcoming_bookings,
         completed_bookings=completed_bookings
     )
@@ -53,7 +53,7 @@ def connect_points():
         .order_by(ConnectPoints.created_at.desc()).limit(5).all()
     
     return render_template(
-        'students/connect_points.html',
+        'dashboard/students/connect_points.html',
         points_balance=points_balance,
         recent_transactions=recent_transactions
     )

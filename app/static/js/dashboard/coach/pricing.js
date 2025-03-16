@@ -121,7 +121,7 @@ function setupPricingEventListeners() {
     if (discountType === 'first_time') {
       document.getElementById('first-time-fields').classList.remove('hidden');
     } else if (discountType === 'package') {
-      document.getElementById('package-fields').classList.remove('hidden');
+      document.getElementById('pricing-package-fields').classList.remove('hidden');
     } else if (discountType === 'seasonal') {
       document.getElementById('seasonal-fields').classList.remove('hidden');
     } else if (discountType === 'custom') {

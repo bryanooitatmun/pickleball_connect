@@ -513,7 +513,7 @@ def profile(coach_id):
 #         profile_picture = current_user.profile_picture.replace('\\', '/')
 
 #     return render_template(
-#         'dashboard/base.html', 
+#         'dashboard/coach/base.html', 
 #         active_tab='dashboard',
 #         profile_picture=profile_picture,
 #         coach=coach, 
@@ -524,7 +524,7 @@ def profile(coach_id):
 #         now=datetime.now()
 #     )
 
-@bp.route('/dashboard')
+@bp.route('/coach/dashboard')
 @login_required
 @coach_or_academy_manager_required
 def dashboard():
@@ -591,7 +591,7 @@ def dashboard():
         profile_picture = current_user.profile_picture.replace('\\', '/')
 
     return render_template(
-        'dashboard/base.html', 
+        'dashboard/coach/base.html', 
         active_tab='dashboard',
         profile_picture=profile_picture,
         coach=coach, 
@@ -602,7 +602,7 @@ def dashboard():
         now=datetime.now()
     )
 
-@bp.route('/profile')
+@bp.route('/coach/profile')
 @login_required
 @coach_required
 def dashboard_profile():
@@ -632,7 +632,7 @@ def dashboard_profile():
         profile_picture = current_user.profile_picture.replace('\\', '/')
     
     return render_template(
-        'dashboard/base.html',
+        'dashboard/coach/base.html',
         active_tab='profile',
         profile_picture=profile_picture,
         coach=coach,
@@ -643,7 +643,7 @@ def dashboard_profile():
         all_tags=all_tags
     )
 
-@bp.route('/courts')
+@bp.route('/coach/courts')
 @login_required
 @coach_or_academy_manager_required
 def courts():
@@ -686,7 +686,7 @@ def courts():
         profile_picture = current_user.profile_picture.replace('\\', '/')
     
     return render_template(
-        'dashboard/base.html',
+        'dashboard/coach/base.html',
         active_tab='courts',
         profile_picture=profile_picture,
         coach=coach,
@@ -695,7 +695,7 @@ def courts():
         all_courts=all_courts
     )
 
-@bp.route('/availability')
+@bp.route('/coach/availability')
 @login_required
 @coach_or_academy_manager_required
 def availability():
@@ -757,7 +757,7 @@ def availability():
         profile_picture = current_user.profile_picture.replace('\\', '/')
     
     return render_template(
-        'dashboard/base.html',
+        'dashboard/coach/base.html',
         active_tab='availability',
         profile_picture=profile_picture,
         coach=coach,
@@ -769,7 +769,7 @@ def availability():
         selected_coach_id=selected_coach_id
     )
 
-@bp.route('/bookings')
+@bp.route('/coach/bookings')
 @login_required
 @coach_or_academy_manager_required
 def bookings():
@@ -864,7 +864,7 @@ def bookings():
         profile_picture = current_user.profile_picture.replace('\\', '/')
     
     return render_template(
-        'dashboard/base.html',
+        'dashboard/coach/base.html',
         active_tab='bookings',
         profile_picture=profile_picture,
         coach=coach,
@@ -876,7 +876,7 @@ def bookings():
         selected_coach_id=selected_coach_id
     )
 
-@bp.route('/session-logs')
+@bp.route('/coach/session-logs')
 @login_required
 @coach_required
 def session_logs():
@@ -894,7 +894,7 @@ def session_logs():
         profile_picture = current_user.profile_picture.replace('\\', '/')
     
     return render_template(
-        'dashboard/base.html',
+        'dashboard/coach/base.html',
         active_tab='session-logs',
         profile_picture=profile_picture,
         coach=coach,
@@ -902,7 +902,7 @@ def session_logs():
         courts=courts
     )
 
-@bp.route('/pricing')
+@bp.route('/coach/pricing')
 @login_required
 @coach_required
 def pricing():
@@ -917,14 +917,14 @@ def pricing():
         profile_picture = current_user.profile_picture.replace('\\', '/')
     
     return render_template(
-        'dashboard/base.html',
+        'dashboard/coach/base.html',
         active_tab='pricing',
         profile_picture=profile_picture,
         coach=coach,
         plans=plans
     )
 
-@bp.route('/packages')
+@bp.route('/coach/packages')
 @login_required
 @coach_or_academy_manager_required
 def packages():
@@ -960,7 +960,7 @@ def packages():
         profile_picture = current_user.profile_picture.replace('\\', '/')
     
     return render_template(
-        'dashboard/base.html',
+        'dashboard/coach/base.html',
         active_tab='packages',
         profile_picture=profile_picture,
         coach=coach,
@@ -968,7 +968,7 @@ def packages():
         academy_packages=academy_packages
     )
 
-@bp.route('/earnings')
+@bp.route('/coach/earnings')
 @login_required
 @coach_or_academy_manager_required
 def earnings():
@@ -1013,7 +1013,7 @@ def earnings():
         profile_picture = current_user.profile_picture.replace('\\', '/')
     
     return render_template(
-        'dashboard/base.html',
+        'dashboard/coach/base.html',
         active_tab='earnings',
         profile_picture=profile_picture,
         coach=coach,
@@ -1022,7 +1022,7 @@ def earnings():
         selected_coach_id=selected_coach_id
     )
 
-@bp.route('/help')
+@bp.route('/coach/help')
 @login_required
 @coach_or_academy_manager_required
 def help():
@@ -1036,7 +1036,7 @@ def help():
         profile_picture = current_user.profile_picture.replace('\\', '/')
     
     return render_template(
-        'dashboard/base.html',
+        'dashboard/coach/base.html',
         active_tab='help',
         profile_picture=profile_picture,
         coach=coach

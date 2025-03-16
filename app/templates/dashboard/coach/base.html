@@ -248,80 +248,80 @@
 
       <!-- Dashboard Tab -->
       <div id="dashboard-tab" class="tab-content active">
-        {% include 'dashboard/tabs/dashboard.html' %}
+        {% include 'dashboard/coach/dashboard.html' %}
       </div>
 
       <!-- Profile Tab -->
       <div id="profile-tab" class="tab-content">
-        {% include 'dashboard/tabs/profile.html' %}
+        {% include 'dashboard/coach/profile.html' %}
       </div>
 
       <!-- Courts Tab -->
       <div id="courts-tab" class="tab-content">
-        {% include 'dashboard/tabs/courts.html' %}
+        {% include 'dashboard/coach/courts.html' %}
       </div>
 
       <!-- Calendar Tab -->
       <div id="calendar-tab" class="tab-content">
-        {% include 'dashboard/tabs/calendar.html' %}
+        {% include 'dashboard/coach/calendar.html' %}
       </div>
 
       <!-- Bookings Tab -->
       <div id="bookings-tab" class="tab-content">
-        {% include 'dashboard/tabs/bookings.html' %}
+        {% include 'dashboard/coach/bookings.html' %}
       </div>
 
       <!-- Availability Tab -->
       <div id="availability-tab" class="tab-content">
-        {% include 'dashboard/tabs/availability.html' %}
+        {% include 'dashboard/coach/availability.html' %}
       </div>
 
       <!-- Session Logs Tab -->
       <div id="session-logs-tab" class="tab-content">
-        {% include 'dashboard/tabs/session_logs.html' %}
+        {% include 'dashboard/coach/session_logs.html' %}
       </div>
 
       <!-- Pricing Tab -->
       <div id="pricing-tab" class="tab-content">
-        {% include 'dashboard/tabs/pricing.html' %}
+        {% include 'dashboard/coach/pricing.html' %}
       </div>
 
       <!-- Packages Tab -->
       <div id="packages-tab" class="tab-content">
-        {% include 'dashboard/tabs/packages.html' %}
+        {% include 'dashboard/coach/packages.html' %}
       </div>
 
       <!-- Earnings Tab -->
       <div id="earnings-tab" class="tab-content">
-        {% include 'dashboard/tabs/earnings.html' %}
+        {% include 'dashboard/coach/earnings.html' %}
       </div>
 
       <!-- Academy Tab -->
       {% if current_user.is_academy_manager %}
       <div id="academy-tab" class="tab-content">
-        {% include 'dashboard/tabs/academy.html' %}
+        {% include 'dashboard/coach/academy.html' %}
       </div>
       {% endif %}
 
       <!-- Help Center Tab -->
       <div id="help-tab" class="tab-content">
-        {% include 'dashboard/tabs/help.html' %}
+        {% include 'dashboard/coach/help.html' %}
       </div>
     </div>
   </div>
 
   <!-- Include all modals -->
-  {% include 'dashboard/modals/court_modals.html' %}
-  {% include 'dashboard/modals/session_modals.html' %}
-  {% include 'dashboard/modals/booking_modals.html' %}
-  {% include 'dashboard/modals/availability_modals.html' %}
-  {% include 'dashboard/modals/package_modals.html' %}
+  {% include 'dashboard/coach/modals/court_modals.html' %}
+  {% include 'dashboard/coach/modals/session_modals.html' %}
+  {% include 'dashboard/coach/modals/booking_modals.html' %}
+  {% include 'dashboard/coach/modals/availability_modals.html' %}
+  {% include 'dashboard/coach/modals/package_modals.html' %}
   {% if current_user.is_academy_manager %}
-  {% include 'dashboard/modals/academy_modals.html' %}
+  {% include 'dashboard/coach/modals/academy_modals.html' %}
   {% endif %}
 
   <!-- Toast Notification -->
-  {% include 'dashboard/components/toast.html' %}
+  {% include 'dashboard/coach/components/toast.html' %}
 {% endblock %}
 
 {% block scripts %}
@@ -329,21 +329,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
 <!-- Common dashboard functionality -->
-<script src="{{ url_for('static', filename='js/dashboard/common.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/common.js') }}"></script>
 
 <!-- Tab-specific scripts -->
-<script src="{{ url_for('static', filename='js/dashboard/dashboard.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/profile.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/courts.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/calendar.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/bookings.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/availability.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/session_logs.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/pricing.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/packages.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/earnings.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/profile.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/courts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/calendar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/bookings.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/availability.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/session_logs.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/pricing.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/packages.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/earnings.js') }}"></script>
 {% if current_user.is_academy_manager %}
-<script src="{{ url_for('static', filename='js/dashboard/academy.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/coach/academy.js') }}"></script>
 {% endif %}
 
 <script>

@@ -68,7 +68,7 @@ def dashboard():
     recent_bookings = Booking.query.order_by(Booking.created_at.desc()).limit(5).all()
     
     return render_template(
-        'admin/index.html', 
+        'dashboard/admin/index.html', 
         users_count=users_count,
         coaches_count=coaches_count,
         courts_count=courts_count,
@@ -117,7 +117,7 @@ def add_court():
             db.session.rollback()
             flash(f'Error adding court: {str(e)}', 'error')
     
-    return render_template('admin/add_court.html')
+    return render_template('dashboard/admin/add_court.html')
 
 @bp.route('/courts/<int:court_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -144,7 +144,7 @@ def edit_court(court_id):
             db.session.rollback()
             flash(f'Error updating court: {str(e)}', 'error')
     
-    return render_template('admin/edit_court.html', court=court)
+    return render_template('dashboard/admin/edit_court.html', court=court)
 
 @bp.route('/courts/<int:court_id>/delete', methods=['POST'])
 @login_required
@@ -171,7 +171,7 @@ def court_fees(court_id):
     """Admin interface for managing court fees"""
     court = Court.query.get_or_404(court_id)
     fees = CourtFee.query.filter_by(court_id=court_id).order_by(CourtFee.start_time).all()
-    return render_template('admin/court_fees.html', court=court, fees=fees)
+    return render_template('dashboard/admin/court_fees.html', court=court, fees=fees)
 
 @bp.route('/api/courts/<int:court_id>/fees', methods=['GET'])
 @login_required
@@ -306,7 +306,7 @@ def delete_court_fee(fee_id):
 def users():
     """Admin interface for user management"""
     users = User.query.all()
-    return render_template('admin/users.html', users=users)
+    return render_template('dashboard/admin/users.html', users=users)
 
 @bp.route('/users/<int:user_id>')
 @login_required
@@ -314,7 +314,7 @@ def users():
 def user_details(user_id):
     """View user details"""
     user = User.query.get_or_404(user_id)
-    return render_template('admin/user_details.html', user=user)
+    return render_template('dashboard/admin/user_details.html', user=user)
 
 @bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -341,7 +341,7 @@ def edit_user(user_id):
             db.session.rollback()
             flash(f'Error updating user: {str(e)}', 'error')
     
-    return render_template('admin/edit_user.html', user=user)
+    return render_template('dashboard/admin/edit_user.html', user=user)
 
 @bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @login_required
@@ -367,7 +367,7 @@ def delete_user(user_id):
 def coaches():
     """Admin interface for coach management"""
     coaches = Coach.query.join(User).all()
-    return render_template('admin/coaches.html', coaches=coaches)
+    return render_template('dashboard/admin/coaches.html', coaches=coaches)
 
 @bp.route('/coaches/<int:coach_id>')
 @login_required
@@ -375,7 +375,7 @@ def coaches():
 def coach_details(coach_id):
     """View coach details"""
     coach = Coach.query.get_or_404(coach_id)
-    return render_template('admin/coach_details.html', coach=coach)
+    return render_template('dashboard/admin/coach_details.html', coach=coach)
 
 # Earnings analytics
 @bp.route('/earnings')
@@ -441,7 +441,7 @@ def earnings():
     ).group_by(User.first_name, User.last_name).all()
     
     return render_template(
-        'admin/earnings.html',
+        'dashboard/admin/earnings.html',
         total_earnings=total_earnings,
         monthly_earnings=monthly_earnings,
         this_month_earnings=this_month_earnings,
@@ -467,7 +467,7 @@ def support_tickets():
         tickets = []
         flash('Support Ticket model is not implemented yet.', 'info')
     
-    return render_template('admin/support_tickets.html', tickets=tickets)
+    return render_template('dashboard/admin/support_tickets.html', tickets=tickets)
 
 # Database management interface
 @bp.route('/database')
@@ -479,7 +479,7 @@ def database():
     inspector = inspect(db.engine)
     tables = inspector.get_table_names()
     
-    return render_template('admin/database.html', tables=tables)
+    return render_template('dashboard/admin/database.html', tables=tables)
 
 @bp.route('/database/<table>')
 @login_required
@@ -562,7 +562,7 @@ def table_view(table):
     columns = [column.name for column in model.__table__.columns]
     
     return render_template(
-        'admin/table_view.html', 
+        'dashboard/admin/table_view.html', 
         table=table, 
         records=records, 
         columns=columns,
@@ -619,7 +619,7 @@ def record_view(table, record_id):
             'type': str(column.type)
         })
     
-    return render_template('admin/record_view.html', table=table, record=record, columns=columns)
+    return render_template('dashboard/admin/record_view.html', table=table, record=record, columns=columns)
 
 @bp.route('/database/<table>/<int:record_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -712,7 +712,7 @@ def record_edit(table, record_id):
             'primary_key': column.primary_key
         })
     
-    return render_template('admin/record_edit.html', table=table, record=record, columns=columns)
+    return render_template('dashboard/admin/record_edit.html', table=table, record=record, columns=columns)
 
 @bp.route('/database/<table>/<int:record_id>/delete', methods=['POST'])
 @login_required
@@ -768,7 +768,7 @@ def record_delete(table, record_id):
 def bookings():
     """Admin interface for bookings management"""
     bookings = Booking.query.order_by(Booking.date.desc(), Booking.start_time).all()
-    return render_template('admin/bookings.html', bookings=bookings)
+    return render_template('dashboard/admin/bookings.html', bookings=bookings)
 
 @bp.route('/bookings/<int:booking_id>')
 @login_required
@@ -776,7 +776,7 @@ def bookings():
 def booking_details(booking_id):
     """View booking details"""
     booking = Booking.query.get_or_404(booking_id)
-    return render_template('admin/booking_details.html', booking=booking)
+    return render_template('dashboard/admin/booking_details.html', booking=booking)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or not current_user.is_admin:
             flash('Access denied. Admin privileges required.')
@@ -790,5 +790,5 @@ def booking_details(booking_id):
 def courts():
     """Admin interface for courts management"""
     courts = Court.query.all()
-    return render_template('admin/courts.html', courts=courts)
+    return render_template('dashboard/admin/courts.html', courts=courts)
 

@@ -1,0 +1,174 @@
+{% if current_user.is_academy_manager %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">Academy Management</h1>
+  <p class="text-gray-600">Manage your academy settings, coaches, and operations</p>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <h3 class="font-semibold mb-6">Academy Information</h3>
+  
+  <form id="academy-info-form">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label for="academy-name" class="block text-gray-700 font-medium mb-2">Academy Name*</label>
+        <input type="text" id="academy-name" name="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+      </div>
+      <div>
+        <label for="academy-website" class="block text-gray-700 font-medium mb-2">Website</label>
+        <input type="url" id="academy-website" name="website" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+    </div>
+    
+    <div class="mb-6">
+      <label for="academy-description" class="block text-gray-700 font-medium mb-2">Description*</label>
+      <textarea id="academy-description" name="description" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+    </div>
+    
+    <div class="mb-6">
+      <label for="academy-tags" class="block text-gray-700 font-medium mb-2">Tags</label>
+      <input type="text" id="academy-tags" name="tags" placeholder="e.g., beginner-friendly, professional, competition" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <p class="text-sm text-gray-500 mt-1">Separate tags with commas</p>
+    </div>
+    
+    <div class="mb-6">
+      <label for="academy-url-code" class="block text-gray-700 font-medium mb-2">Private URL Code</label>
+      <input type="text" id="academy-url-code" name="private_url_code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <p class="text-sm text-gray-500 mt-1">Used for exclusive access links</p>
+    </div>
+    
+    <div class="mb-6">
+      <label class="block text-gray-700 font-medium mb-2">Academy Logo</label>
+      <div class="flex items-center space-x-4">
+        <div id="academy-logo-preview" class="w-24 h-24 border border-gray-300 rounded-lg flex items-center justify-center bg-gray-100">
+          <i class="fas fa-image text-gray-400 text-xl"></i>
+        </div>
+        <div>
+          <input type="file" id="academy-logo-input" name="logo" accept="image/*" class="hidden">
+          <button type="button" id="upload-academy-logo" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+            Upload Logo
+          </button>
+          <button type="button" id="remove-academy-logo" class="ml-2 text-red-600 text-sm hover:text-red-800 hidden">
+            Remove
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
+      Save Academy Information
+    </button>
+  </form>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <h3 class="font-semibold mb-6">Payment Details</h3>
+  
+  <form id="academy-payment-form">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label for="academy-bank-name" class="block text-gray-700 font-medium mb-2">Bank Name*</label>
+        <input type="text" id="academy-bank-name" name="bank_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+      </div>
+      <div>
+        <label for="academy-account-name" class="block text-gray-700 font-medium mb-2">Account Holder Name*</label>
+        <input type="text" id="academy-account-name" name="account_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label for="academy-account-number" class="block text-gray-700 font-medium mb-2">Account Number*</label>
+        <input type="text" id="academy-account-number" name="account_number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+      </div>
+      <div>
+        <label for="academy-payment-reference" class="block text-gray-700 font-medium mb-2">Payment Reference</label>
+        <input type="text" id="academy-payment-reference" name="payment_reference" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+    </div>
+    
+    <div class="mb-6">
+      <h4 class="text-gray-700 font-medium mb-2">Court Payment Details (Optional)</h4>
+      <p class="text-sm text-gray-500 mb-4">If court fees need to be paid to a different account</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+        <div>
+          <label for="court-bank-name" class="block text-gray-700 font-medium mb-2">Court Fee Bank Name</label>
+          <input type="text" id="court-bank-name" name="court_bank_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label for="court-account-name" class="block text-gray-700 font-medium mb-2">Court Fee Account Name</label>
+          <input type="text" id="court-account-name" name="court_account_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="court-account-number" class="block text-gray-700 font-medium mb-2">Court Fee Account Number</label>
+          <input type="text" id="court-account-number" name="court_account_number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label for="court-payment-reference" class="block text-gray-700 font-medium mb-2">Court Fee Payment Reference</label>
+          <input type="text" id="court-payment-reference" name="court_payment_reference" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+    </div>
+    
+    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
+      Save Payment Details
+    </button>
+  </form>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <div class="flex items-center justify-between mb-6">
+    <h3 class="font-semibold">Manage Coaches</h3>
+    <button id="add-coach-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+      <i class="fas fa-user-plus mr-2"></i> Add Coach
+    </button>
+  </div>
+  
+  <div id="academy-coaches-container">
+    <!-- Coaches will be dynamically inserted here -->
+    <div class="text-center py-12 text-gray-500">
+      <p>No coaches added yet</p>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6">
+  <h3 class="font-semibold mb-6">Academy Analytics</h3>
+  
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-gray-50 rounded-lg p-4">
+      <h4 class="text-gray-500 text-sm font-medium mb-1">Total Sessions</h4>
+      <p id="academy-total-sessions" class="text-2xl font-bold">0</p>
+      <p class="text-sm text-gray-500">All time</p>
+    </div>
+    <div class="bg-gray-50 rounded-lg p-4">
+      <h4 class="text-gray-500 text-sm font-medium mb-1">Total Students</h4>
+      <p id="academy-total-students" class="text-2xl font-bold">0</p>
+      <p class="text-sm text-gray-500">All time</p>
+    </div>
+    <div class="bg-gray-50 rounded-lg p-4">
+      <h4 class="text-gray-500 text-sm font-medium mb-1">Total Revenue</h4>
+      <p id="academy-total-revenue" class="text-2xl font-bold">$0.00</p>
+      <p class="text-sm text-gray-500">All time</p>
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+      <h4 class="font-medium mb-4">Sessions by Coach</h4>
+      <div class="h-64">
+        <canvas id="academy-sessions-by-coach-chart"></canvas>
+      </div>
+    </div>
+    <div>
+      <h4 class="font-medium mb-4">Revenue by Month</h4>
+      <div class="h-64">
+        <canvas id="academy-revenue-chart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}

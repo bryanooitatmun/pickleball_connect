@@ -58,19 +58,172 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
-/* Additional styles from original dashboard */
-/* ... */
 {% endblock %}
 
 {% block content %}
   <!-- Navbar -->
-  {% include 'dashboard/shared/navbar.html' %}
+  <nav class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-6 py-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <a href="{{ url_for('coaches.index') }}" class="flex items-center space-x-2">
+            <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+              <span class="text-white font-bold text-xl">P</span>
+            </div>
+            <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Pickleball Connect</span>
+          </a>
+          <span class="hidden md:inline-block text-gray-500">|</span>
+          <span class="hidden md:inline-block text-gray-700 font-medium">
+            {% if current_user.is_academy_manager and not current_user.is_coach %}Academy{% else %}Coach{% endif %} Dashboard
+          </span>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+          <div class="relative" id="notification-dropdown">
+            <button id="notification-btn" class="p-2 text-gray-600 hover:text-blue-600 transition-colors focus:outline-none">
+              <i class="fas fa-bell"></i>
+              <span id="notification-badge" class="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center hidden">0</span>
+            </button>
+            <div id="notification-menu" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 z-20 hidden">
+              <div class="px-4 py-2 border-b border-gray-100">
+                <h4 class="font-semibold">Notifications</h4>
+              </div>
+              <div id="notification-list" class="max-h-64 overflow-y-auto">
+                <!-- Notifications will be dynamically inserted here -->
+                <div class="px-4 py-3 text-center text-gray-500 text-sm">
+                  No new notifications
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="relative" id="profile-dropdown">
+            <button id="profile-btn" class="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors focus:outline-none">
+              <div id="profile-initial" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+                {% if current_user.profile_picture %}
+                  <img src="{{ url_for('static', filename=profile_picture) }}" alt="Profile" class="h-8 w-8 rounded-full object-cover">
+                {% else %}
+                  {{ current_user.first_name[0] }}
+                {% endif %}
+              </div>
+              <span id="profile-name" class="hidden md:inline-block">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+              <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div id="profile-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-20 hidden">
+              <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors" id="view-profile-link">
+                <i class="fas fa-user mr-2"></i> View Profile
+              </a>
+              <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors" id="account-settings-link">
+                <i class="fas fa-cog mr-2"></i> Account Settings
+              </a>
+              <div class="border-t border-gray-100 my-1"></div>
+              <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors" id="logout-link">
+                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
 
   <!-- Main Content -->
   <div class="flex min-h-screen">
     <!-- Sidebar -->
-    {% include 'dashboard/shared/sidebar.html' %}
+    <div class="w-64 bg-white shadow-sm hidden md:block">
+      <div class="p-6 space-y-6">
+        <div>
+          <span class="text-xs text-gray-500 uppercase tracking-wider">Main</span>
+          <ul class="mt-3 space-y-1">
+            <li>
+              <a href="#dashboard" class="dashboard-tab tab-link active-nav-link flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors">
+                <i class="fas fa-tachometer-alt w-5"></i>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="#profile" class="profile-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-user w-5"></i>
+                <span>My Profile</span>
+              </a>
+            </li>
+            <li>
+              <a href="#courts" class="courts-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-map-marker-alt w-5"></i>
+                <span>My Courts</span>
+              </a>
+            </li>
+            <li>
+              <a href="#calendar" class="calendar-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-calendar-week w-5"></i>
+                <span>Calendar View</span>
+              </a>
+            </li>
+            <li>
+              <a href="#bookings" class="bookings-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-calendar-alt w-5"></i>
+                <span>Bookings</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <span class="text-xs text-gray-500 uppercase tracking-wider">Manage</span>
+          <ul class="mt-3 space-y-1">
+            <li>
+              <a href="#availability" class="availability-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-clock w-5"></i>
+                <span>Availability</span>
+              </a>
+            </li>
+            <li>
+              <a href="#session-logs" class="session-logs-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-clipboard-list w-5"></i>
+                <span>Session Logs</span>
+              </a>
+            </li>
+            <li>
+              <a href="#pricing" class="pricing-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-dollar-sign w-5"></i>
+                <span>Pricing Plans</span>
+              </a>
+            </li>
+            <li>
+              <a href="#packages" class="packages-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-box w-5"></i>
+                <span>Packages</span>
+              </a>
+            </li>
+            <li>
+              <a href="#earnings" class="earnings-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-chart-line w-5"></i>
+                <span>Earnings</span>
+              </a>
+            </li>
+            {% if current_user.is_academy_manager %}
+            <li>
+              <a href="#academy" class="academy-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-university w-5"></i>
+                <span>Academy Management</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+
+        <div>
+          <span class="text-xs text-gray-500 uppercase tracking-wider">Support</span>
+          <ul class="mt-3 space-y-1">
+            <li>
+              <a href="#help" class="help-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-question-circle w-5"></i>
+                <span>Help Center</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
 
     <!-- Main Content Area -->
     <div class="flex-1 p-6">
@@ -84,72 +237,237 @@
           <option value="availability">Availability</option>
           <option value="session-logs">Session Logs</option>
           <option value="pricing">Pricing Plans</option>
+          <option value="packages">Packages</option>
           <option value="earnings">Earnings</option>
-          <option value="help">Help Center</option>
           {% if current_user.is_academy_manager %}
-          <option value="academy-profile">Academy Profile</option>
-          <option value="academy-coaches">Academy Coaches</option>
-          <option value="academy-packages">Academy Packages</option>
+          <option value="academy">Academy Management</option>
           {% endif %}
+          <option value="help">Help Center</option>
         </select>
       </div>
 
       <!-- Dashboard Tab -->
-      {% if active_tab == 'dashboard' %}
-        {% include 'dashboard/coach/dashboard.html' %}
-      {% elif active_tab == 'profile' %}
-        {% include 'dashboard/coach/profile.html' %}
-      {% elif active_tab == 'courts' %}
-        {% include 'dashboard/shared/courts.html' %}
-      {% elif active_tab == 'availability' %}
-        {% include 'dashboard/shared/availability.html' %}
-      {% elif active_tab == 'bookings' %}
-        {% include 'dashboard/shared/bookings.html' %}
-      {% elif active_tab == 'session-logs' %}
-        {% include 'dashboard/coach/session_logs.html' %}
-      {% elif active_tab == 'pricing' %}
-        {% include 'dashboard/coach/pricing.html' %}
-      {% elif active_tab == 'packages' %}
-        {% include 'dashboard/coach/packages.html' %}
-      {% elif active_tab == 'earnings' %}
-        {% include 'dashboard/shared/earnings.html' %}
-      {% elif active_tab == 'help' %}
-        {% include 'dashboard/coach/help.html' %}
-      {% elif active_tab == 'academy-profile' %}
-        {% include 'dashboard/academy/profile.html' %}
-      {% elif active_tab == 'academy-coaches' %}
-        {% include 'dashboard/academy/coaches.html' %}
-      {% elif active_tab == 'academy-packages' %}
-        {% include 'dashboard/academy/packages.html' %}
+      <div id="dashboard-tab" class="tab-content active">
+        {% include 'dashboard/tabs/dashboard.html' %}
+      </div>
+
+      <!-- Profile Tab -->
+      <div id="profile-tab" class="tab-content">
+        {% include 'dashboard/tabs/profile.html' %}
+      </div>
+
+      <!-- Courts Tab -->
+      <div id="courts-tab" class="tab-content">
+        {% include 'dashboard/tabs/courts.html' %}
+      </div>
+
+      <!-- Calendar Tab -->
+      <div id="calendar-tab" class="tab-content">
+        {% include 'dashboard/tabs/calendar.html' %}
+      </div>
+
+      <!-- Bookings Tab -->
+      <div id="bookings-tab" class="tab-content">
+        {% include 'dashboard/tabs/bookings.html' %}
+      </div>
+
+      <!-- Availability Tab -->
+      <div id="availability-tab" class="tab-content">
+        {% include 'dashboard/tabs/availability.html' %}
+      </div>
+
+      <!-- Session Logs Tab -->
+      <div id="session-logs-tab" class="tab-content">
+        {% include 'dashboard/tabs/session_logs.html' %}
+      </div>
+
+      <!-- Pricing Tab -->
+      <div id="pricing-tab" class="tab-content">
+        {% include 'dashboard/tabs/pricing.html' %}
+      </div>
+
+      <!-- Packages Tab -->
+      <div id="packages-tab" class="tab-content">
+        {% include 'dashboard/tabs/packages.html' %}
+      </div>
+
+      <!-- Earnings Tab -->
+      <div id="earnings-tab" class="tab-content">
+        {% include 'dashboard/tabs/earnings.html' %}
+      </div>
+
+      <!-- Academy Tab -->
+      {% if current_user.is_academy_manager %}
+      <div id="academy-tab" class="tab-content">
+        {% include 'dashboard/tabs/academy.html' %}
+      </div>
       {% endif %}
 
-      <!-- Modals -->
-      {% include 'dashboard/modals/session_log_modal.html' %}
-      {% include 'dashboard/modals/court_modal.html' %}
-      {% include 'dashboard/modals/pricing_modal.html' %}
-      {% include 'dashboard/modals/package_modal.html' %}
-      {% include 'dashboard/modals/availability_modal.html' %}
-      {% include 'dashboard/modals/confirm_booking_modal.html' %}
-      
-      <!-- Toast Notification -->
-      {% include 'dashboard/shared/toast.html' %}
+      <!-- Help Center Tab -->
+      <div id="help-tab" class="tab-content">
+        {% include 'dashboard/tabs/help.html' %}
+      </div>
     </div>
   </div>
+
+  <!-- Include all modals -->
+  {% include 'dashboard/modals/court_modals.html' %}
+  {% include 'dashboard/modals/session_modals.html' %}
+  {% include 'dashboard/modals/booking_modals.html' %}
+  {% include 'dashboard/modals/availability_modals.html' %}
+  {% include 'dashboard/modals/package_modals.html' %}
+  {% if current_user.is_academy_manager %}
+  {% include 'dashboard/modals/academy_modals.html' %}
+  {% endif %}
+
+  <!-- Toast Notification -->
+  {% include 'dashboard/components/toast.html' %}
 {% endblock %}
 
 {% block scripts %}
-<!-- Include Chart.js -->
+<!-- Core libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-<!-- Include shared dashboard scripts -->
-<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-<!-- Include tab-specific scripts based on active tab -->
-{% if active_tab == 'dashboard' %}
-<script src="{{ url_for('static', filename='js/dashboard_home.js') }}"></script>
-{% elif active_tab == 'availability' %}
-<script src="{{ url_for('static', filename='js/availability.js') }}"></script>
-{% elif active_tab == 'bookings' %}
-<script src="{{ url_for('static', filename='js/bookings.js') }}"></script>
-{% elif active_tab == 'earnings' %}
-<script src="{{ url_for('static', filename='js/earnings.js') }}"></script>
+
+<!-- Common dashboard functionality -->
+<script src="{{ url_for('static', filename='js/dashboard/common.js') }}"></script>
+
+<!-- Tab-specific scripts -->
+<script src="{{ url_for('static', filename='js/dashboard/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/profile.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/courts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/calendar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/bookings.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/availability.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/session_logs.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/pricing.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/packages.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/earnings.js') }}"></script>
+{% if current_user.is_academy_manager %}
+<script src="{{ url_for('static', filename='js/dashboard/academy.js') }}"></script>
 {% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tabs
+    initTabs();
+    
+    // Initialize dropdowns
+    initDropdowns();
+
+    // Load initial data
+    loadDashboardData();
+  });
+  
+  // Initialize tabs
+  function initTabs() {
+    const tabLinks = document.querySelectorAll('.tab-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const mobileNav = document.getElementById('mobile-nav');
+
+    function activateTab(tabId) {
+      // Hide all tab contents
+      tabContents.forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Remove active class from all tab links
+      tabLinks.forEach(link => {
+        link.classList.remove('active-nav-link');
+      });
+      
+      // Show the selected tab content
+      const tabContent = document.getElementById(`${tabId}-tab`);
+      if (tabContent) {
+        tabContent.classList.add('active');
+      }
+      
+      // Add active class to the clicked tab link
+      const tabLink = document.querySelector(`.${tabId}-tab`);
+      if (tabLink) {
+        tabLink.classList.add('active-nav-link');
+      }
+      
+      // Update mobile nav
+      if (mobileNav) {
+        mobileNav.value = tabId;
+      }
+      
+      // Trigger tab-specific initialization if needed
+      if (typeof window[`init${tabId.charAt(0).toUpperCase() + tabId.slice(1)}Tab`] === 'function') {
+        window[`init${tabId.charAt(0).toUpperCase() + tabId.slice(1)}Tab`]();
+      }
+    }
+
+    tabLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const tabId = this.getAttribute('href').substring(1);
+        activateTab(tabId);
+      });
+    });
+
+    if (mobileNav) {
+      mobileNav.addEventListener('change', function() {
+        activateTab(this.value);
+      });
+    }
+    
+    // Check for hash in URL
+    if (window.location.hash) {
+      const tabId = window.location.hash.substring(1);
+      activateTab(tabId);
+    }
+  }
+  
+  // Initialize dropdowns
+  function initDropdowns() {
+    const profileBtn = document.getElementById('profile-btn');
+    const profileMenu = document.getElementById('profile-menu');
+    const notificationBtn = document.getElementById('notification-btn');
+    const notificationMenu = document.getElementById('notification-menu');
+
+    if (profileBtn && profileMenu) {
+      profileBtn.addEventListener('click', function() {
+        profileMenu.classList.toggle('hidden');
+        if (notificationMenu) {
+          notificationMenu.classList.add('hidden');
+        }
+      });
+    }
+
+    if (notificationBtn && notificationMenu) {
+      notificationBtn.addEventListener('click', function() {
+        notificationMenu.classList.toggle('hidden');
+        if (profileMenu) {
+          profileMenu.classList.add('hidden');
+        }
+      });
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+      if (profileBtn && profileMenu && !profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+        profileMenu.classList.add('hidden');
+      }
+      
+      if (notificationBtn && notificationMenu && !notificationBtn.contains(e.target) && !notificationMenu.contains(e.target)) {
+        notificationMenu.classList.add('hidden');
+      }
+    });
+  }
+  
+  // Load dashboard data (this will trigger loading of all necessary data)
+  async function loadDashboardData() {
+    try {
+      // Load user profile data
+      await loadUserProfile();
+      
+      // Initialize dashboard components
+      initDashboardComponents();
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      showToast('Error', 'Failed to load dashboard data. Please refresh the page.', 'error');
+    }
+  }
+</script>
 {% endblock %}

@@ -19,6 +19,7 @@ from app.utils.file_utils import save_uploaded_file, delete_file
 from datetime import datetime, timedelta
 from app.models.payment import PaymentProof
 from app.models.notification import Notification
+from app.models.tag import Tag, CoachTag
 import os
 import json
 import uuid 
@@ -1911,554 +1912,6 @@ def update_package_status():
         'status': new_status
     })
 
-@bp.route('/student/profile', methods=['GET'])
-@login_required
-def get_student_profile():
-    """API endpoint to get the current student's profile data"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts cannot access student profiles'}), 403
-    
-    # Format response data
-    response = {
-        'id': current_user.id,
-        'first_name': current_user.first_name,
-        'last_name': current_user.last_name,
-        'email': current_user.email,
-        'birth_date': current_user.birth_date.isoformat() if current_user.birth_date else None,
-        'gender': current_user.gender,
-        'location': current_user.location,
-        'dupr_rating': current_user.dupr_rating,
-        'bio': current_user.bio,
-        'profile_picture': current_user.profile_picture
-    }
-    
-    return jsonify(response)
-
-@bp.route('/student/profile', methods=['PUT'])
-@login_required
-def update_student_profile():
-    """API endpoint to update student profile"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts cannot update student profiles'}), 403
-    
-    data = request.get_json()
-    
-    # Update user fields
-    current_user.first_name = data.get('first_name', current_user.first_name)
-    current_user.last_name = data.get('last_name', current_user.last_name)
-    current_user.email = data.get('email', current_user.email)
-    
-    # Handle optional fields
-    if 'birth_date' in data and data['birth_date']:
-        try:
-            current_user.birth_date = datetime.fromisoformat(data['birth_date'])
-        except ValueError:
-            pass
-    
-    current_user.gender = data.get('gender', current_user.gender)
-    current_user.location = data.get('location', current_user.location)
-    current_user.dupr_rating = data.get('dupr_rating', current_user.dupr_rating)
-    current_user.bio = data.get('bio', current_user.bio)
-    
-    try:
-        db.session.commit()
-        return jsonify({'success': True})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-@bp.route('/student/change-password', methods=['POST'])
-@login_required
-def student_change_password():
-    """API endpoint for students to change their password"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts should use the coach password change endpoint'}), 403
-    
-    data = request.get_json()
-    current_password = data.get('current_password')
-    new_password = data.get('new_password')
-    
-    if not current_password or not new_password:
-        return jsonify({'error': 'Missing current or new password'}), 400
-    
-    if not current_user.verify_password(current_password):
-        return jsonify({'error': 'Current password is incorrect'}), 401
-    
-    current_user.set_password(new_password)
-    
-    try:
-        db.session.commit()
-        return jsonify({'success': True})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-@bp.route('/student/coaches', methods=['GET'])
-def get_student_coaches():
-    """API endpoint to get all coaches for student dashboard"""
-    coaches = Coach.query.join(Coach.user).all()
-    
-    result = []
-    for coach in coaches:
-        # Get coach rating
-        avg_rating = db.session.query(func.avg(CoachRating.rating)).filter(CoachRating.coach_id == coach.id).scalar() or 0
-        rating_count = CoachRating.query.filter_by(coach_id=coach.id).count()
-        
-        # Get coach courts
-        coach_courts = CoachCourt.query.filter_by(coach_id=coach.id).all()
-        courts = Court.query.filter(Court.id.in_([cc.court_id for cc in coach_courts])).all()
-        court_data = [{'id': court.id, 'name': court.name} for court in courts]
-        
-        coach_data = {
-            'id': coach.id,
-            'user': {
-                'first_name': coach.user.first_name,
-                'last_name': coach.user.last_name,
-                'dupr_rating': coach.user.dupr_rating,
-                'profile_picture': coach.user.profile_picture
-            },
-            'hourly_rate': coach.hourly_rate,
-            'sessions_completed': coach.sessions_completed,
-            'years_experience': coach.years_experience,
-            'specialties': coach.specialties,
-            'biography': coach.biography,
-            'avg_rating': round(float(avg_rating), 1),
-            'rating_count': rating_count,
-            'courts': court_data
-        }
-        
-        result.append(coach_data)
-    
-    return jsonify(result)
-
-@bp.route('/student/bookings/<status>', methods=['GET'])
-@login_required
-def get_student_bookings(status):
-    """API endpoint to get student bookings by status"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts cannot access student bookings'}), 403
-    
-    # Define query based on status
-    query = Booking.query.filter(Booking.student_id == current_user.id)
-    
-    if status == 'upcoming':
-        query = query.filter(
-            Booking.status == 'upcoming',
-            Booking.date >= datetime.now().date()
-        ).order_by(Booking.date, Booking.start_time)
-    elif status == 'completed':
-        query = query.filter(
-            Booking.status == 'completed'
-        ).order_by(Booking.date.desc())
-    elif status == 'cancelled':
-        query = query.filter(
-            Booking.status == 'cancelled'
-        ).order_by(Booking.date.desc())
-    else:
-        return jsonify({'error': 'Invalid status provided'}), 400
-    
-    bookings = query.all()
-    
-    # Format bookings data
-    result = []
-    for booking in bookings:
-        coach = Coach.query.get(booking.coach_id)
-        coach_user = User.query.get(coach.user_id)
-        
-        booking_data = {
-            'id': booking.id,
-            'coach_id': booking.coach_id,
-            'coach': {
-                'id': coach.id,
-                'user': {
-                    'first_name': coach_user.first_name,
-                    'last_name': coach_user.last_name
-                }
-            },
-            'court_id': booking.court_id,
-            'court': {
-                'id': booking.court.id,
-                'name': booking.court.name
-            },
-            'date': booking.date.isoformat(),
-            'start_time': booking.start_time.strftime('%H:%M:%S'),
-            'end_time': booking.end_time.strftime('%H:%M:%S'),
-            'price': float(booking.price),
-            'base_price': float(booking.base_price),
-            'status': booking.status,
-            'discount_amount': float(booking.discount_amount) if booking.discount_amount else None,
-            'discount_percentage': float(booking.discount_percentage) if booking.discount_percentage else None
-        }
-        
-        # Add session log if it exists
-        if hasattr(booking, 'session_log') and booking.session_log:
-            booking_data['session_log'] = {
-                'id': booking.session_log.id,
-                'title': booking.session_log.title,
-                'notes': booking.session_log.notes
-            }
-        
-        result.append(booking_data)
-    
-    return jsonify(result)
-
-@bp.route('/student/bookings/cancel', methods=['POST'])
-@login_required
-def cancel_student_booking():
-    """API endpoint for student to cancel a booking"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts should use the coach cancellation endpoint'}), 403
-    
-    data = request.get_json()
-    booking_id = data.get('booking_id')
-    
-    if not booking_id:
-        return jsonify({'error': 'Booking ID is required'}), 400
-    
-    booking = Booking.query.filter_by(
-        id=booking_id,
-        student_id=current_user.id,
-        status='upcoming'
-    ).first()
-    
-    if not booking:
-        return jsonify({'error': 'Booking not found or cannot be cancelled'}), 404
-    
-    # Check cancellation policy (e.g., 24-hour window)
-    booking_datetime = datetime.combine(booking.date, booking.start_time)
-    hours_until_booking = (booking_datetime - datetime.now()).total_seconds() / 3600
-    
-    if hours_until_booking < 24:
-        # Could implement a penalty here, but for now just warn
-        pass
-    
-    # Mark as cancelled
-    booking.status = 'cancelled'
-    
-    # Make availability available again
-    if booking.availability_id:
-        availability = Availability.query.get(booking.availability_id)
-        if availability:
-            availability.is_booked = False
-    
-    notification = Notification(
-        user_id=coach.user_id if cancelled_by == 'student' else booking.student_id,
-        title="Booking cancelled",
-        message=f"Booking on {booking.date.strftime('%Y-%m-%d')} has been cancelled",
-        notification_type="cancellation",
-        related_id=booking.id
-    )
-    db.session.add(notification)
-
-    send_booking_cancelled_notification(booking, cancelled_by, reason)
-
-    try:
-        db.session.commit()
-        return jsonify({'success': True})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-@bp.route('/student/packages', methods=['GET'])
-@login_required
-def get_student_packages():
-    """API endpoint to get student packages that can be used with a specific coach"""
-    coach_id = request.args.get('coach_id', type=int)
-    
-    if not coach_id:
-        # Get all student packages (both coach and academy packages)
-        all_packages = BookingPackage.query.filter_by(student_id=current_user.id).all()
-    
-        result = []
-        for package in all_packages:
-            package_data = {
-                'id': package.id,
-                'package_type': package.package_type,
-                'total_sessions': package.total_sessions,
-                'sessions_booked': package.sessions_booked,
-                'sessions_completed': package.sessions_completed,
-                'total_price': float(package.total_price),
-                'original_price': float(package.original_price),
-                'discount_amount': float(package.discount_amount) if package.discount_amount else None,
-                'purchase_date': package.purchase_date.isoformat(),
-                'expires_at': package.expires_at.isoformat() if package.expires_at else None,
-                'status': package.status
-            }
-            
-            # Add pricing plan info
-            if package.package_type == 'coach' and package.pricing_plan:
-                package_data['pricing_plan'] = {
-                    'id': package.pricing_plan_id,
-                    'name': package.pricing_plan.name,
-                    'description': package.pricing_plan.description
-                }
-            elif package.package_type == 'academy' and package.academy_pricing_plan:
-                package_data['pricing_plan'] = {
-                    'id': package.academy_pricing_plan_id,
-                    'name': package.academy_pricing_plan.name,
-                    'description': package.academy_pricing_plan.description
-                }
-            else:
-                package_data['pricing_plan'] = {
-                    'id': None,
-                    'name': 'Standard Package',
-                    'description': 'Basic coaching package'
-                }
-            
-            # Add coach info if it's a coach package
-            if package.package_type == 'coach' and package.coach_id:
-                coach = Coach.query.get(package.coach_id)
-                if coach and coach.user_id:
-                    coach_user = User.query.get(coach.user_id)
-                    package_data['coach_id'] = package.coach_id
-                    package_data['coach'] = {
-                        'id': coach.id,
-                        'user': {
-                            'first_name': coach_user.first_name,
-                            'last_name': coach_user.last_name
-                        }
-                    }
-            
-            # Add academy info if it's an academy package
-            if package.package_type == 'academy' and package.academy_id:
-                academy = Academy.query.get(package.academy_id)
-                if academy:
-                    package_data['academy_id'] = package.academy_id
-                    package_data['academy'] = {
-                        'id': academy.id,
-                        'name': academy.name,
-                        'description': academy.description
-                    }
-            
-            result.append(package_data)
-        return jsonify(result)
-
-    # Get packages created specifically for this coach
-    coach_packages = BookingPackage.query.filter(
-        BookingPackage.student_id == current_user.id,
-        BookingPackage.coach_id == coach_id,
-        BookingPackage.sessions_booked < BookingPackage.total_sessions,
-        (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
-    ).all()
-    
-    # Get academies this coach belongs to
-    coach_academies = AcademyCoach.query.filter_by(
-        coach_id=coach_id,
-        is_active=True
-    ).all()
-    
-    academy_ids = [ca.academy_id for ca in coach_academies]
-    
-    # Get academy packages that can be used with this coach
-    academy_packages = []
-    if academy_ids:
-        academy_packages = BookingPackage.query.filter(
-            BookingPackage.student_id == current_user.id,
-            BookingPackage.academy_id.in_(academy_ids),
-            BookingPackage.package_type == 'academy',
-            BookingPackage.sessions_booked < BookingPackage.total_sessions,
-            (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
-        ).all()
-    
-    # Combine and format packages
-    result = []
-    for package in coach_packages + academy_packages:
-        package_data = {
-            'id': package.id,
-            'package_type': package.package_type,
-            'total_sessions': package.total_sessions,
-            'sessions_booked': package.sessions_booked,
-            'sessions_completed': package.sessions_completed,
-            'total_price': float(package.total_price),
-            'original_price': float(package.original_price),
-            'discount_amount': float(package.discount_amount) if package.discount_amount else None,
-            'purchase_date': package.purchase_date.isoformat(),
-            'expires_at': package.expires_at.isoformat() if package.expires_at else None,
-            'status': package.status
-        }
-        
-        # Add pricing plan info
-        if package.package_type == 'coach' and package.pricing_plan:
-            package_data['pricing_plan'] = {
-                'id': package.pricing_plan.id,
-                'name': package.pricing_plan.name,
-                'description': package.pricing_plan.description
-            }
-        elif package.package_type == 'academy' and package.academy_pricing_plan:
-            package_data['pricing_plan'] = {
-                'id': package.academy_pricing_plan.id,
-                'name': package.academy_pricing_plan.name,
-                'description': package.academy_pricing_plan.description
-            }
-        else:
-            package_data['pricing_plan'] = {
-                'id': None,
-                'name': 'Standard Package',
-                'description': 'Basic coaching package'
-            }
-        
-        result.append(package_data)
-    
-    return jsonify(result)
-
-@bp.route('/student/session-logs', methods=['GET'])
-@login_required
-def get_student_session_logs():
-    """API endpoint to get student session logs"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts cannot access student session logs'}), 403
-    
-    session_logs = SessionLog.query.filter_by(student_id=current_user.id).order_by(SessionLog.created_at.desc()).all()
-    
-    result = []
-    for log in session_logs:
-        coach = Coach.query.get(log.coach_id)
-        coach_user = User.query.get(coach.user_id)
-        booking = Booking.query.get(log.booking_id)
-        
-        log_data = {
-            'id': log.id,
-            'booking_id': log.booking_id,
-            'coach_id': log.coach_id,
-            'title': log.title,
-            'coach_notes': log.coach_notes,
-            'notes': log.notes,  # Assuming there's a student_notes field
-            'created_at': log.created_at.isoformat(),
-            'updated_at': log.updated_at.isoformat() if log.updated_at else None,
-            'coach': {
-                'id': coach.id,
-                'user': {
-                    'first_name': coach_user.first_name,
-                    'last_name': coach_user.last_name
-                }
-            },
-            'booking': {
-                'id': booking.id,
-                'date': booking.date.isoformat(),
-                'start_time': booking.start_time.strftime('%H:%M:%S'),
-                'end_time': booking.end_time.strftime('%H:%M:%S'),
-                'court': {
-                    'id': booking.court_id,
-                    'name': booking.court.name
-                }
-            }
-        }
-        
-        result.append(log_data)
-    
-    return jsonify(result)
-
-@bp.route('/student/session-logs/<int:log_id>', methods=['GET'])
-@login_required
-def get_student_session_log(log_id):
-    """API endpoint to get a specific session log for a student"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts cannot access student session logs'}), 403
-    
-    session_log = SessionLog.query.filter_by(id=log_id, student_id=current_user.id).first_or_404()
-    
-    coach = Coach.query.get(session_log.coach_id)
-    coach_user = User.query.get(coach.user_id)
-    booking = Booking.query.get(session_log.booking_id)
-    
-    log_data = {
-        'id': session_log.id,
-        'booking_id': session_log.booking_id,
-        'coach_id': session_log.coach_id,
-        'title': session_log.title,
-        'coach_notes': session_log.coach_notes,
-        'notes': session_log.notes,  # Assuming there's a student_notes field
-        'created_at': session_log.created_at.isoformat(),
-        'updated_at': session_log.updated_at.isoformat() if session_log.updated_at else None,
-        'coach': {
-            'id': coach.id,
-            'user': {
-                'first_name': coach_user.first_name,
-                'last_name': coach_user.last_name
-            }
-        },
-        'booking': {
-            'id': booking.id,
-            'date': booking.date.isoformat(),
-            'start_time': booking.start_time.strftime('%H:%M:%S'),
-            'end_time': booking.end_time.strftime('%H:%M:%S'),
-            'court': {
-                'id': booking.court_id,
-                'name': booking.court.name
-            }
-        }
-    }
-    
-    return jsonify(log_data)
-
-@bp.route('/student/session-logs/update-notes', methods=['POST'])
-@login_required
-def update_student_session_notes():
-    """API endpoint for student to update their notes on a session log"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts cannot update student notes'}), 403
-    
-    data = request.get_json()
-    log_id = data.get('log_id')
-    student_notes = data.get('student_notes')
-    
-    if not log_id:
-        return jsonify({'error': 'Session log ID is required'}), 400
-    
-    session_log = SessionLog.query.filter_by(id=log_id, student_id=current_user.id).first_or_404()
-    
-    # Update student notes 
-    session_log.notes = student_notes
-    
-    try:
-        db.session.commit()
-        return jsonify({'success': True})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-@bp.route('/student/courts', methods=['GET'])
-def get_all_courts():
-    """API endpoint to get all courts"""
-    courts = Court.query.all()
-    
-    result = []
-    for court in courts:
-        court_data = {
-            'id': court.id,
-            'name': court.name,
-            'address': court.address,
-            'city': court.city,
-            'state': court.state,
-            'zip_code': court.zip_code,
-            'indoor': court.indoor
-        }
-        
-        result.append(court_data)
-    
-    return jsonify(result)
-
-
-@bp.route('/support/request', methods=['POST'])
-@login_required
-def submit_support_request():
-    """API endpoint for students to submit support requests"""
-    data = request.get_json()
-    subject = data.get('subject')
-    message = data.get('message')
-    
-    if not subject or not message:
-        return jsonify({'error': 'Subject and message are required'}), 400
-    
-    # Here you would typically create a support ticket in your database
-    # or send an email to your support team
-    # For now, we'll just return success
-    
-    return jsonify({
-        'success': True,
-        'message': 'Your support request has been submitted.'
-    })
-
 
 @bp.route('/upload-payment-proof/<int:booking_id>', methods=['POST'])
 @login_required
@@ -3344,3 +2797,553 @@ def get_academy_by_url_code(private_url_code):
 #         result.append(coach_data)
     
 #     return jsonify(result)
+
+
+@bp.route('/student/profile', methods=['GET'])
+@login_required
+def get_student_profile():
+    """API endpoint to get the current student's profile data"""
+    if current_user.is_coach:
+        return jsonify({'error': 'Coach accounts cannot access student profiles'}), 403
+    
+    # Format response data
+    response = {
+        'id': current_user.id,
+        'first_name': current_user.first_name,
+        'last_name': current_user.last_name,
+        'email': current_user.email,
+        'birth_date': current_user.birth_date.isoformat() if current_user.birth_date else None,
+        'gender': current_user.gender,
+        'location': current_user.location,
+        'dupr_rating': current_user.dupr_rating,
+        'bio': current_user.bio,
+        'profile_picture': current_user.profile_picture
+    }
+    
+    return jsonify(response)
+
+@bp.route('/student/profile', methods=['PUT'])
+@login_required
+def update_student_profile():
+    """API endpoint to update student profile"""
+    if current_user.is_coach:
+        return jsonify({'error': 'Coach accounts cannot update student profiles'}), 403
+    
+    data = request.get_json()
+    
+    # Update user fields
+    current_user.first_name = data.get('first_name', current_user.first_name)
+    current_user.last_name = data.get('last_name', current_user.last_name)
+    current_user.email = data.get('email', current_user.email)
+    
+    # Handle optional fields
+    if 'birth_date' in data and data['birth_date']:
+        try:
+            current_user.birth_date = datetime.fromisoformat(data['birth_date'])
+        except ValueError:
+            pass
+    
+    current_user.gender = data.get('gender', current_user.gender)
+    current_user.location = data.get('location', current_user.location)
+    current_user.dupr_rating = data.get('dupr_rating', current_user.dupr_rating)
+    current_user.bio = data.get('bio', current_user.bio)
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/student/change-password', methods=['POST'])
+@login_required
+def student_change_password():
+    """API endpoint for students to change their password"""
+    if current_user.is_coach:
+        return jsonify({'error': 'Coach accounts should use the coach password change endpoint'}), 403
+    
+    data = request.get_json()
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+    
+    if not current_password or not new_password:
+        return jsonify({'error': 'Missing current or new password'}), 400
+    
+    if not current_user.verify_password(current_password):
+        return jsonify({'error': 'Current password is incorrect'}), 401
+    
+    current_user.set_password(new_password)
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/student/coaches', methods=['GET'])
+def get_student_coaches():
+    """API endpoint to get all coaches for student dashboard"""
+    coaches = Coach.query.join(Coach.user).all()
+    
+    result = []
+    for coach in coaches:
+        # Get coach rating
+        avg_rating = db.session.query(func.avg(CoachRating.rating)).filter(CoachRating.coach_id == coach.id).scalar() or 0
+        rating_count = CoachRating.query.filter_by(coach_id=coach.id).count()
+        
+        # Get coach courts
+        coach_courts = CoachCourt.query.filter_by(coach_id=coach.id).all()
+        courts = Court.query.filter(Court.id.in_([cc.court_id for cc in coach_courts])).all()
+        court_data = [{'id': court.id, 'name': court.name} for court in courts]
+        
+        coach_data = {
+            'id': coach.id,
+            'user': {
+                'first_name': coach.user.first_name,
+                'last_name': coach.user.last_name,
+                'dupr_rating': coach.user.dupr_rating,
+                'profile_picture': coach.user.profile_picture
+            },
+            'hourly_rate': coach.hourly_rate,
+            'sessions_completed': coach.sessions_completed,
+            'years_experience': coach.years_experience,
+            'specialties': coach.specialties,
+            'biography': coach.biography,
+            'avg_rating': round(float(avg_rating), 1),
+            'rating_count': rating_count,
+            'courts': court_data
+        }
+        
+        result.append(coach_data)
+    
+    return jsonify(result)
+
+@bp.route('/student/bookings/<status>', methods=['GET'])
+@login_required
+def get_student_bookings(status):
+    """API endpoint to get student bookings by status"""
+    if current_user.is_coach:
+        return jsonify({'error': 'Coach accounts cannot access student bookings'}), 403
+    
+    # Define query based on status
+    query = Booking.query.filter(Booking.student_id == current_user.id)
+    
+    if status == 'upcoming':
+        query = query.filter(
+            Booking.status == 'upcoming',
+            Booking.date >= datetime.now().date()
+        ).order_by(Booking.date, Booking.start_time)
+    elif status == 'completed':
+        query = query.filter(
+            Booking.status == 'completed'
+        ).order_by(Booking.date.desc())
+    elif status == 'cancelled':
+        query = query.filter(
+            Booking.status == 'cancelled'
+        ).order_by(Booking.date.desc())
+    else:
+        return jsonify({'error': 'Invalid status provided'}), 400
+    
+    bookings = query.all()
+    
+    # Format bookings data
+    result = []
+    for booking in bookings:
+        coach = Coach.query.get(booking.coach_id)
+        coach_user = User.query.get(coach.user_id)
+        
+        booking_data = {
+            'id': booking.id,
+            'coach_id': booking.coach_id,
+            'coach': {
+                'id': coach.id,
+                'user': {
+                    'first_name': coach_user.first_name,
+                    'last_name': coach_user.last_name
+                }
+            },
+            'court_id': booking.court_id,
+            'court': {
+                'id': booking.court.id,
+                'name': booking.court.name
+            },
+            'date': booking.date.isoformat(),
+            'start_time': booking.start_time.strftime('%H:%M:%S'),
+            'end_time': booking.end_time.strftime('%H:%M:%S'),
+            'price': float(booking.price),
+            'base_price': float(booking.base_price),
+            'status': booking.status,
+            'discount_amount': float(booking.discount_amount) if booking.discount_amount else None,
+            'discount_percentage': float(booking.discount_percentage) if booking.discount_percentage else None
+        }
+        
+        # Add session log if it exists
+        if hasattr(booking, 'session_log') and booking.session_log:
+            booking_data['session_log'] = {
+                'id': booking.session_log.id,
+                'title': booking.session_log.title,
+                'notes': booking.session_log.notes
+            }
+        
+        result.append(booking_data)
+    
+    return jsonify(result)
+
+@bp.route('/student/bookings/cancel', methods=['POST'])
+@login_required
+def cancel_student_booking():
+    """API endpoint for student to cancel a booking"""
+    if current_user.is_coach:
+        return jsonify({'error': 'Coach accounts should use the coach cancellation endpoint'}), 403
+    
+    data = request.get_json()
+    booking_id = data.get('booking_id')
+    
+    if not booking_id:
+        return jsonify({'error': 'Booking ID is required'}), 400
+    
+    booking = Booking.query.filter_by(
+        id=booking_id,
+        student_id=current_user.id,
+        status='upcoming'
+    ).first()
+    
+    if not booking:
+        return jsonify({'error': 'Booking not found or cannot be cancelled'}), 404
+    
+    # Check cancellation policy (e.g., 24-hour window)
+    booking_datetime = datetime.combine(booking.date, booking.start_time)
+    hours_until_booking = (booking_datetime - datetime.now()).total_seconds() / 3600
+    
+    if hours_until_booking < 24:
+        # Could implement a penalty here, but for now just warn
+        pass
+    
+    # Mark as cancelled
+    booking.status = 'cancelled'
+    
+    # Make availability available again
+    if booking.availability_id:
+        availability = Availability.query.get(booking.availability_id)
+        if availability:
+            availability.is_booked = False
+    
+    notification = Notification(
+        user_id=coach.user_id if cancelled_by == 'student' else booking.student_id,
+        title="Booking cancelled",
+        message=f"Booking on {booking.date.strftime('%Y-%m-%d')} has been cancelled",
+        notification_type="cancellation",
+        related_id=booking.id
+    )
+    db.session.add(notification)
+
+    send_booking_cancelled_notification(booking, cancelled_by, reason)
+
+    try:
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/student/packages', methods=['GET'])
+@login_required
+def get_student_packages():
+    """API endpoint to get student packages that can be used with a specific coach"""
+    coach_id = request.args.get('coach_id', type=int)
+    
+    if not coach_id:
+        # Get all student packages (both coach and academy packages)
+        all_packages = BookingPackage.query.filter_by(student_id=current_user.id).all()
+    
+        result = []
+        for package in all_packages:
+            package_data = {
+                'id': package.id,
+                'package_type': package.package_type,
+                'total_sessions': package.total_sessions,
+                'sessions_booked': package.sessions_booked,
+                'sessions_completed': package.sessions_completed,
+                'total_price': float(package.total_price),
+                'original_price': float(package.original_price),
+                'discount_amount': float(package.discount_amount) if package.discount_amount else None,
+                'purchase_date': package.purchase_date.isoformat(),
+                'expires_at': package.expires_at.isoformat() if package.expires_at else None,
+                'status': package.status
+            }
+            
+            # Add pricing plan info
+            if package.package_type == 'coach' and package.pricing_plan:
+                package_data['pricing_plan'] = {
+                    'id': package.pricing_plan_id,
+                    'name': package.pricing_plan.name,
+                    'description': package.pricing_plan.description
+                }
+            elif package.package_type == 'academy' and package.academy_pricing_plan:
+                package_data['pricing_plan'] = {
+                    'id': package.academy_pricing_plan_id,
+                    'name': package.academy_pricing_plan.name,
+                    'description': package.academy_pricing_plan.description
+                }
+            else:
+                package_data['pricing_plan'] = {
+                    'id': None,
+                    'name': 'Standard Package',
+                    'description': 'Basic coaching package'
+                }
+            
+            # Add coach info if it's a coach package
+            if package.package_type == 'coach' and package.coach_id:
+                coach = Coach.query.get(package.coach_id)
+                if coach and coach.user_id:
+                    coach_user = User.query.get(coach.user_id)
+                    package_data['coach_id'] = package.coach_id
+                    package_data['coach'] = {
+                        'id': coach.id,
+                        'user': {
+                            'first_name': coach_user.first_name,
+                            'last_name': coach_user.last_name
+                        }
+                    }
+            
+            # Add academy info if it's an academy package
+            if package.package_type == 'academy' and package.academy_id:
+                academy = Academy.query.get(package.academy_id)
+                if academy:
+                    package_data['academy_id'] = package.academy_id
+                    package_data['academy'] = {
+                        'id': academy.id,
+                        'name': academy.name,
+                        'description': academy.description
+                    }
+            
+            result.append(package_data)
+        return jsonify(result)
+
+    # Get packages created specifically for this coach
+    coach_packages = BookingPackage.query.filter(
+        BookingPackage.student_id == current_user.id,
+        BookingPackage.coach_id == coach_id,
+        BookingPackage.sessions_booked < BookingPackage.total_sessions,
+        (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
+    ).all()
+    
+    # Get academies this coach belongs to
+    coach_academies = AcademyCoach.query.filter_by(
+        coach_id=coach_id,
+        is_active=True
+    ).all()
+    
+    academy_ids = [ca.academy_id for ca in coach_academies]
+    
+    # Get academy packages that can be used with this coach
+    academy_packages = []
+    if academy_ids:
+        academy_packages = BookingPackage.query.filter(
+            BookingPackage.student_id == current_user.id,
+            BookingPackage.academy_id.in_(academy_ids),
+            BookingPackage.package_type == 'academy',
+            BookingPackage.sessions_booked < BookingPackage.total_sessions,
+            (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
+        ).all()
+    
+    # Combine and format packages
+    result = []
+    for package in coach_packages + academy_packages:
+        package_data = {
+            'id': package.id,
+            'package_type': package.package_type,
+            'total_sessions': package.total_sessions,
+            'sessions_booked': package.sessions_booked,
+            'sessions_completed': package.sessions_completed,
+            'total_price': float(package.total_price),
+            'original_price': float(package.original_price),
+            'discount_amount': float(package.discount_amount) if package.discount_amount else None,
+            'purchase_date': package.purchase_date.isoformat(),
+            'expires_at': package.expires_at.isoformat() if package.expires_at else None,
+            'status': package.status
+        }
+        
+        # Add pricing plan info
+        if package.package_type == 'coach' and package.pricing_plan:
+            package_data['pricing_plan'] = {
+                'id': package.pricing_plan.id,
+                'name': package.pricing_plan.name,
+                'description': package.pricing_plan.description
+            }
+        elif package.package_type == 'academy' and package.academy_pricing_plan:
+            package_data['pricing_plan'] = {
+                'id': package.academy_pricing_plan.id,
+                'name': package.academy_pricing_plan.name,
+                'description': package.academy_pricing_plan.description
+            }
+        else:
+            package_data['pricing_plan'] = {
+                'id': None,
+                'name': 'Standard Package',
+                'description': 'Basic coaching package'
+            }
+        
+        result.append(package_data)
+    
+    return jsonify(result)
+
+@bp.route('/student/session-logs', methods=['GET'])
+@login_required
+def get_student_session_logs():
+    """API endpoint to get student session logs"""
+    if current_user.is_coach:
+        return jsonify({'error': 'Coach accounts cannot access student session logs'}), 403
+    
+    session_logs = SessionLog.query.filter_by(student_id=current_user.id).order_by(SessionLog.created_at.desc()).all()
+    
+    result = []
+    for log in session_logs:
+        coach = Coach.query.get(log.coach_id)
+        coach_user = User.query.get(coach.user_id)
+        booking = Booking.query.get(log.booking_id)
+        
+        log_data = {
+            'id': log.id,
+            'booking_id': log.booking_id,
+            'coach_id': log.coach_id,
+            'title': log.title,
+            'coach_notes': log.coach_notes,
+            'notes': log.notes,  # Assuming there's a student_notes field
+            'created_at': log.created_at.isoformat(),
+            'updated_at': log.updated_at.isoformat() if log.updated_at else None,
+            'coach': {
+                'id': coach.id,
+                'user': {
+                    'first_name': coach_user.first_name,
+                    'last_name': coach_user.last_name
+                }
+            },
+            'booking': {
+                'id': booking.id,
+                'date': booking.date.isoformat(),
+                'start_time': booking.start_time.strftime('%H:%M:%S'),
+                'end_time': booking.end_time.strftime('%H:%M:%S'),
+                'court': {
+                    'id': booking.court_id,
+                    'name': booking.court.name
+                }
+            }
+        }
+        
+        result.append(log_data)
+    
+    return jsonify(result)
+
+@bp.route('/student/session-logs/<int:log_id>', methods=['GET'])
+@login_required
+def get_student_session_log(log_id):
+    """API endpoint to get a specific session log for a student"""
+    if current_user.is_coach:
+        return jsonify({'error': 'Coach accounts cannot access student session logs'}), 403
+    
+    session_log = SessionLog.query.filter_by(id=log_id, student_id=current_user.id).first_or_404()
+    
+    coach = Coach.query.get(session_log.coach_id)
+    coach_user = User.query.get(coach.user_id)
+    booking = Booking.query.get(session_log.booking_id)
+    
+    log_data = {
+        'id': session_log.id,
+        'booking_id': session_log.booking_id,
+        'coach_id': session_log.coach_id,
+        'title': session_log.title,
+        'coach_notes': session_log.coach_notes,
+        'notes': session_log.notes,  # Assuming there's a student_notes field
+        'created_at': session_log.created_at.isoformat(),
+        'updated_at': session_log.updated_at.isoformat() if session_log.updated_at else None,
+        'coach': {
+            'id': coach.id,
+            'user': {
+                'first_name': coach_user.first_name,
+                'last_name': coach_user.last_name
+            }
+        },
+        'booking': {
+            'id': booking.id,
+            'date': booking.date.isoformat(),
+            'start_time': booking.start_time.strftime('%H:%M:%S'),
+            'end_time': booking.end_time.strftime('%H:%M:%S'),
+            'court': {
+                'id': booking.court_id,
+                'name': booking.court.name
+            }
+        }
+    }
+    
+    return jsonify(log_data)
+
+@bp.route('/student/session-logs/update-notes', methods=['POST'])
+@login_required
+def update_student_session_notes():
+    """API endpoint for student to update their notes on a session log"""
+    if current_user.is_coach:
+        return jsonify({'error': 'Coach accounts cannot update student notes'}), 403
+    
+    data = request.get_json()
+    log_id = data.get('log_id')
+    student_notes = data.get('student_notes')
+    
+    if not log_id:
+        return jsonify({'error': 'Session log ID is required'}), 400
+    
+    session_log = SessionLog.query.filter_by(id=log_id, student_id=current_user.id).first_or_404()
+    
+    # Update student notes 
+    session_log.notes = student_notes
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/student/courts', methods=['GET'])
+def get_all_courts():
+    """API endpoint to get all courts"""
+    courts = Court.query.all()
+    
+    result = []
+    for court in courts:
+        court_data = {
+            'id': court.id,
+            'name': court.name,
+            'address': court.address,
+            'city': court.city,
+            'state': court.state,
+            'zip_code': court.zip_code,
+            'indoor': court.indoor
+        }
+        
+        result.append(court_data)
+    
+    return jsonify(result)
+
+
+@bp.route('/support/request', methods=['POST'])
+@login_required
+def submit_support_request():
+    """API endpoint for students to submit support requests"""
+    data = request.get_json()
+    subject = data.get('subject')
+    message = data.get('message')
+    
+    if not subject or not message:
+        return jsonify({'error': 'Subject and message are required'}), 400
+    
+    # Here you would typically create a support ticket in your database
+    # or send an email to your support team
+    # For now, we'll just return success
+    
+    return jsonify({
+        'success': True,
+        'message': 'Your support request has been submitted.'
+    })
+

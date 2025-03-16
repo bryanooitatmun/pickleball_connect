@@ -416,7 +416,7 @@ function updateSelectedTags() {
 // Load all available tags
 async function loadTags() {
   try {
-    const tags = await fetchAPI('/tags');
+    const tags = await fetchAPI('/coach/tags');
     
     const tagsSelect = document.getElementById('coach-tags');
     

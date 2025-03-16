@@ -18,12 +18,12 @@ function initEarningsTab() {
         const coachFilter = document.getElementById('earnings-coach-filter');
         if (coachFilter && coachFilter.value) {
           if (coachFilter.value === 'academy') {
-            endpoint = '/api/academy/earnings';
+            endpoint = '/academy/earnings';
           } else {
             queryParams = `?coach_id=${coachFilter.value}`;
           }
         } else {
-          endpoint = '/api/academy/earnings';
+          endpoint = '/academy/earnings';
         }
       }
       
@@ -313,12 +313,12 @@ function setupEarningsEventListeners() {
         const coachFilter = document.getElementById('earnings-coach-filter');
         if (coachFilter && coachFilter.value) {
           if (coachFilter.value === 'academy') {
-            endpoint = '/api/academy/earnings/' + months;
+            endpoint = '/academy/earnings/' + months;
           } else {
             queryParams = `?coach_id=${coachFilter.value}`;
           }
         } else {
-          endpoint = '/api/academy/earnings/' + months;
+          endpoint = '/academy/earnings/' + months;
         }
       }
       
@@ -346,12 +346,12 @@ function setupEarningsEventListeners() {
         const coachFilter = document.getElementById('earnings-coach-filter');
         if (coachFilter && coachFilter.value) {
           if (coachFilter.value === 'academy') {
-            endpoint = '/api/academy/earnings/breakdown/' + period;
+            endpoint = '/academy/earnings/breakdown/' + period;
           } else {
             queryParams = `?coach_id=${coachFilter.value}`;
           }
         } else {
-          endpoint = '/api/academy/earnings/breakdown/' + period;
+          endpoint = '/academy/earnings/breakdown/' + period;
         }
       }
       

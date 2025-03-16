@@ -2199,7 +2199,868 @@ def get_all_tags():
     
     return jsonify(result)
 
+@bp.route('/academy/info', methods=['GET', 'PUT'])
+@login_required
+def academy_info():
+    """Get and update academy information"""
+    if not current_user.is_academy_manager:
+        return jsonify({'error': 'Not an academy manager account'}), 403
+    
+    # Get academy ID from academy manager record
+    academy_manager = AcademyManager.query.filter_by(user_id=current_user.id).first_or_404()
+    academy = Academy.query.get_or_404(academy_manager.academy_id)
+    
+    if request.method == 'GET':
+        # Format academy tags
+        tags = [tag.name for tag in academy.tags] if academy.tags else []
+        
+        return jsonify({
+            'id': academy.id,
+            'name': academy.name,
+            'description': academy.description,
+            'website': academy.website,
+            'logo': academy.logo_path,
+            'private_url_code': academy.private_url_code,
+            'tags': tags,
+            'bank_name': academy.bank_name,
+            'account_name': academy.account_name,
+            'account_number': academy.account_number,
+            'payment_reference': academy.payment_reference,
+            'court_bank_name': academy.court_bank_name,
+            'court_account_name': academy.court_account_name,
+            'court_account_number': academy.court_account_number,
+            'court_payment_reference': academy.court_payment_reference
+        })
+    else:  # PUT
+        data = request.get_json()
+        
+        # Update academy information
+        academy.name = data.get('name', academy.name)
+        academy.description = data.get('description', academy.description)
+        academy.website = data.get('website', academy.website)
+        academy.private_url_code = data.get('private_url_code', academy.private_url_code)
+        
+        # Update academy tags if provided
+        if 'tags' in data:
+            # Clear existing tags
+            academy.tags = []
+            
+            # Add new tags
+            for tag_name in data['tags']:
+                tag = Tag.query.filter_by(name=tag_name).first()
+                if not tag:
+                    tag = Tag(name=tag_name)
+                    db.session.add(tag)
+                academy.tags.append(tag)
+        
+        try:
+            db.session.commit()
+            return jsonify({'success': True})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
 
+@bp.route('/academy/coaches', methods=['GET'])
+@login_required
+def get_academy_coaches():
+    """Get coaches for an academy"""
+    if not current_user.is_academy_manager:
+        return jsonify({'error': 'Not an academy manager account'}), 403
+    
+    # Get academy ID from academy manager record
+    academy_manager = AcademyManager.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Get academy coaches
+    academy_coaches = AcademyCoach.query.filter_by(academy_id=academy_manager.academy_id).all()
+    
+    result = []
+    for ac in academy_coaches:
+        coach = Coach.query.get(ac.coach_id)
+        if not coach:
+            continue
+            
+        user = User.query.get(coach.user_id)
+        if not user:
+            continue
+            
+        # Get average rating
+        avg_rating = db.session.query(func.avg(CoachRating.rating)).filter(
+            CoachRating.coach_id == coach.id
+        ).scalar() or 0
+        
+        coach_data = {
+            'id': coach.id,
+            'user_id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'profile_picture': user.profile_picture,
+            'dupr_rating': user.dupr_rating,
+            'hourly_rate': coach.hourly_rate,
+            'years_experience': coach.years_experience,
+            'sessions_completed': coach.sessions_completed,
+            'avg_rating': float(avg_rating),
+            'academy_role': ac.role
+        }
+        
+        result.append(coach_data)
+    
+    return jsonify(result)
+
+@bp.route('/academy/analytics', methods=['GET'])
+@login_required
+def get_academy_analytics():
+    """Get academy analytics"""
+    if not current_user.is_academy_manager:
+        return jsonify({'error': 'Not an academy manager account'}), 403
+    
+    # Get academy ID from academy manager record
+    academy_manager = AcademyManager.query.filter_by(user_id=current_user.id).first_or_404()
+    academy_id = academy_manager.academy_id
+    
+    # Get academy coaches
+    academy_coaches = AcademyCoach.query.filter_by(academy_id=academy_id).all()
+    coach_ids = [ac.coach_id for ac in academy_coaches]
+    
+    # Get total sessions (completed bookings)
+    total_sessions = Booking.query.filter(
+        Booking.coach_id.in_(coach_ids),
+        Booking.status == 'completed'
+    ).count()
+    
+    # Get total students (unique students who have booked with academy coaches)
+    total_students = db.session.query(func.count(func.distinct(Booking.student_id))).filter(
+        Booking.coach_id.in_(coach_ids)
+    ).scalar() or 0
+    
+    # Get total revenue
+    total_revenue = db.session.query(func.sum(Booking.price)).filter(
+        Booking.coach_id.in_(coach_ids),
+        Booking.status == 'completed'
+    ).scalar() or 0
+    
+    # Get sessions by coach
+    sessions_by_coach = {}
+    for coach_id in coach_ids:
+        coach = Coach.query.get(coach_id)
+        if coach and coach.user:
+            coach_name = f"{coach.user.first_name} {coach.user.last_name}"
+            session_count = Booking.query.filter(
+                Booking.coach_id == coach_id,
+                Booking.status == 'completed'
+            ).count()
+            
+            if session_count > 0:
+                sessions_by_coach[coach_name] = session_count
+    
+    # Get revenue by month
+    revenue_by_month = {}
+    now = datetime.now()
+    
+    for i in range(11, -1, -1):
+        month_start = now.replace(day=1) - timedelta(days=i*30)
+        month_key = month_start.strftime('%Y-%m')
+        
+        month_revenue = db.session.query(func.sum(Booking.price)).filter(
+            Booking.coach_id.in_(coach_ids),
+            Booking.status == 'completed',
+            extract('year', Booking.date) == month_start.year,
+            extract('month', Booking.date) == month_start.month
+        ).scalar() or 0
+        
+        revenue_by_month[month_key] = float(month_revenue)
+    
+    return jsonify({
+        'total_sessions': total_sessions,
+        'total_students': total_students,
+        'total_revenue': float(total_revenue),
+        'sessions_by_coach': sessions_by_coach,
+        'revenue_by_month': revenue_by_month
+    })
+
+@bp.route('/academy/upload-logo', methods=['POST'])
+@login_required
+def upload_academy_logo():
+    """Upload academy logo"""
+    if not current_user.is_academy_manager:
+        return jsonify({'error': 'Not an academy manager account'}), 403
+    
+    try:
+        if 'logo' not in request.files:
+            return jsonify({'success': False, 'message': 'No file provided'}), 400
+        
+        file = request.files['logo']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No file selected'}), 400
+        
+        # Get academy
+        academy_manager = AcademyManager.query.filter_by(user_id=current_user.id).first_or_404()
+        academy = Academy.query.get_or_404(academy_manager.academy_id)
+        
+        # Delete old logo if exists
+        if academy.logo_path:
+            delete_file(academy.logo_path)
+        
+        # Save new logo
+        logo_path = save_uploaded_file(
+            file, 
+            current_app.config['ACADEMY_LOGOS_DIR'], 
+            f"academy_{academy.id}"
+        )
+        
+        if not logo_path:
+            return jsonify({'success': False, 'message': 'Failed to save logo'}), 400
+        
+        # Update academy record
+        academy.logo_path = logo_path
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Logo updated successfully',
+            'logo_url': logo_path
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@bp.route('/academy/remove-logo', methods=['POST'])
+@login_required
+def remove_academy_logo():
+    """Remove academy logo"""
+    if not current_user.is_academy_manager:
+        return jsonify({'error': 'Not an academy manager account'}), 403
+    
+    # Get academy
+    academy_manager = AcademyManager.query.filter_by(user_id=current_user.id).first_or_404()
+    academy = Academy.query.get_or_404(academy_manager.academy_id)
+    
+    if academy.logo_path:
+        # Delete the file
+        delete_file(academy.logo_path)
+        
+        # Update academy record
+        academy.logo_path = None
+        db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Academy logo removed successfully'})
+
+@bp.route('/academy/earnings', methods=['GET'])
+@login_required
+def get_academy_earnings():
+    """Get academy earnings"""
+    if not current_user.is_academy_manager:
+        return jsonify({'error': 'Not an academy manager account'}), 403
+    
+    # Get academy ID from academy manager record
+    academy_manager = AcademyManager.query.filter_by(user_id=current_user.id).first_or_404()
+    academy_id = academy_manager.academy_id
+    
+    # Get academy coaches
+    academy_coaches = AcademyCoach.query.filter_by(academy_id=academy_id).all()
+    coach_ids = [ac.coach_id for ac in academy_coaches]
+    
+    if not coach_ids:
+        return jsonify({
+            'total': 0,
+            'monthly_average': 0,
+            'this_month': 0,
+            'last_month': 0,
+            'monthly': {},
+            'by_court': {},
+            'breakdown': {}
+        })
+    
+    # Get total earnings
+    total_earnings = db.session.query(func.sum(Booking.price)).filter(
+        Booking.coach_id.in_(coach_ids),
+        Booking.status == 'completed'
+    ).scalar() or 0
+    
+    # Current month earnings
+    now = datetime.now()
+    this_month_earnings = db.session.query(func.sum(Booking.price)).filter(
+        Booking.coach_id.in_(coach_ids),
+        Booking.status == 'completed',
+        extract('year', Booking.date) == now.year,
+        extract('month', Booking.date) == now.month
+    ).scalar() or 0
+    
+    # Last month earnings
+    last_month = now.replace(day=1) - timedelta(days=1)
+    last_month_earnings = db.session.query(func.sum(Booking.price)).filter(
+        Booking.coach_id.in_(coach_ids),
+        Booking.status == 'completed',
+        extract('year', Booking.date) == last_month.year,
+        extract('month', Booking.date) == last_month.month
+    ).scalar() or 0
+    
+    # Get monthly earnings for chart
+    monthly_data = {}
+    months_to_fetch = 12
+    
+    for i in range(months_to_fetch-1, -1, -1):
+        month_date = now.replace(day=1) - timedelta(days=i*30)
+        month_key = month_date.strftime('%Y-%m')
+        month_name = month_date.strftime('%B %Y')
+        
+        month_earnings = db.session.query(func.sum(Booking.price)).filter(
+            Booking.coach_id.in_(coach_ids),
+            Booking.status == 'completed',
+            extract('year', Booking.date) == month_date.year,
+            extract('month', Booking.date) == month_date.month
+        ).scalar() or 0
+        
+        monthly_data[month_name] = float(month_earnings)
+    
+    # Get earnings by court
+    court_earnings = {}
+    courts = Court.query.all()
+    for court in courts:
+        court_total = db.session.query(func.sum(Booking.price)).filter(
+            Booking.coach_id.in_(coach_ids),
+            Booking.court_id == court.id,
+            Booking.status == 'completed'
+        ).scalar() or 0
+        
+        if court_total > 0:
+            court_earnings[court.name] = float(court_total)
+    
+    # Get earnings breakdown by discount type
+    earnings_breakdown = {}
+    
+    # Regular sessions (no discount)
+    regular_count = Booking.query.filter(
+        Booking.coach_id.in_(coach_ids),
+        Booking.status == 'completed',
+        Booking.pricing_plan_id.is_(None)
+    ).count()
+    
+    regular_amount = db.session.query(func.sum(Booking.price)).filter(
+        Booking.coach_id.in_(coach_ids),
+        Booking.status == 'completed',
+        Booking.pricing_plan_id.is_(None)
+    ).scalar() or 0
+    
+    if regular_count > 0:
+        earnings_breakdown['regular'] = {
+            'sessions': regular_count,
+            'amount': float(regular_amount)
+        }
+    
+    # Discounted sessions by type
+    for discount_type in ['first_time', 'package', 'seasonal', 'custom']:
+        discount_count = Booking.query.join(PricingPlan).filter(
+            Booking.coach_id.in_(coach_ids),
+            Booking.status == 'completed',
+            PricingPlan.discount_type == discount_type
+        ).count()
+        
+        discount_amount = db.session.query(func.sum(Booking.price)).join(PricingPlan).filter(
+            Booking.coach_id.in_(coach_ids),
+            Booking.status == 'completed',
+            PricingPlan.discount_type == discount_type
+        ).scalar() or 0
+        
+        if discount_count > 0:
+            earnings_breakdown[discount_type] = {
+                'sessions': discount_count,
+                'amount': float(discount_amount)
+            }
+    
+    # Calculate monthly average
+    months_with_earnings = sum(1 for e in monthly_data.values() if e > 0)
+    monthly_average = total_earnings / months_with_earnings if months_with_earnings > 0 else 0
+    
+    return jsonify({
+        'total': float(total_earnings),
+        'monthly_average': float(monthly_average),
+        'this_month': float(this_month_earnings),
+        'last_month': float(last_month_earnings),
+        'monthly': monthly_data,
+        'by_court': court_earnings,
+        'breakdown': earnings_breakdown
+    })
+
+@bp.route('/academy/earnings/breakdown/<period>', methods=['GET'])
+@login_required
+def get_academy_earnings_breakdown(period):
+    """Get academy earnings breakdown by period"""
+    if not current_user.is_academy_manager:
+        return jsonify({'error': 'Not an academy manager account'}), 403
+    
+    # Get academy ID from academy manager record
+    academy_manager = AcademyManager.query.filter_by(user_id=current_user.id).first_or_404()
+    academy_id = academy_manager.academy_id
+    
+    # Get academy coaches
+    academy_coaches = AcademyCoach.query.filter_by(academy_id=academy_id).all()
+    coach_ids = [ac.coach_id for ac in academy_coaches]
+    
+    if not coach_ids:
+        return jsonify({'breakdown': {}})
+    
+    # Define date range based on period
+    now = datetime.now()
+    start_date = None
+    
+    if period == 'this-month':
+        start_date = now.replace(day=1)
+    elif period == 'last-month':
+        first_day_of_month = now.replace(day=1)
+        start_date = first_day_of_month - timedelta(days=1)
+        start_date = start_date.replace(day=1)
+        # End date is the last day of last month
+        end_date = first_day_of_month - timedelta(days=1)
+    elif period == 'this-year':
+        start_date = now.replace(month=1, day=1)
+    elif period == 'all-time':
+        # No date filter needed
+        pass
+    else:
+        return jsonify({'error': 'Invalid period specified'}), 400
+    
+    # Get earnings breakdown by discount type
+    breakdown = {}
+    
+    # Base query for completed bookings by academy coaches
+    base_query = Booking.query.filter(
+        Booking.coach_id.in_(coach_ids),
+        Booking.status == 'completed'
+    )
+    
+    # Apply date filter if needed
+    if start_date:
+        if period == 'last-month':
+            base_query = base_query.filter(
+                Booking.date >= start_date,
+                Booking.date <= end_date
+            )
+        else:
+            base_query = base_query.filter(Booking.date >= start_date)
+    
+    # Regular sessions (no discount)
+    regular_count = base_query.filter(Booking.pricing_plan_id.is_(None)).count()
+    
+    regular_amount = db.session.query(func.sum(Booking.price)).filter(
+        Booking.id.in_([b.id for b in base_query.filter(Booking.pricing_plan_id.is_(None)).all()])
+    ).scalar() or 0
+    
+    breakdown['regular'] = {
+        'sessions': regular_count,
+        'amount': float(regular_amount)
+    }
+    
+    # Discounted sessions by type
+    for discount_type in ['first_time', 'package', 'seasonal', 'custom']:
+        discount_bookings = base_query.join(PricingPlan).filter(
+            PricingPlan.discount_type == discount_type
+        ).all()
+        
+        discount_count = len(discount_bookings)
+        
+        discount_amount = db.session.query(func.sum(Booking.price)).filter(
+            Booking.id.in_([b.id for b in discount_bookings])
+        ).scalar() or 0
+        
+        breakdown[discount_type] = {
+            'sessions': discount_count,
+            'amount': float(discount_amount)
+        }
+    
+    return jsonify({'breakdown': breakdown})
+
+@bp.route('/coach/update-payment-details', methods=['POST'])
+@login_required
+def update_payment_details():
+    """Update coach payment details"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Update payment info
+    payment_info = {
+        'bank_name': data.get('bank_name'),
+        'account_name': data.get('account_name'),
+        'account_number': data.get('account_number'),
+        'payment_reference': data.get('payment_reference')
+    }
+    
+    coach.payment_info = payment_info
+    
+    # Update court payment details if provided
+    if 'court_payment_details' in data:
+        coach.court_payment_details = data.get('court_payment_details')
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/default-booking-responsibility', methods=['GET'])
+@login_required
+def get_default_booking_responsibility():
+    """Get default court booking responsibility"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    return jsonify({
+        'default_responsibility': coach.default_court_booking_responsibility or 'coach'
+    })
+
+@bp.route('/coach/update-default-booking-responsibility', methods=['POST'])
+@login_required
+def update_default_booking_responsibility():
+    """Update default court booking responsibility"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    responsibility = data.get('default_responsibility')
+    if responsibility not in ['coach', 'student']:
+        return jsonify({'error': 'Invalid responsibility value'}), 400
+    
+    coach.default_court_booking_responsibility = responsibility
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/packages/purchased', methods=['GET'])
+@login_required
+def get_purchased_packages():
+    """Get purchased packages for a coach"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Get all packages purchased from this coach
+    packages = BookingPackage.query.filter_by(coach_id=coach.id).all()
+    
+    result = []
+    for package in packages:
+        # Get student
+        student = User.query.get(package.student_id)
+        if not student:
+            continue
+        
+        # Get pricing plan
+        pricing_plan = None
+        if package.pricing_plan_id:
+            pricing_plan = PricingPlan.query.get(package.pricing_plan_id)
+        
+        # Get payment proof
+        payment_proof = PaymentProof.query.filter_by(
+            package_id=package.id,
+            proof_type='package'
+        ).first()
+        
+        package_data = {
+            'id': package.id,
+            'student': {
+                'id': student.id,
+                'name': f"{student.first_name} {student.last_name}",
+                'email': student.email
+            },
+            'pricing_plan': {
+                'id': pricing_plan.id if pricing_plan else None,
+                'name': pricing_plan.name if pricing_plan else 'Standard Package'
+            },
+            'total_sessions': package.total_sessions,
+            'sessions_used': package.sessions_completed,
+            'total_price': float(package.total_price),
+            'purchase_date': package.purchase_date.isoformat(),
+            'status': package.status,
+            'expires_at': package.expires_at.isoformat() if package.expires_at else None
+        }
+        
+        if payment_proof:
+            package_data['payment_proof'] = {
+                'id': payment_proof.id,
+                'image_url': f"/static/{payment_proof.image_path}"
+            }
+        
+        result.append(package_data)
+    
+    return jsonify(result)
+
+@bp.route('/coach/packages/purchased/approve', methods=['POST'])
+@login_required
+def approve_package_purchase():
+    """Approve a package purchase"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    purchase_id = data.get('purchase_id')
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Get the package
+    package = BookingPackage.query.filter_by(
+        id=purchase_id,
+        coach_id=coach.id,
+        status='pending'
+    ).first_or_404()
+    
+    # Update status to active
+    package.status = 'active'
+    package.activated_at = datetime.now()
+    
+    # Create notification for student
+    notification = Notification(
+        user_id=package.student_id,
+        title="Package Approved",
+        message=f"Your package purchase has been approved by the coach.",
+        notification_type="package_status",
+        related_id=package.id
+    )
+    
+    db.session.add(notification)
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'package_id': package.id
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/packages/purchased/reject', methods=['POST'])
+@login_required
+def reject_package_purchase():
+    """Reject a package purchase"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    purchase_id = data.get('purchase_id')
+    reason = data.get('reason', 'No reason provided')
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Get the package
+    package = BookingPackage.query.filter_by(
+        id=purchase_id,
+        coach_id=coach.id,
+        status='pending'
+    ).first_or_404()
+    
+    # Update status to rejected
+    package.status = 'rejected'
+    package.rejection_reason = reason
+    
+    # Create notification for student
+    notification = Notification(
+        user_id=package.student_id,
+        title="Package Rejected",
+        message=f"Your package purchase was rejected. Reason: {reason}",
+        notification_type="package_status",
+        related_id=package.id
+    )
+    
+    db.session.add(notification)
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'package_id': package.id
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/upload-court-proof', methods=['POST'])
+@login_required
+def upload_court_proof():
+    """Upload court booking proof"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    if 'court_proof' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['court_proof']
+    booking_id = request.form.get('booking_id')
+    
+    if not booking_id:
+        return jsonify({'error': 'Booking ID is required'}), 400
+    
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Verify booking belongs to this coach
+    booking = Booking.query.filter_by(
+        id=booking_id,
+        coach_id=coach.id
+    ).first_or_404()
+    
+    try:
+        # Create directory for proofs if it doesn't exist
+        proofs_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'booking_proofs')
+        os.makedirs(proofs_dir, exist_ok=True)
+        
+        # Save the file with a unique name
+        filename = f"court_proof_{booking_id}_{int(datetime.now().timestamp())}"
+        file_path = save_uploaded_file(file, proofs_dir, filename)
+        
+        if not file_path:
+            return jsonify({'error': 'Failed to save file'}), 500
+        
+        # Check if proof already exists
+        existing_proof = PaymentProof.query.filter_by(
+            booking_id=booking_id,
+            proof_type='court'
+        ).first()
+        
+        if existing_proof:
+            # Update existing proof
+            if existing_proof.image_path:
+                delete_file(existing_proof.image_path)
+            
+            existing_proof.image_path = file_path
+            existing_proof.status = 'approved'  # Auto-approve when coach uploads
+        else:
+            # Create new proof
+            proof = PaymentProof(
+                booking_id=booking_id,
+                image_path=file_path,
+                proof_type='court',
+                status='approved'  # Auto-approve when coach uploads
+            )
+            db.session.add(proof)
+        
+        # Update booking status
+        booking.court_payment_status = 'approved'
+        
+        # Create notification for student
+        notification = Notification(
+            user_id=booking.student_id,
+            title="Court Booking Confirmed",
+            message=f"Your coach has confirmed the court booking for your session on {booking.date.strftime('%Y-%m-%d')}",
+            notification_type='court_booking',
+            related_id=booking.id
+        )
+        db.session.add(notification)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Court booking proof uploaded successfully',
+            'proof_url': file_path
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/support/request', methods=['POST'])
+@login_required
+def submit_support_request():
+    """Submit a support request"""
+    data = request.get_json()
+    subject = data.get('subject')
+    message = data.get('message')
+    
+    if not subject or not message:
+        return jsonify({'error': 'Subject and message are required'}), 400
+    
+    try:
+        # Create support request record
+        # This is a placeholder - you might want to create a SupportRequest model
+        # For now, we'll just return success
+        
+        # Optionally, send an email to support team
+        # send_support_email(current_user, subject, message)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Your support request has been submitted.'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/coach/courts/update-instructions', methods=['POST'])
+@login_required
+def update_court_instructions():
+    """Update court booking instructions"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    data = request.get_json()
+    court_id = data.get('court_id')
+    
+    if not court_id:
+        return jsonify({'error': 'Court ID is required'}), 400
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Verify coach is associated with this court
+    coach_court = CoachCourt.query.filter_by(
+        coach_id=coach.id,
+        court_id=court_id
+    ).first_or_404()
+    
+    # Update court booking instructions
+    coach_court.booking_instructions = data.get('booking_instructions')
+    coach_court.booking_link = data.get('booking_link')
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/courts/<int:court_id>', methods=['GET'])
+def get_court_details(court_id):
+    """Get details for a specific court"""
+    court = Court.query.get_or_404(court_id)
+    
+    result = {
+        'id': court.id,
+        'name': court.name,
+        'address': court.address,
+        'city': court.city,
+        'state': court.state,
+        'zip_code': court.zip_code,
+        'indoor': court.indoor,
+        'booking_link': court.booking_link
+    }
+    
+    # If the user is a coach, get booking instructions for this court
+    if current_user.is_authenticated and current_user.is_coach:
+        coach = Coach.query.filter_by(user_id=current_user.id).first()
+        
+        if coach:
+            coach_court = CoachCourt.query.filter_by(
+                coach_id=coach.id,
+                court_id=court_id
+            ).first()
+            
+            if coach_court:
+                result['booking_instructions'] = coach_court.booking_instructions
+                result['booking_link'] = coach_court.booking_link
+    
+    return jsonify(result)
+    
 @bp.route('/notifications')
 @login_required
 def get_notifications():

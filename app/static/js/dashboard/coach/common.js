@@ -200,7 +200,7 @@ async function updateCoachProfile(profileData) {
 
 // Change password
 async function changePassword(passwordData) {
-  return fetchAPI('/coach/change-password', {
+  return fetchAPI('/auth/change-password', {
     method: 'POST',
     body: JSON.stringify(passwordData)
   });
@@ -314,7 +314,7 @@ async function uploadCourtBookingProof(bookingId, proofFile) {
 
 // Reschedule booking
 async function rescheduleBooking(rescheduleData) {
-  return fetchAPI('/coach/reschedule-booking', {
+  return fetchAPI('/coach/defer-booking', {
     method: 'POST',
     body: JSON.stringify(rescheduleData)
   });
@@ -364,29 +364,29 @@ async function getEarnings(period = 'all') {
   return fetchAPI(`/coach/earnings/${period}`);
 }
 
-// Get coach packages
-async function getCoachPackages() {
-  return fetchAPI('/coach/packages');
-}
+// // Get coach packages
+// async function getCoachPackages() {
+//   return fetchAPI('/coach/packages');
+// }
 
-// Approve coach package
-async function approveCoachPackage(packageId) {
-  return fetchAPI('/coach/packages/approve', {
-    method: 'POST',
-    body: JSON.stringify({ package_id: packageId })
-  });
-}
+// // Approve coach package
+// async function approveCoachPackage(packageId) {
+//   return fetchAPI('/coach/packages/approve', {
+//     method: 'POST',
+//     body: JSON.stringify({ package_id: packageId })
+//   });
+// }
 
-// Reject coach package
-async function rejectCoachPackage(packageId, reason) {
-  return fetchAPI('/coach/packages/reject', {
-    method: 'POST',
-    body: JSON.stringify({
-      package_id: packageId,
-      rejection_reason: reason
-    })
-  });
-}
+// // Reject coach package
+// async function rejectCoachPackage(packageId, reason) {
+//   return fetchAPI('/coach/packages/reject', {
+//     method: 'POST',
+//     body: JSON.stringify({
+//       package_id: packageId,
+//       rejection_reason: reason
+//     })
+//   });
+// }
 
 // Get academy packages
 async function getAcademyPackages() {

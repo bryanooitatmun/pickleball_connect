@@ -1337,7 +1337,7 @@
           academyPackages = []
           for (const idParam of academyIds){
 
-            const response = await fetch(`/api/academy/${idParam}/pricing-plans`);
+            const response = await fetch(`/academy/${idParam}/pricing-plans`);
             if (!response.ok) {
               throw new Error('Failed to fetch academy packages');
             }

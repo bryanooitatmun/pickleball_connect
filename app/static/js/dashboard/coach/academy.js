@@ -13,15 +13,15 @@ function initAcademyTab() {
   async function loadAcademyData() {
     try {
       // Load academy info
-      const academyInfo = await fetchAPI('/api/academy/info');
+      const academyInfo = await fetchAPI('/academy/info');
       populateAcademyForm(academyInfo);
       
       // Load academy coaches
-      const coaches = await fetchAPI('/api/academy/coaches');
+      const coaches = await fetchAPI('/academy/coaches');
       displayAcademyCoaches(coaches);
       
       // Load academy analytics
-      const analytics = await fetchAPI('/api/academy/analytics');
+      const analytics = await fetchAPI('/academy/analytics');
       displayAcademyAnalytics(analytics);
     } catch (error) {
       console.error('Error loading academy data:', error);
@@ -329,7 +329,7 @@ function initAcademyTab() {
       
       try {
         showLoading(this);
-        await fetchAPI('/api/academy/info', {
+        await fetchAPI('/academy/info', {
           method: 'PUT',
           body: JSON.stringify(academyData)
         });
@@ -359,7 +359,7 @@ function initAcademyTab() {
       
       try {
         showLoading(this);
-        await fetchAPI('/api/academy/payment-details', {
+        await fetchAPI('/academy/payment-details', {
           method: 'PUT',
           body: JSON.stringify(paymentData)
         });
@@ -395,7 +395,7 @@ function initAcademyTab() {
             const formData = new FormData();
             formData.append('logo', file);
             
-            await fetch('/api/academy/upload-logo', {
+            await fetch('/academy/upload-logo', {
               method: 'POST',
               body: formData
             });
@@ -414,7 +414,7 @@ function initAcademyTab() {
     // Remove academy logo
     document.getElementById('remove-academy-logo')?.addEventListener('click', async function() {
       try {
-        await fetchAPI('/api/academy/remove-logo', {
+        await fetchAPI('/academy/remove-logo', {
           method: 'POST'
         });
         
@@ -469,7 +469,7 @@ function initAcademyTab() {
       
       try {
         showLoading(this);
-        await fetchAPI('/api/academy/coaches/add', {
+        await fetchAPI('/academy/coaches/add', {
           method: 'POST',
           body: JSON.stringify(coachData)
         });
@@ -507,7 +507,7 @@ function initAcademyTab() {
       
       try {
         showLoading(this);
-        await fetchAPI('/api/academy/coaches/update-role', {
+        await fetchAPI('/academy/coaches/update-role', {
           method: 'POST',
           body: JSON.stringify(updateData)
         });
@@ -528,7 +528,7 @@ function initAcademyTab() {
       
       try {
         document.getElementById('remove-coach-modal').classList.add('hidden');
-        await fetchAPI('/api/academy/coaches/remove', {
+        await fetchAPI('/academy/coaches/remove', {
           method: 'POST',
           body: JSON.stringify({ coach_id: coachId })
         });

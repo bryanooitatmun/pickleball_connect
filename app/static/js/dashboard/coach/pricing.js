@@ -10,7 +10,7 @@ function initPricingTab() {
 // Load pricing plans
 async function loadPricingPlans() {
   try {
-    const endpoint = IS_ACADEMY_MANAGER ? '/api/academy/pricing-plans' : '/api/coach/pricing-plans';
+    const endpoint = IS_ACADEMY_MANAGER ? '/academy/pricing-plans' : '/coach/pricing-plans';
     const plans = await fetchAPI(endpoint);
     
     // Store the original data
@@ -188,7 +188,7 @@ function setupPricingEventListeners() {
     
     try {
       showLoading(this);
-      const endpoint = IS_ACADEMY_MANAGER ? '/api/academy/pricing-plans/add' : '/api/coach/pricing-plans/add';
+      const endpoint = IS_ACADEMY_MANAGER ? '/academy/pricing-plans/add' : '/coach/pricing-plans/add';
       await fetchAPI(endpoint, {
         method: 'POST',
         body: JSON.stringify(planData)
@@ -215,7 +215,7 @@ function setupPricingEventListeners() {
     
     try {
       document.getElementById('delete-pricing-modal').classList.add('hidden');
-      const endpoint = IS_ACADEMY_MANAGER ? '/api/academy/pricing-plans/delete' : '/api/coach/pricing-plans/delete';
+      const endpoint = IS_ACADEMY_MANAGER ? '/academy/pricing-plans/delete' : '/coach/pricing-plans/delete';
       await fetchAPI(endpoint, {
         method: 'POST',
         body: JSON.stringify({ plan_id: planId })

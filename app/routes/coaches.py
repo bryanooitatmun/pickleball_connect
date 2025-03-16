@@ -524,7 +524,7 @@ def profile(coach_id):
 #         now=datetime.now()
 #     )
 
-@bp.route('/coach/dashboard')
+@bp.route('/dashboard')
 @login_required
 @coach_or_academy_manager_required
 def dashboard():

@@ -689,8 +689,8 @@ def seed_database():
                     # For seed data, we'll simulate this with random values
                     coaching_payment_required = True
                     coaching_payment_status = random.choice(['pending', 'uploaded', 'approved'])
-                    court_payment_required = random.choice([True, False])
-                    court_payment_status = 'not_required' if not court_payment_required else random.choice(['pending', 'uploaded', 'approved'])
+                    court_payment_required = True
+                    court_payment_status = 'not_required' if not court_payment_required else random.choice(['uploaded', 'approved'])
 
                     # Create booking
                     booking = Booking(
@@ -708,7 +708,8 @@ def seed_database():
                         status="completed",
                         pricing_plan_id=pricing_plan.id if pricing_plan else None,
                         discount_amount=discount_amount,
-                        discount_percentage=discount_percentage
+                        discount_percentage=discount_percentage,
+                        court_booking_responsibility="coach"
                     )
                     
                     db.session.add(booking)
@@ -799,6 +800,8 @@ def seed_database():
                     discount_amount = pricing_plan.fixed_discount
                     price = base_price - discount_amount
             
+            court_booking_responsibility = 'student' if booking.availability.student_books_court else 'coach'
+
             # Create booking
             booking = Booking(
                 student_id=student.id,
@@ -815,7 +818,8 @@ def seed_database():
                 status="upcoming",
                 pricing_plan_id=pricing_plan.id if pricing_plan else None,
                 discount_amount=discount_amount,
-                discount_percentage=discount_percentage
+                discount_percentage=discount_percentage,
+                court_booking_responsibility=court_booking_responsibility
             )
             
             db.session.add(booking)
@@ -832,7 +836,7 @@ def seed_database():
                 )
                 db.session.add(proof)
             
-            if court_payment_required and court_payment_status in ['uploaded', 'approved']:
+            if court_booking_responsibility == 'student' and court_payment_status in ['uploaded', 'approved']:
                 proof = PaymentProof(
                     booking_id=booking.id,
                     image_path=f"uploads/payment_proofs/booking_{booking.id}_court_{int(datetime.now().timestamp())}.png",

@@ -15,20 +15,20 @@ let originalPackagesData = {
   async function loadPackagesData() {
     try {
       // Load my packages
-      const myPackagesEndpoint = isAcademyManager() ? '/api/academy/packages' : '/api/coach/packages';
+      const myPackagesEndpoint = IS_ACADEMY_MANAGER ? '/academy/packages' : '/coach/packages';
       const myPackages = await fetchAPI(myPackagesEndpoint);
       originalPackagesData.myPackages = myPackages;
       displayMyPackages(myPackages);
       
       // Load purchased packages
-      const purchasedPackagesEndpoint = isAcademyManager() ? '/api/academy/packages/purchased' : '/api/coach/packages/purchased';
+      const purchasedPackagesEndpoint = IS_ACADEMY_MANAGER ? '/academy/packages/purchased' : '/coach/packages/purchased';
       const purchasedPackages = await fetchAPI(purchasedPackagesEndpoint);
       originalPackagesData.purchasedPackages = purchasedPackages;
       displayPurchasedPackages(purchasedPackages);
       
       // Load academy packages (if academy manager)
-      if (isAcademyManager()) {
-        const academyPackagesEndpoint = '/api/academy/packages/all';
+      if (IS_ACADEMY_MANAGER) {
+        const academyPackagesEndpoint = '/academy/packages/all';
         const academyPackages = await fetchAPI(academyPackagesEndpoint);
         originalPackagesData.academyPackages = academyPackages;
         displayAcademyPackages(academyPackages);
@@ -84,7 +84,7 @@ let originalPackagesData = {
           <button class="text-blue-600 hover:text-blue-700 mr-4 view-package-btn" data-package-id="${pkg.id}">
             <i class="fas fa-eye"></i> View
           </button>
-          <button class="text-red-600 hover:text-red-700 delete-package-btn ${pkg.is_academy_package && !isAcademyManager() ? 'hidden' : ''}" data-package-id="${pkg.id}">
+          <button class="text-red-600 hover:text-red-700 delete-package-btn ${pkg.is_academy_package && !IS_ACADEMY_MANAGER ? 'hidden' : ''}" data-package-id="${pkg.id}">
             <i class="fas fa-trash"></i> Delete
           </button>
         </div>
@@ -338,7 +338,7 @@ let originalPackagesData = {
       document.getElementById('purchased-packages-tab-btn').classList.remove('text-blue-600', 'border-blue-600');
       document.getElementById('purchased-packages-tab-btn').classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
       
-      if (isAcademyManager()) {
+      if (IS_ACADEMY_MANAGER) {
         document.getElementById('academy-packages-tab-btn').classList.remove('text-blue-600', 'border-blue-600');
         document.getElementById('academy-packages-tab-btn').classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
       }
@@ -349,7 +349,7 @@ let originalPackagesData = {
       document.getElementById('purchased-packages-tab').classList.add('hidden');
       document.getElementById('purchased-packages-tab').classList.remove('active');
       
-      if (isAcademyManager()) {
+      if (IS_ACADEMY_MANAGER) {
         document.getElementById('academy-packages-tab').classList.add('hidden');
         document.getElementById('academy-packages-tab').classList.remove('active');
       }
@@ -362,7 +362,7 @@ let originalPackagesData = {
       document.getElementById('my-packages-tab-btn').classList.remove('text-blue-600', 'border-blue-600');
       document.getElementById('my-packages-tab-btn').classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
       
-      if (isAcademyManager()) {
+      if (IS_ACADEMY_MANAGER) {
         document.getElementById('academy-packages-tab-btn').classList.remove('text-blue-600', 'border-blue-600');
         document.getElementById('academy-packages-tab-btn').classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
       }
@@ -373,13 +373,13 @@ let originalPackagesData = {
       document.getElementById('my-packages-tab').classList.add('hidden');
       document.getElementById('my-packages-tab').classList.remove('active');
       
-      if (isAcademyManager()) {
+      if (IS_ACADEMY_MANAGER) {
         document.getElementById('academy-packages-tab').classList.add('hidden');
         document.getElementById('academy-packages-tab').classList.remove('active');
       }
     });
     
-    if (isAcademyManager()) {
+    if (IS_ACADEMY_MANAGER) {
       document.getElementById('academy-packages-tab-btn')?.addEventListener('click', function() {
         this.classList.add('text-blue-600', 'border-blue-600');
         this.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
@@ -416,13 +416,13 @@ let originalPackagesData = {
       };
       
       // Add academy package flag if academy manager
-      if (isAcademyManager()) {
+      if (IS_ACADEMY_MANAGER) {
         packageData.is_academy_package = formData.get('is_academy_package') ? true : false;
       }
       
       try {
         showLoading(this);
-        const endpoint = isAcademyManager() ? '/api/academy/packages/create' : '/api/coach/packages/create';
+        const endpoint = IS_ACADEMY_MANAGER ? '/academy/packages/create' : '/coach/packages/create';
         await fetchAPI(endpoint, {
           method: 'POST',
           body: JSON.stringify(packageData)
@@ -453,7 +453,7 @@ let originalPackagesData = {
     });
     
     // Academy package filters
-    if (isAcademyManager()) {
+    if (IS_ACADEMY_MANAGER) {
       document.getElementById('academy-package-coach-filter')?.addEventListener('change', function() {
         filterAcademyPackages();
       });
@@ -490,7 +490,7 @@ let originalPackagesData = {
       
       try {
         document.getElementById('delete-package-modal').classList.add('hidden');
-        const endpoint = isAcademyManager() ? '/api/academy/packages/delete' : '/api/coach/packages/delete';
+        const endpoint = IS_ACADEMY_MANAGER ? '/academy/packages/delete' : '/coach/packages/delete';
         await fetchAPI(endpoint, {
           method: 'POST',
           body: JSON.stringify({ package_id: packageId })
@@ -518,8 +518,8 @@ let originalPackagesData = {
         document.getElementById('approve-purchase-modal').classList.add('hidden');
         
         const endpoint = isAcademy 
-          ? '/api/academy/packages/purchased/approve' 
-          : '/api/coach/packages/purchased/approve';
+          ? '/academy/packages/purchased/approve' 
+          : '/coach/packages/purchased/approve';
         
         await fetchAPI(endpoint, {
           method: 'POST',
@@ -542,8 +542,8 @@ let originalPackagesData = {
         document.getElementById('approve-purchase-modal').classList.add('hidden');
         
         const endpoint = isAcademy 
-          ? '/api/academy/packages/purchased/reject' 
-          : '/api/coach/packages/purchased/reject';
+          ? '/academy/packages/purchased/reject' 
+          : '/coach/packages/purchased/reject';
         
         await fetchAPI(endpoint, {
           method: 'POST',
@@ -561,9 +561,9 @@ let originalPackagesData = {
   // View package details
   async function viewPackageDetails(packageId) {
     try {
-      const endpoint = isAcademyManager() 
-        ? `/api/academy/packages/${packageId}` 
-        : `/api/coach/packages/${packageId}`;
+      const endpoint = IS_ACADEMY_MANAGER 
+        ? `/academy/packages/${packageId}` 
+        : `/coach/packages/${packageId}`;
       
       const packageData = await fetchAPI(endpoint);
       
@@ -589,8 +589,8 @@ let originalPackagesData = {
   async function showApprovePurchaseModal(purchaseId, isAcademy = false) {
     try {
       const endpoint = isAcademy 
-        ? `/api/academy/packages/purchased/${purchaseId}` 
-        : `/api/coach/packages/purchased/${purchaseId}`;
+        ? `/academy/packages/purchased/${purchaseId}` 
+        : `/coach/packages/purchased/${purchaseId}`;
       
       const purchaseData = await fetchAPI(endpoint);
       
@@ -627,8 +627,8 @@ let originalPackagesData = {
   function viewPaymentProof(purchaseId, isAcademy = false) {
     try {
       const endpoint = isAcademy 
-        ? `/api/academy/packages/purchased/${purchaseId}/payment-proof` 
-        : `/api/coach/packages/purchased/${purchaseId}/payment-proof`;
+        ? `/academy/packages/purchased/${purchaseId}/payment-proof` 
+        : `/coach/packages/purchased/${purchaseId}/payment-proof`;
       
       fetchAPI(endpoint)
         .then(data => {
@@ -688,7 +688,7 @@ let originalPackagesData = {
   
   // Filter academy packages
   function filterAcademyPackages() {
-    if (!isAcademyManager()) return;
+    if (!IS_ACADEMY_MANAGER) return;
     
     const coachFilter = document.getElementById('academy-package-coach-filter');
     const statusFilter = document.getElementById('academy-package-status-filter');

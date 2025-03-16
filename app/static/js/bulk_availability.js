@@ -1,4 +1,4 @@
-let currentCalendarView = 'month'; // Track current view state globally
+let currentAvailabilityCalendarView = 'month'; // Track current view state globally
 
 // Add these API functions to your existing API calls
 async function addBulkAvailability(bulkData) {
@@ -465,6 +465,7 @@ function initBulkAvailability() {
         
         // Update calendar view if it's visible
         const calendarContainer = document.getElementById('availability-calendar');
+
         if (calendarContainer.innerHTML !== '') {
           const currentDate = new Date();
           generateAvailabilityCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
@@ -545,7 +546,7 @@ function initBulkAvailability() {
 
     // Calendar navigation buttons
     document.getElementById('prev-month-btn').addEventListener('click', async function() {
-        if (currentCalendarView === 'month') {
+        if (currentAvailabilityCalendarView === 'month') {
         // Existing month navigation code
         const monthYearText = document.getElementById('calendar-month-year').textContent;
         const [monthName, year] = monthYearText.split(' ');
@@ -583,7 +584,7 @@ function initBulkAvailability() {
     });
     
     document.getElementById('next-month-btn').addEventListener('click', async function() {
-        if (currentCalendarView === 'month') {
+        if (currentAvailabilityCalendarView === 'month') {
         // Existing month navigation code
         const monthYearText = document.getElementById('calendar-month-year').textContent;
         const [monthName, year] = monthYearText.split(' ');
@@ -624,9 +625,9 @@ function initBulkAvailability() {
     document.getElementById('toggle-calendar-view').addEventListener('click', async function() {
         const calendarContainer = document.getElementById('availability-calendar');
 
-        currentCalendarView = currentCalendarView === 'month' ? 'week' : 'month';
+        currentAvailabilityCalendarView = currentAvailabilityCalendarView === 'month' ? 'week' : 'month';
       
-        if (currentCalendarView === 'week') {
+        if (currentAvailabilityCalendarView === 'week') {
             this.textContent = 'Switch to Month View';
             // Generate week view
             generateAvailabilityWeekView(await getAvailability());

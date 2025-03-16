@@ -766,6 +766,64 @@ def get_earnings(period):
     
     return jsonify(response)
 
+@bp.route('/coach/bookings/<int:booking_id>')
+@login_required
+def get_coach_bookings_by_id(booking_id):
+    """API endpoint to get coach bookings by id"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    
+    # Define query based on status
+    booking = Booking.query.filter(Booking.id == booking_id).first_or_404()
+    
+
+    # Get all payment proofs for these bookings in one query
+    payment_proofs = {}
+    if booking:
+        proofs = PaymentProof.query.filter(
+            PaymentProof.booking_id == booking_id
+        ).all()
+
+        # Organize proofs by booking_id and proof_type
+        for proof in proofs:
+            if proof.booking_id not in payment_proofs:
+                payment_proofs[proof.booking_id] = {}
+            payment_proofs[proof.booking_id][proof.proof_type] = proof.image_path
+    
+    
+    # Format bookings data
+
+    booking_payment_proofs = payment_proofs.get(booking.id, {})
+
+    booking_data = {
+        'id': booking.id,
+        'student': {
+            'id': booking.student_id,
+            'first_name': booking.student.first_name,
+            'last_name': booking.student.last_name,
+            'email': booking.student.email
+        },
+        'date': booking.date.isoformat(),
+        'start_time': booking.start_time.strftime('%H:%M:%S'),
+        'end_time': booking.end_time.strftime('%H:%M:%S'),
+        'price': float(booking.price),
+        'status': booking.status,
+        'court': {
+            'id': booking.court_id,
+            'name': booking.court.name
+        },
+        'venue_confirmed': booking.venue_confirmed,
+        'court_booking_responsibility': booking.court_booking_responsibility,
+        # Use the payment proofs from our lookup
+        'payment_proof': booking_payment_proofs.get('coaching'),
+        'court_booking_proof': booking_payment_proofs.get('court')
+    }
+        
+
+    return jsonify(booking_data)
+
+
 @bp.route('/coach/bookings/<status>')
 @login_required
 def get_coach_bookings(status):
@@ -795,10 +853,29 @@ def get_coach_bookings(status):
         return jsonify({'error': 'Invalid status provided'}), 400
     
     bookings = query.all()
+
+    # Get all booking IDs for efficient payment proof lookup
+    booking_ids = [booking.id for booking in bookings]
+
+    # Get all payment proofs for these bookings in one query
+    payment_proofs = {}
+    if booking_ids:
+        proofs = PaymentProof.query.filter(
+            PaymentProof.booking_id.in_(booking_ids)
+        ).all()
+
+        # Organize proofs by booking_id and proof_type
+        for proof in proofs:
+            if proof.booking_id not in payment_proofs:
+                payment_proofs[proof.booking_id] = {}
+            payment_proofs[proof.booking_id][proof.proof_type] = proof.image_path
+    
     
     # Format bookings data
     result = []
     for booking in bookings:
+        booking_payment_proofs = payment_proofs.get(booking.id, {})
+
         booking_data = {
             'id': booking.id,
             'student': {
@@ -816,11 +893,154 @@ def get_coach_bookings(status):
                 'id': booking.court_id,
                 'name': booking.court.name
             },
-            'venue_confirmed': booking.venue_confirmed
+            'venue_confirmed': booking.venue_confirmed,
+            'court_booking_responsibility': booking.court_booking_responsibility,
+            # Use the payment proofs from our lookup
+            'payment_proof': booking_payment_proofs.get('coaching'),
+            'court_booking_proof': booking_payment_proofs.get('court')
         }
         
         # Add session log if it exists
         if booking.session_log:
+            booking_data['session_log'] = {
+                'id': booking.session_log.id,
+                'title': booking.session_log.title,
+                'notes': booking.session_log.notes,
+                'coach_notes': booking.session_log.coach_notes,
+                'created_at': booking.session_log.created_at.isoformat()
+            }
+        
+        result.append(booking_data)
+    
+    return jsonify(result)
+
+@bp.route('/coach/bookings/period')
+@login_required
+def get_bookings_by_period():
+    """API endpoint to get coach bookings for a specific date range"""
+    # Get date range from query parameters
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+    
+    # Validate date parameters
+    if not start_date_str or not end_date_str:
+        return jsonify({'error': 'Start date and end date are required'}), 400
+    
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+    
+    # For academy managers, allow filtering by coach_id
+    coach_id = None
+    if current_user.is_academy_manager:
+        coach_id = request.args.get('coach_id', type=int)
+        
+        # If coach_id provided, verify it belongs to this academy manager
+        if coach_id:
+            # Get academies managed by this user
+            academy_ids = [am.academy_id for am in AcademyManager.query.filter_by(user_id=current_user.id).all()]
+            
+            # Check if the coach belongs to any of these academies
+            coach_in_academy = AcademyCoach.query.filter(
+                AcademyCoach.coach_id == coach_id,
+                AcademyCoach.academy_id.in_(academy_ids)
+            ).first()
+            
+            if not coach_in_academy:
+                return jsonify({'error': 'You do not have access to this coach'}), 403
+    # Regular coach can only see their own bookings
+    elif current_user.is_coach:
+        coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+        coach_id = coach.id
+    else:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    # Define query based on parameters
+    query = Booking.query
+    
+    # Filter by date range
+    query = query.filter(
+        Booking.date >= start_date,
+        Booking.date <= end_date
+    )
+    
+    # Filter by coach
+    if coach_id:
+        query = query.filter(Booking.coach_id == coach_id)
+    elif current_user.is_academy_manager:
+        # If no specific coach_id but user is academy manager, get all coaches from their academies
+        academy_ids = [am.academy_id for am in AcademyManager.query.filter_by(user_id=current_user.id).all()]
+        academy_coach_ids = [ac.coach_id for ac in AcademyCoach.query.filter(AcademyCoach.academy_id.in_(academy_ids)).all()]
+        
+        if academy_coach_ids:
+            query = query.filter(Booking.coach_id.in_(academy_coach_ids))
+        else:
+            # No coaches found in this academy, return empty result
+            return jsonify([])
+    
+    # Order by date and time
+    query = query.order_by(Booking.date, Booking.start_time)
+    
+    # Execute query
+    bookings = query.all()
+    
+    # Get all booking IDs for efficient payment proof lookup
+    booking_ids = [booking.id for booking in bookings]
+    
+    # Get all payment proofs for these bookings in one query
+    payment_proofs = {}
+    if booking_ids:
+        proofs = PaymentProof.query.filter(
+            PaymentProof.booking_id.in_(booking_ids)
+        ).all()
+        
+        # Organize proofs by booking_id and proof_type
+        for proof in proofs:
+            if proof.booking_id not in payment_proofs:
+                payment_proofs[proof.booking_id] = {}
+            payment_proofs[proof.booking_id][proof.proof_type] = proof.image_path
+    
+    # Format bookings data
+    result = []
+    for booking in bookings:
+        # Get payment proofs for this booking
+        booking_payment_proofs = payment_proofs.get(booking.id, {})
+        
+        booking_data = {
+            'id': booking.id,
+            'student': {
+                'id': booking.student_id,
+                'first_name': booking.student.first_name,
+                'last_name': booking.student.last_name,
+                'email': booking.student.email
+            },
+            'coach': {
+                'id': booking.coach_id,
+                'user': {
+                    'first_name': booking.coach.user.first_name,
+                    'last_name': booking.coach.user.last_name
+                }
+            },
+            'date': booking.date.isoformat(),
+            'start_time': booking.start_time.strftime('%H:%M:%S'),
+            'end_time': booking.end_time.strftime('%H:%M:%S'),
+            'price': float(booking.price),
+            'status': booking.status,
+            'court': {
+                'id': booking.court_id,
+                'name': booking.court.name
+            },
+            'venue_confirmed': booking.venue_confirmed,
+            'court_booking_responsibility': booking.court_booking_responsibility,
+            # Use the payment proofs from our lookup
+            'payment_proof': booking_payment_proofs.get('coaching'),
+            'court_booking_proof': booking_payment_proofs.get('court')
+        }
+        
+        # Add session log if it exists
+        if hasattr(booking, 'session_log') and booking.session_log:
             booking_data['session_log'] = {
                 'id': booking.session_log.id,
                 'title': booking.session_log.title,
@@ -2243,10 +2463,11 @@ def submit_support_request():
 @bp.route('/upload-payment-proof/<int:booking_id>', methods=['POST'])
 @login_required
 def upload_payment_proof(booking_id):
-    """API endpoint for student to upload payment proof"""
+    """API endpoint for users to upload payment proof"""
+    user_type = 'student'
     if current_user.is_coach:
-        return jsonify({'error': 'Coaches cannot upload payment proofs'}), 403
-    
+        user_type = 'coach'
+
     # Get booking and verify it belongs to this student
     booking = Booking.query.filter_by(
         id=booking_id,
@@ -2287,36 +2508,37 @@ def upload_payment_proof(booking_id):
             booking_id=booking_id,
             image_path=image_path,
             proof_type=proof_type,
-            status='pending'
+            status='pending' if not current_user.is_coach else 'approved'
         )
         
         db.session.add(proof)
         
         # Update booking status
         if proof_type == 'coaching':
-            booking.coaching_payment_status = 'uploaded'
+            booking.coaching_payment_status = 'uploaded' 
         elif proof_type == 'court':
-            booking.court_payment_status = 'uploaded'
+            booking.court_payment_status = 'uploaded' if not current_user.is_coach else 'approved'
         
         db.session.commit()
         
         # Create notification for coach
         from app.models.notification import Notification
         
-        notification = Notification(
-            user_id=booking.coach.user_id,
-            title=f"Payment proof uploaded",
-            message=f"Student has uploaded {proof_type} payment proof for booking on {booking.date.strftime('%Y-%m-%d')}",
-            notification_type='payment_proof',
-            related_id=booking.id
-        )
+        if not current_user.is_coach:
+            notification = Notification(
+                user_id=booking.coach.user_id,
+                title=f"Payment proof uploaded",
+                message=f"Student has uploaded {proof_type} payment proof for booking on {booking.date.strftime('%Y-%m-%d')}",
+                notification_type='payment_proof',
+                related_id=booking.id
+            )
         
         db.session.add(notification)
         db.session.commit()
         
         # Send email notification
         from app.utils.email import send_coach_payment_proof_notification
-        send_coach_payment_proof_notification(booking, proof_type)
+        #send_coach_payment_proof_notification(booking, proof_type)
         
         return jsonify({
             'success': True,

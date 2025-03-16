@@ -72,11 +72,15 @@ async function loadBookingsForMonth(month, year) {
 }
 
 // Load all bookings (used for week view)
-async function loadAllBookings() {
+async function loadBookingsForWeek(start, end) {
   try {
+    // Format dates as required by API
+    const startDateStr = start.toISOString().split('T')[0];
+    const endDateStr = end.toISOString().split('T')[0];
+
     // For academy managers, get coach ID from filter if selected
-    let endpoint = '/coach/bookings/all';
-    let params = '';
+    let endpoint = '/coach/bookings/period';
+    let params = `?start_date=${startDateStr}&end_date=${endDateStr}`;
     
     if (IS_ACADEMY_MANAGER) {
       const coachFilter = document.getElementById('academy-coach-filter');
@@ -427,12 +431,16 @@ function showDateBookings(date, bookings) {
       bookingItem.className = 'flex justify-between items-center bg-blue-50 p-2 rounded';
       
       if (IS_COACH) {
-        const venueStatus = booking.venue_confirmed ? 
-          `<div class="my-3 px-3 py-1.5 rounded-md bg-green-100 border border-green-300 text-green-700 text-sm mt-1"><i class="fas fa-check-circle"></i> Venue Confirmed</div>` : 
-          `<button class="my-3 px-3 py-1.5 rounded-md bg-red-100 border border-red-300 text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm font-medium flex items-center space-x-1.5 transition-colors confirm-venue-btn" data-booking-id="${booking.id}">
+        let venueStatus = '';
+        if (booking.venue_confirmed){
+          venueStatus = `<div class="my-3 px-3 py-1.5 rounded-md bg-green-100 border border-green-300 text-green-700 text-sm mt-1"><i class="fas fa-check-circle"></i> Venue Confirmed</div>`
+        }
+        else{
+          venueStatus = `<button class="my-3 px-3 py-1.5 rounded-md ${(booking.court_booking_responsibility == 'student' || booking.court_booking_proof)  ? 'bg-yellow-100 border border-yellow-300 text-yellow-700 hover:bg-yellow-200' : 'bg-red-100 border border-red-300 text-red-700 hover:bg-red-200'} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm font-medium flex items-center space-x-1.5 transition-colors confirm-venue-btn" data-booking-id="${booking.id}">
               <i class="fas fa-exclamation-circle"></i>
-              <span>Please Book and Confirm Venue</span>
+              <span>${(booking.court_booking_responsibility == 'student' || booking.court_booking_proof) ? 'Confirm Student Venue' : 'Please Book Venue'}</span>
           </button>`;
+        }
         
         const actionButtons = `
           <div class="flex space-x-3 mt-1">
@@ -775,7 +783,7 @@ function updateCalendarNavigationForWeeks() {
       const prevWeek = new Date(startOfWeek);
       prevWeek.setDate(prevWeek.getDate() - 7);
       
-      const bookingsData = await loadAllBookings();
+      const bookingsData = await loadBookingsForWeek(prevWeek, startOfWeek);
       generateBookingsWeekView(prevWeek, bookingsData);
     });
     
@@ -786,8 +794,12 @@ function updateCalendarNavigationForWeeks() {
       // Go to next week
       const nextWeek = new Date(startOfWeek);
       nextWeek.setDate(nextWeek.getDate() + 7);
+
+      // Go to next week
+      const next2Week = new Date(nextWeek);
+      next2Week.setDate(next2Week.getDate() + 7);
       
-      const bookingsData = await loadAllBookings();
+      const bookingsData = await loadBookingsForWeek(nextWeek, next2Week);
       generateBookingsWeekView(nextWeek, bookingsData);
     });
   }
@@ -833,7 +845,13 @@ async function setupAcademyCoachFilter() {
       } else {
         // Week view - get current week start
         const startOfWeek = getWeekRangeFromDisplay();
-        const bookingsData = await loadAllBookings();
+      
+        // Go to next week
+        const nextWeek = new Date(startOfWeek);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        
+        const bookingsData = await loadBookingsForWeek(startOfWeek, nextWeek);
+
         generateBookingsWeekView(startOfWeek, bookingsData);
       }
     });
@@ -859,8 +877,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const today = new Date();
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay());
+      
+        // Go to next week
+        const nextWeek = new Date(startOfWeek);
+        nextWeek.setDate(nextWeek.getDate() + 7);
         
-        const bookingsData = await loadAllBookings();
+        const bookingsData = await loadBookingsForWeek(startOfWeek, nextWeek);
         generateBookingsWeekView(startOfWeek, bookingsData);
         
         // Update navigation buttons to handle week navigation

@@ -41,6 +41,7 @@ class Booking(db.Model):
     coaching_payment_status = db.Column(db.String(20), default='pending')  # 'pending', 'uploaded', 'approved', 'rejected'
     court_payment_required = db.Column(db.Boolean, default=False)  # Set to True if student books court
     court_payment_status = db.Column(db.String(20), default='not_required')  # 'not_required', 'pending', 'uploaded', 'approved', 'rejected'
+    court_booking_responsibility = db.Column(db.String(20), default='coach')  # 'coach' or 'student'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Track applied discount if any

@@ -4,8 +4,8 @@
 
 // API configuration
 const API_BASE_URL = '/api';
-const IS_COACH = document.body.getAttribute('data-is-coach') === 'true';
-const IS_ACADEMY_MANAGER = document.body.getAttribute('data-is-academy-manager') === 'true';
+const IS_COACH = document.getElementById('user-is-coach')?.value === 'true';
+const IS_ACADEMY_MANAGER = document.getElementById('user-is-academy-manager')?.value === 'true';
 
 /**
  * Helper Functions

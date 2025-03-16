@@ -3,7 +3,7 @@
 
 // Initialize the academy tab
 function initAcademyTab() {
-    if (!isAcademyManager()) return;
+    if (!IS_ACADEMY_MANAGER) return;
     
     loadAcademyData();
     setupAcademyEventListeners();

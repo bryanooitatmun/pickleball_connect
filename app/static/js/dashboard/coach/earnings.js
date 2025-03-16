@@ -10,11 +10,11 @@ function initEarningsTab() {
   // Load earnings data
   async function loadEarningsData() {
     try {
-      let endpoint = '/api/coach/earnings';
-      let queryParams = '';
+      let endpoint = '/coach/earnings';
+      let queryParams = '/all';
       
       // If academy manager and a coach is selected
-      if (isAcademyManager()) {
+      if (IS_ACADEMY_MANAGER) {
         const coachFilter = document.getElementById('earnings-coach-filter');
         if (coachFilter && coachFilter.value) {
           if (coachFilter.value === 'academy') {
@@ -31,7 +31,7 @@ function initEarningsTab() {
       displayEarningsData(earningsData);
       
       // If academy manager, populate coach filter
-      if (isAcademyManager()) {
+      if (IS_ACADEMY_MANAGER) {
         populateCoachFilter(document.getElementById('earnings-coach-filter'));
       }
     } catch (error) {
@@ -305,11 +305,11 @@ function setupEarningsEventListeners() {
     const months = parseInt(this.value);
     
     try {
-      let endpoint = '/api/coach/earnings/' + months;
+      let endpoint = '/coach/earnings/' + months;
       let queryParams = '';
       
       // If academy manager and a coach is selected
-      if (isAcademyManager()) {
+      if (IS_ACADEMY_MANAGER) {
         const coachFilter = document.getElementById('earnings-coach-filter');
         if (coachFilter && coachFilter.value) {
           if (coachFilter.value === 'academy') {
@@ -338,11 +338,11 @@ function setupEarningsEventListeners() {
     const period = this.value;
     
     try {
-      let endpoint = '/api/coach/earnings/breakdown/' + period;
+      let endpoint = '/coach/earnings/breakdown/' + period;
       let queryParams = '';
       
       // If academy manager and a coach is selected
-      if (isAcademyManager()) {
+      if (IS_ACADEMY_MANAGER) {
         const coachFilter = document.getElementById('earnings-coach-filter');
         if (coachFilter && coachFilter.value) {
           if (coachFilter.value === 'academy') {
@@ -367,7 +367,7 @@ function setupEarningsEventListeners() {
   });
   
   // Coach filter (for academy manager)
-  if (isAcademyManager()) {
+  if (IS_ACADEMY_MANAGER) {
     document.getElementById('earnings-coach-filter')?.addEventListener('change', function() {
       loadEarningsData();
     });

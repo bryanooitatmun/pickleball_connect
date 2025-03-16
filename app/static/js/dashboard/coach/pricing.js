@@ -10,7 +10,7 @@ function initPricingTab() {
 // Load pricing plans
 async function loadPricingPlans() {
   try {
-    const endpoint = isAcademyManager() ? '/api/academy/pricing-plans' : '/api/coach/pricing-plans';
+    const endpoint = IS_ACADEMY_MANAGER ? '/api/academy/pricing-plans' : '/api/coach/pricing-plans';
     const plans = await fetchAPI(endpoint);
     
     // Store the original data
@@ -86,7 +86,7 @@ function displayPricingPlans(plans) {
       <p class="mt-3 text-gray-600">${plan.description}</p>
       
       <div class="flex justify-end mt-4">
-        <button class="text-red-600 hover:text-red-700 delete-pricing-btn ${plan.is_academy_plan && !isAcademyManager() ? 'hidden' : ''}" data-plan-id="${plan.id}">
+        <button class="text-red-600 hover:text-red-700 delete-pricing-btn ${plan.is_academy_plan && !IS_ACADEMY_MANAGER ? 'hidden' : ''}" data-plan-id="${plan.id}">
           <i class="fas fa-trash"></i> Delete
         </button>
       </div>
@@ -182,13 +182,13 @@ function setupPricingEventListeners() {
     }
     
     // Add academy plan flag if academy manager
-    if (isAcademyManager()) {
+    if (IS_ACADEMY_MANAGER) {
       planData.is_academy_plan = formData.get('is_academy_plan') ? true : false;
     }
     
     try {
       showLoading(this);
-      const endpoint = isAcademyManager() ? '/api/academy/pricing-plans/add' : '/api/coach/pricing-plans/add';
+      const endpoint = IS_ACADEMY_MANAGER ? '/api/academy/pricing-plans/add' : '/api/coach/pricing-plans/add';
       await fetchAPI(endpoint, {
         method: 'POST',
         body: JSON.stringify(planData)
@@ -215,7 +215,7 @@ function setupPricingEventListeners() {
     
     try {
       document.getElementById('delete-pricing-modal').classList.add('hidden');
-      const endpoint = isAcademyManager() ? '/api/academy/pricing-plans/delete' : '/api/coach/pricing-plans/delete';
+      const endpoint = IS_ACADEMY_MANAGER ? '/api/academy/pricing-plans/delete' : '/api/coach/pricing-plans/delete';
       await fetchAPI(endpoint, {
         method: 'POST',
         body: JSON.stringify({ plan_id: planId })

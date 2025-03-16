@@ -61,6 +61,8 @@
 {% endblock %}
 
 {% block content %}
+  <input type="hidden" id="user-is-coach" value="{{ 'true' if current_user.is_coach else 'false' }}">
+  <input type="hidden" id="user-is-academy-manager" value="{{ 'true' if current_user.is_academy_manager else 'false' }}">
   <!-- Navbar -->
   <nav class="bg-white shadow-sm sticky top-0 z-50">
     <div class="container mx-auto px-6 py-3">
@@ -182,12 +184,12 @@
                 <span>Session Logs</span>
               </a>
             </li>
-            <li>
+            {# <li>
               <a href="#pricing" class="pricing-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-dollar-sign w-5"></i>
                 <span>Pricing Plans</span>
               </a>
-            </li>
+            </li> #}
             <li>
               <a href="#packages" class="packages-tab tab-link flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-box w-5"></i>
@@ -327,6 +329,7 @@
 {% block scripts %}
 <!-- Core libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/bulk_availability.js') }}"></script>
 
 <!-- Common dashboard functionality -->
 <script src="{{ url_for('static', filename='js/dashboard/coach/common.js') }}"></script>
@@ -345,6 +348,9 @@
 {% if current_user.is_academy_manager %}
 <script src="{{ url_for('static', filename='js/dashboard/coach/academy.js') }}"></script>
 {% endif %}
+
+
+
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -464,6 +470,16 @@
       
       // Initialize dashboard components
       initDashboardComponents();
+
+      initDashboardTab();
+
+      initSessionLogsTab();
+
+      initBulkAvailability();
+
+      const currentDate = new Date();
+      generateAvailabilityCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
+
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       showToast('Error', 'Failed to load dashboard data. Please refresh the page.', 'error');

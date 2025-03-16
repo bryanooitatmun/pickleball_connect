@@ -10,7 +10,7 @@ function initSessionLogsTab() {
 // Load session logs data
 async function loadSessionLogs() {
   try {
-    const endpoint = isAcademyManager() ? '/api/academy/session-logs' : '/api/coach/session-logs';
+    const endpoint = IS_ACADEMY_MANAGER ? '/academy/session-logs' : '/coach/session-logs';
     const sessionLogs = await fetchAPI(endpoint);
     
     // Sort logs by date (newest first by default)
@@ -27,7 +27,7 @@ async function loadSessionLogs() {
     displaySessionLogs(sessionLogs);
     
     // If academy manager, populate coach filter
-    if (isAcademyManager()) {
+    if (IS_ACADEMY_MANAGER) {
       populateCoachFilter(document.getElementById('session-logs-filter-coach'));
     }
     
@@ -60,7 +60,7 @@ function displaySessionLogs(sessionLogs) {
     const logDate = formatDate(log.booking.date);
     
     // Add coach name if academy manager
-    const coachInfo = isAcademyManager() 
+    const coachInfo = IS_ACADEMY_MANAGER 
       ? `<span class="inline-block bg-blue-100 text-blue-700 rounded-lg px-2 py-1 text-xs ml-2">
            <i class="fas fa-user-tie mr-1"></i> ${log.coach.first_name} ${log.coach.last_name}
          </span>`
@@ -242,7 +242,7 @@ function openSessionLogModal(bookingId, logId) {
       showLoading(modal);
       
       // Get session log data asynchronously
-      const endpoint = isAcademyManager() ? `/api/academy/session-logs/${logId}` : `/api/coach/session-logs/${logId}`;
+      const endpoint = IS_ACADEMY_MANAGER ? `/academy/session-logs/${logId}` : `/coach/session-logs/${logId}`;
       fetchAPI(endpoint)
         .then(logData => {
           // Populate form
@@ -299,7 +299,7 @@ document.getElementById('session-log-form').addEventListener('submit', async fun
   
   try {
     showLoading(this);
-    const endpoint = isAcademyManager() ? '/api/academy/session-logs/update' : '/api/coach/session-logs/update';
+    const endpoint = IS_ACADEMY_MANAGER ? '/academy/session-logs/update' : '/coach/session-logs/update';
     await fetchAPI(endpoint, {
       method: 'POST',
       body: JSON.stringify(logData)

@@ -139,9 +139,9 @@ let originalBookingsData = {
           if (IS_COACH) {
             venueStatusHtml = booking.venue_confirmed ? 
               `<div class="mt-3 px-3 py-1.5 rounded-md bg-green-100 border border-green-300 text-green-700 text-sm"><i class="fas fa-check-circle mr-1"></i> Venue Confirmed</div>` : 
-              `<button class="mt-3 px-3 py-1.5 rounded-md bg-red-100 border border-red-300 text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm font-medium flex items-center space-x-1.5 transition-colors confirm-venue-btn" data-booking-id="${booking.id}" data-has-proof="${booking.court_booking_proof ? 'true' : 'false'}">
+              `<button class="mt-3 px-3 py-1.5 rounded-md ${booking.court_booking_proof ? 'bg-yellow-100 border border-yellow-300 text-yellow-700 hover:bg-yellow-200' : 'bg-red-100 border border-red-300 text-red-700 hover:bg-red-200'}  focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm font-medium flex items-center space-x-1.5 transition-colors confirm-venue-btn" data-booking-id="${booking.id}" data-has-proof="${booking.court_booking_proof ? 'true' : 'false'}">
                 <i class="fas fa-exclamation-circle mr-1"></i>
-                <span>${booking.court_booking_proof ? 'Confirm Venue' : 'Book and Confirm Venue'}</span>
+                <span>${booking.court_booking_proof ? 'Confirm Venue Booking' : 'Please Book The Venue and Upload Court Booking Proof'}</span>
               </button>`;
           } else {
             venueStatusHtml = booking.venue_confirmed ? 
@@ -151,7 +151,10 @@ let originalBookingsData = {
         } else {
           venueStatusHtml = booking.venue_confirmed ? 
             `<div class="mt-3 px-3 py-1.5 rounded-md bg-green-100 border border-green-300 text-green-700 text-sm"><i class="fas fa-check-circle mr-1"></i> Venue Confirmed</div>` : 
-            `<div class="mt-3 px-3 py-1.5 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-700 text-sm"><i class="fas fa-exclamation-triangle mr-1"></i> Waiting for student to confirm venue</div>`;
+            `<button class="mt-3 px-3 py-1.5 rounded-md ${booking.court_booking_proof ? 'bg-yellow-100 border border-yellow-300 text-yellow-700 hover:bg-yellow-200' : 'bg-red-100 border border-red-300 text-red-700 hover:bg-red-200'} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm font-medium flex items-center space-x-1.5 transition-colors confirm-venue-btn" data-booking-id="${booking.id}" data-has-proof="${booking.court_booking_proof ? 'true' : 'false'}">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                <span>${booking.court_booking_proof ? 'Student Has Booked the Venue. Please Confirm Venue Booking' : 'ERROR: Student is responsible for court booking but image proof not available'}</span>
+              </button>`;
         }
         
         // Show payment and court proof status
@@ -326,14 +329,8 @@ let originalBookingsData = {
     document.querySelectorAll('.confirm-venue-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
-        const hasProof = this.getAttribute('data-has-proof') === 'true';
         
-        if (hasProof) {
-          showConfirmVenueModal(bookingId);
-        } else {
-          // Show court booking proof upload form
-          showUploadCourtProofModal(bookingId);
-        }
+        showConfirmVenueModal(bookingId);
       });
     });
     
@@ -612,9 +609,10 @@ let originalBookingsData = {
   async function uploadCourtBookingProof(bookingId, file) {
     const formData = new FormData();
     formData.append('booking_id', bookingId);
-    formData.append('court_proof', file);
+    formData.append('proof_type', 'court');
+    formData.append('proof_image', file);
     
-    const response = await fetch('/api/bookings/upload-court-proof', {
+    const response = await fetch('/bookings/upload-payment-proof', {
       method: 'POST',
       body: formData
     });
@@ -691,16 +689,113 @@ let originalBookingsData = {
   }
   
   // Function to show confirm venue modal
-  function showConfirmVenueModal(bookingId) {
+  async function showConfirmVenueModal(bookingId) {
     const modal = document.getElementById('confirm-venue-modal');
     if (!modal) return;
     
-    // Set booking ID
-    document.getElementById('confirm-venue-booking-id').value = bookingId;
+    try {
+      // Show loading state
+      modal.classList.add('loading');
+      
+      // Get booking details from API
+      const booking = await fetchAPI(`/coach/bookings/${bookingId}`);
+      
+      // Set booking ID
+      document.getElementById('confirm-venue-booking-id').value = bookingId;
+      
+      // Determine which section to show based on court booking responsibility
+      document.getElementById('coach-booking-responsibility-section').classList.add('hidden');
+      document.getElementById('student-booking-responsibility-section').classList.add('hidden');
+      
+      if (booking.court_booking_responsibility === 'coach') {
+        // Coach is responsible for booking - show that section
+        const coachSection = document.getElementById('coach-booking-responsibility-section');
+        coachSection.classList.remove('hidden');
+        
+        // Add court booking information
+        const instructionsElement = document.getElementById('court-booking-instructions');
+        if (instructionsElement) {
+          instructionsElement.textContent = booking.court.booking_instructions || 'No specific instructions provided.';
+        }
+        
+        const linkElement = document.getElementById('court-booking-link');
+        if (linkElement) {
+          if (booking.court.booking_link) {
+            linkElement.href = booking.court.booking_link;
+            linkElement.textContent = booking.court.booking_link;
+            linkElement.parentElement.classList.remove('hidden');
+          } else {
+            linkElement.parentElement.classList.add('hidden');
+          }
+        }
+        
+        // If court proof already exists, show it
+        if (booking.court_booking_proof) {
+          const proofSection = document.createElement('div');
+          proofSection.innerHTML = `
+            <div class="mb-4">
+              <label class="block text-gray-700 font-medium mb-2">Court Booking Proof</label>
+              <div class="p-3 bg-gray-50 rounded-lg flex items-center">
+                <a href="${booking.court_booking_proof}" target="_blank" class="text-blue-600 hover:underline flex items-center">
+                  <i class="fas fa-file-image mr-2"></i>
+                  <span>View Uploaded Proof</span>
+                </a>
+              </div>
+            </div>
+          `;
+          
+          // Insert before the upload field
+          const uploadField = coachSection.querySelector('input[type="file"]').parentElement;
+          uploadField.insertAdjacentElement('beforebegin', proofSection);
+          
+          // Hide the upload field since proof already exists
+          uploadField.classList.add('hidden');
+        }
+      } else {
+        // Student is responsible for booking - show that section
+        const studentSection = document.getElementById('student-booking-responsibility-section');
+        studentSection.classList.remove('hidden');
+        
+        // Show payment and court booking proofs if they exist
+        const studentProofLink = document.getElementById('student-court-booking-proof-link');
+        const studentProofContainer = document.getElementById('student-court-booking-proof-container');
+        
+        if (booking.court_booking_proof) {
+          studentProofLink.href = booking.court_booking_proof;
+          studentProofContainer.classList.remove('hidden');
+        } else {
+          studentProofContainer.classList.add('hidden');
+          studentProofContainer.innerHTML = `
+            <p class="text-red-600">Student has not uploaded court booking proof yet.</p>
+          `;
+        }
+        
+        const paymentProofLink = document.getElementById('coach-payment-proof-link');
+        const paymentProofContainer = document.getElementById('coach-payment-proof-container');
+        
+        if (booking.payment_proof) {
+          paymentProofLink.href = booking.payment_proof;
+          paymentProofContainer.classList.remove('hidden');
+        } else {
+          paymentProofContainer.classList.add('hidden');
+          paymentProofContainer.innerHTML = `
+            <p class="text-red-600">Student has not uploaded payment proof yet.</p>
+          `;
+        }
+      }
+      
+      // Remove loading state
+      modal.classList.remove('loading');
+      
+      // Show modal
+      modal.classList.remove('hidden');
+    } catch (error) {
+      console.error('Error showing confirm venue modal:', error);
+      showToast('Error', 'Failed to load booking details. Please try again.', 'error');
+      modal.classList.remove('loading');
+    }
     
-    // Show modal
-    modal.classList.remove('hidden');
-    
+
     // Add event listeners to close buttons
     document.querySelectorAll('.close-confirm-venue-modal').forEach(btn => {
       btn.addEventListener('click', function() {

@@ -1266,7 +1266,7 @@
               
               // Store reservation token for booking submission
               reservationToken = data.reservation_token;
-              reservationExpiry = new Date(data.expires_at);
+              reservationExpiry = new Date(data.expires_at + 'Z');
               
               // Clear any existing countdown
               if (countdownInterval) {
@@ -1301,9 +1301,10 @@
           timerElement.classList.remove('hidden');
           
           const countdownInterval = setInterval(() => {
-              const now = new Date().getTime();
-              const timeRemaining = Math.max(0, Math.floor((reservationExpiry - now) / 1000));
-              
+              const now = Date.now();
+
+              const timeRemaining = Math.max(0, Math.floor((reservationExpiry  - now) / 1000));
+
               if (timeRemaining <= 0) {
                   clearInterval(countdownInterval);
                   timerElement.innerHTML = `<div class="bg-red-100 text-red-700 p-2 rounded border border-red-300">

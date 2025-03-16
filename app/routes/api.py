@@ -154,7 +154,6 @@ def get_pricing_plans():
     return jsonify(result)
 
 @bp.route('/coach/pricing-plans/<int:coach_id>')
-@login_required
 def get_pricing_plans_by_coachid(coach_id):
     """API endpoint to get coach pricing plans"""
     
@@ -4187,24 +4186,4 @@ def get_all_courts():
     
     return jsonify(result)
 
-
-@bp.route('/support/request', methods=['POST'])
-@login_required
-def submit_support_request():
-    """API endpoint for students to submit support requests"""
-    data = request.get_json()
-    subject = data.get('subject')
-    message = data.get('message')
-    
-    if not subject or not message:
-        return jsonify({'error': 'Subject and message are required'}), 400
-    
-    # Here you would typically create a support ticket in your database
-    # or send an email to your support team
-    # For now, we'll just return success
-    
-    return jsonify({
-        'success': True,
-        'message': 'Your support request has been submitted.'
-    })
 

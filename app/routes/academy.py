@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import current_user, login_required
 from app import db
 from app.models.academy import Academy, AcademyCoach, AcademyManager
+from app.models.academy_pricing import AcademyPricingPlan
 from app.models.coach import Coach
 from app.models.user import User
 from app.models.booking import Booking, Availability
@@ -139,6 +140,33 @@ def dashboard():
         'academy/dashboard.html',
         academies=academies
     )
+
+@bp.route('/<int:academy_id>/pricing-plans')
+def get_academy_pricing_plans(academy_id):
+    """API endpoint to get academy pricing plans"""
+    plans = AcademyPricingPlan.query.filter_by(
+        academy_id=academy_id,
+        is_active=True
+    ).all()
+    
+    result = []
+    for plan in plans:
+        plan_data = {
+            'id': plan.id,
+            'academy_id': plan.academy_id,
+            'name': plan.name,
+            'description': plan.description,
+            'discount_type': plan.discount_type,
+            'sessions_required': plan.sessions_required,
+            'percentage_discount': plan.percentage_discount,
+            'fixed_discount': plan.fixed_discount,
+            'first_time_only': plan.first_time_only,
+            'valid_from': plan.valid_from.isoformat() if plan.valid_from else None,
+            'valid_to': plan.valid_to.isoformat() if plan.valid_to else None
+        }
+        result.append(plan_data)
+    
+    return jsonify(result)
 
 @bp.route('/<int:academy_id>/dashboard')
 @login_required

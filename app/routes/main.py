@@ -6,10 +6,10 @@ bp = Blueprint('main', __name__)
 @bp.route('/')
 @bp.route('/index')
 def index():
-    now = datetime.now()
+    now = datetime.utcnow()
     return render_template('index.html', title='Home', now=now)
 
 @bp.route('/about')
 def about():
-    now = datetime.now()
+    now = datetime.utcnow()
     return render_template('about.html', title='About Us', now=now)

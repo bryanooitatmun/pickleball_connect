@@ -166,7 +166,7 @@ def academy_dashboard(academy_id):
     upcoming_bookings = Booking.query.filter(
         Booking.coach_id.in_(coach_ids),
         Booking.status == 'upcoming',
-        Booking.date >= datetime.now().date()
+        Booking.date >= datetime.utcnow().date()
     ).order_by(Booking.date, Booking.start_time).all()
     
     # Get coach statistics

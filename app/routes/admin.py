@@ -51,7 +51,7 @@ def dashboard():
     total_revenue = db.session.query(func.sum(Booking.price)).filter(Booking.status == 'completed').scalar() or 0
     
     # Get monthly revenue for current year
-    current_year = datetime.now().year
+    current_year = datetime.utcnow().year
     monthly_revenue = {}
     
     for month in range(1, 13):
@@ -387,8 +387,8 @@ def earnings():
     total_earnings = db.session.query(func.sum(Booking.price)).filter(Booking.status == 'completed').scalar() or 0
     
     # Get earnings by month for the current year
-    current_year = datetime.now().year
-    current_month = datetime.now().month
+    current_year = datetime.utcnow().year
+    current_month = datetime.utcnow().month
     monthly_earnings = []
     
     for month in range(1, 13):

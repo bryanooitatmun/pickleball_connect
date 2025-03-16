@@ -496,7 +496,7 @@ def profile(coach_id):
 #     upcoming_bookings = Booking.query.filter(
 #         Booking.coach_id == coach.id,
 #         Booking.status == 'upcoming',
-#         Booking.date >= datetime.now().date()
+#         Booking.date >= datetime.utcnow().date()
 #     ).order_by(Booking.date, Booking.start_time).all() if coach else []
     
 #     # Get recent session logs
@@ -521,7 +521,7 @@ def profile(coach_id):
 #         upcoming_bookings=upcoming_bookings,
 #         recent_logs=recent_logs,
 #         total_earnings=total_earnings,
-#         now=datetime.now()
+#         now=datetime.utcnow()
 #     )
 
 @bp.route('/dashboard')
@@ -543,7 +543,7 @@ def dashboard():
         upcoming_bookings = Booking.query.filter(
             Booking.coach_id == coach.id,
             Booking.status == 'upcoming',
-            Booking.date >= datetime.now().date()
+            Booking.date >= datetime.utcnow().date()
         ).order_by(Booking.date, Booking.start_time).all()
     elif current_user.is_academy_manager:
         # For academy managers, get bookings for all academy coaches
@@ -563,7 +563,7 @@ def dashboard():
                 upcoming_bookings = Booking.query.filter(
                     Booking.coach_id.in_(coach_ids),
                     Booking.status == 'upcoming',
-                    Booking.date >= datetime.now().date()
+                    Booking.date >= datetime.utcnow().date()
                 ).order_by(Booking.date, Booking.start_time).all()
     
     # Get recent session logs
@@ -599,7 +599,7 @@ def dashboard():
         upcoming_bookings=upcoming_bookings,
         recent_logs=recent_logs,
         total_earnings=total_earnings,
-        now=datetime.now()
+        now=datetime.utcnow()
     )
 
 @bp.route('/coach/profile')
@@ -709,7 +709,7 @@ def availability():
         if coach:
             availabilities = Availability.query.filter(
                 Availability.coach_id == coach.id,
-                Availability.date >= datetime.now().date()
+                Availability.date >= datetime.utcnow().date()
             ).order_by(Availability.date, Availability.start_time).all()
     
     # For academy managers, get availabilities for selected coach or all coaches
@@ -734,7 +734,7 @@ def availability():
                 # Get availabilities for selected coach
                 availabilities = Availability.query.filter(
                     Availability.coach_id == selected_coach_id,
-                    Availability.date >= datetime.now().date()
+                    Availability.date >= datetime.utcnow().date()
                 ).order_by(Availability.date, Availability.start_time).all()
     
     # Get all courts for dropdown
@@ -787,7 +787,7 @@ def bookings():
             upcoming_bookings = Booking.query.filter(
                 Booking.coach_id == coach.id,
                 Booking.status == 'upcoming',
-                Booking.date >= datetime.now().date()
+                Booking.date >= datetime.utcnow().date()
             ).order_by(Booking.date, Booking.start_time).all()
             
             # Get completed bookings
@@ -825,7 +825,7 @@ def bookings():
                 upcoming_bookings = Booking.query.filter(
                     Booking.coach_id == selected_coach_id,
                     Booking.status == 'upcoming',
-                    Booking.date >= datetime.now().date()
+                    Booking.date >= datetime.utcnow().date()
                 ).order_by(Booking.date, Booking.start_time).all()
                 
                 completed_bookings = Booking.query.filter(
@@ -843,7 +843,7 @@ def bookings():
                     upcoming_bookings = Booking.query.filter(
                         Booking.coach_id.in_(coach_ids),
                         Booking.status == 'upcoming',
-                        Booking.date >= datetime.now().date()
+                        Booking.date >= datetime.utcnow().date()
                     ).order_by(Booking.date, Booking.start_time).all()
                     
                     completed_bookings = Booking.query.filter(
@@ -1051,7 +1051,7 @@ def get_coach_earnings(coach_id):
     ).scalar() or 0
     
     # Current month earnings
-    now = datetime.now()
+    now = datetime.utcnow()
     this_month_earnings = db.session.query(func.sum(Booking.price)).filter(
         Booking.coach_id == coach_id,
         Booking.status == 'completed',
@@ -1176,7 +1176,7 @@ def get_academy_earnings(academy_ids):
     ).scalar() or 0
     
     # Current month earnings
-    now = datetime.now()
+    now = datetime.utcnow()
     this_month_earnings = db.session.query(func.sum(Booking.price)).filter(
         Booking.coach_id.in_(coach_ids),
         Booking.status == 'completed',

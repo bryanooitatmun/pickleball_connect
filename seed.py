@@ -258,7 +258,7 @@ def seed_database():
                 coach_id=john_coach.id,
                 image_path=image_path,
                 description=f"Coach John teaching {random.choice(['serves', 'dinks', 'strategy', 'footwork', 'technique'])}",
-                created_at=datetime.now() - timedelta(days=random.randint(1, 30))
+                created_at=datetime.utcnow() - timedelta(days=random.randint(1, 30))
             ))
         
         # Jane's showcase images (3-6 images)
@@ -269,7 +269,7 @@ def seed_database():
                 coach_id=jane_coach.id,
                 image_path=image_path,
                 description=f"Coach Jane demonstrating {random.choice(['advanced serves', 'tournament play', 'doubles strategy', 'volley technique', 'third shot drops'])}",
-                created_at=datetime.now() - timedelta(days=random.randint(1, 30))
+                created_at=datetime.utcnow() - timedelta(days=random.randint(1, 30))
             ))
         
         michael_image_count = random.randint(3, 6)
@@ -279,7 +279,7 @@ def seed_database():
                 coach_id=michael_coach.id,
                 image_path=image_path,
                 description=f"Coach Michael demonstrating {random.choice(['advanced serves', 'tournament play', 'doubles strategy', 'volley technique', 'third shot drops'])}",
-                created_at=datetime.now() - timedelta(days=random.randint(1, 30))
+                created_at=datetime.utcnow() - timedelta(days=random.randint(1, 30))
             ))
 
         db.session.add_all(showcase_images)
@@ -439,8 +439,8 @@ def seed_database():
                 description="Special summer discount for all sessions",
                 discount_type="seasonal",
                 percentage_discount=12.0,
-                valid_from=datetime.now() - timedelta(days=30),
-                valid_to=datetime.now() + timedelta(days=60),
+                valid_from=datetime.utcnow() - timedelta(days=30),
+                valid_to=datetime.utcnow() + timedelta(days=60),
                 is_active=True
             )
         ]
@@ -527,8 +527,8 @@ def seed_database():
                 total_price=400.0,  # Example price
                 original_price=500.0,
                 discount_amount=100.0,
-                purchase_date=datetime.now() - timedelta(days=random.randint(5, 30)),
-                expires_at=datetime.now() + timedelta(days=random.randint(30, 90)),
+                purchase_date=datetime.utcnow() - timedelta(days=random.randint(5, 30)),
+                expires_at=datetime.utcnow() + timedelta(days=random.randint(30, 90)),
                 status='active'
             )
             db.session.add(elite_package)
@@ -546,8 +546,8 @@ def seed_database():
                     total_price=220.0,
                     original_price=250.0,
                     discount_amount=30.0,
-                    purchase_date=datetime.now() - timedelta(days=random.randint(5, 30)),
-                    expires_at=datetime.now() + timedelta(days=random.randint(30, 90)),
+                    purchase_date=datetime.utcnow() - timedelta(days=random.randint(5, 30)),
+                    expires_at=datetime.utcnow() + timedelta(days=random.randint(30, 90)),
                     status='active'
                 )
                 db.session.add(city_package)
@@ -555,7 +555,7 @@ def seed_database():
         db.session.commit()
 
         # Create availability for the next 14 days
-        today = datetime.now().date()
+        today = datetime.utcnow().date()
         
         # Each coach has 3 available time slots per day for the next 2 weeks
         for day in range(14):
@@ -719,7 +719,7 @@ def seed_database():
                     if coaching_payment_status in ['uploaded', 'approved']:
                         proof = PaymentProof(
                             booking_id=booking.id,
-                            image_path=f"uploads/payment_proofs/booking_{booking.id}_coaching_{int(datetime.now().timestamp())}.png",
+                            image_path=f"uploads/payment_proofs/booking_{booking.id}_coaching_{int(datetime.utcnow().timestamp())}.png",
                             proof_type='coaching',
                             status=coaching_payment_status,
                             notes="Payment received via Venmo" if coaching_payment_status == 'approved' else None
@@ -729,7 +729,7 @@ def seed_database():
                     if court_payment_required and court_payment_status in ['uploaded', 'approved']:
                         proof = PaymentProof(
                             booking_id=booking.id,
-                            image_path=f"uploads/payment_proofs/booking_{booking.id}_court_{int(datetime.now().timestamp())}.png",
+                            image_path=f"uploads/payment_proofs/booking_{booking.id}_court_{int(datetime.utcnow().timestamp())}.png",
                             proof_type='court',
                             status=court_payment_status,
                             notes="Court reservation confirmed" if court_payment_status == 'approved' else None
@@ -829,7 +829,7 @@ def seed_database():
             if coaching_payment_status in ['uploaded', 'approved']:
                 proof = PaymentProof(
                     booking_id=booking.id,
-                    image_path=f"uploads/payment_proofs/booking_{booking.id}_coaching_{int(datetime.now().timestamp())}.png",
+                    image_path=f"uploads/payment_proofs/booking_{booking.id}_coaching_{int(datetime.utcnow().timestamp())}.png",
                     proof_type='coaching',
                     status=coaching_payment_status,
                     notes="Payment received via Venmo" if coaching_payment_status == 'approved' else None
@@ -839,7 +839,7 @@ def seed_database():
             if court_booking_responsibility == 'student' and court_payment_status in ['uploaded', 'approved']:
                 proof = PaymentProof(
                     booking_id=booking.id,
-                    image_path=f"uploads/payment_proofs/booking_{booking.id}_court_{int(datetime.now().timestamp())}.png",
+                    image_path=f"uploads/payment_proofs/booking_{booking.id}_court_{int(datetime.utcnow().timestamp())}.png",
                     proof_type='court',
                     status=court_payment_status,
                     notes="Court reservation confirmed" if court_payment_status == 'approved' else None
@@ -918,7 +918,7 @@ def seed_database():
                     notification_type=notif_type,
                     related_id=random.randint(1, 100),  # Random ID for testing
                     is_read=random.choice([True, False]),
-                    created_at=datetime.now() - timedelta(hours=random.randint(1, 72))
+                    created_at=datetime.utcnow() - timedelta(hours=random.randint(1, 72))
                 )
                 notifications.append(notification)
         
@@ -942,7 +942,7 @@ def seed_database():
                     notification_type=notif_type,
                     related_id=random.randint(1, 100),  # Random ID for testing
                     is_read=random.choice([True, False]),
-                    created_at=datetime.now() - timedelta(hours=random.randint(1, 72))
+                    created_at=datetime.utcnow() - timedelta(hours=random.randint(1, 72))
                 )
                 notifications.append(notification)
         
@@ -966,7 +966,7 @@ def seed_database():
                     notification_type=notif_type,
                     related_id=random.choice([academies[0].id, academies[1].id]),
                     is_read=random.choice([True, False]),
-                    created_at=datetime.now() - timedelta(hours=random.randint(1, 72))
+                    created_at=datetime.utcnow() - timedelta(hours=random.randint(1, 72))
                 )
                 notifications.append(notification)
         
@@ -1080,8 +1080,8 @@ def seed_database():
                         total_price=total_price,
                         original_price=original_price,
                         discount_amount=discount_amount,
-                        purchase_date=datetime.now() - timedelta(days=random.randint(5, 30)),
-                        expires_at=datetime.now() + timedelta(days=random.randint(30, 90)),
+                        purchase_date=datetime.utcnow() - timedelta(days=random.randint(5, 30)),
+                        expires_at=datetime.utcnow() + timedelta(days=random.randint(30, 90)),
                         status='active'
                     )
                     
@@ -1156,7 +1156,7 @@ def seed_database():
             message = ticket_messages[subject_idx].format(
                 coach=f"{coach_user.first_name} {coach_user.last_name}",
                 issue=random.choice(["a double booking", "incorrect pricing", "wrong time slot"]),
-                date=datetime.now().strftime("%B %d"),
+                date=datetime.utcnow().strftime("%B %d"),
                 court=random.choice([c.name for c in courts]),
                 feature_request=random.choice(["see my progress over time", "rate coaches after each session", "get notifications for court availability"]),
                 quality=random.choice(["excellent", "good", "satisfactory", "disappointing"]),
@@ -1173,11 +1173,11 @@ def seed_database():
             
             # Create timestamp (newer for open/in-progress, older for resolved)
             if status == "resolved":
-                created_at = datetime.now() - timedelta(days=random.randint(7, 30))
+                created_at = datetime.utcnow() - timedelta(days=random.randint(7, 30))
                 resolved_at = created_at + timedelta(days=random.randint(1, 5))
                 resolved_by_id = admin.id
             else:
-                created_at = datetime.now() - timedelta(days=random.randint(0, 7))
+                created_at = datetime.utcnow() - timedelta(days=random.randint(0, 7))
                 resolved_at = None
                 resolved_by_id = None
             
@@ -1254,11 +1254,11 @@ def seed_database():
             
             # Create timestamp (newer for open/in-progress, older for resolved)
             if status == "resolved":
-                created_at = datetime.now() - timedelta(days=random.randint(7, 30))
+                created_at = datetime.utcnow() - timedelta(days=random.randint(7, 30))
                 resolved_at = created_at + timedelta(days=random.randint(1, 5))
                 resolved_by_id = admin.id
             else:
-                created_at = datetime.now() - timedelta(days=random.randint(0, 7))
+                created_at = datetime.utcnow() - timedelta(days=random.randint(0, 7))
                 resolved_at = None
                 resolved_by_id = None
             

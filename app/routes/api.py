@@ -81,7 +81,7 @@ def get_coach_stats():
     upcoming_sessions = Booking.query.filter(
         Booking.coach_id == coach.id,
         Booking.status == 'upcoming',
-        Booking.date >= datetime.now().date()
+        Booking.date >= datetime.utcnow().date()
     ).count()
     
     # Get total earnings from completed sessions
@@ -102,7 +102,7 @@ def get_coach_stats():
     # This will get earnings for the last 6 months
     monthly_earnings = {}
     for i in range(5, -1, -1):
-        month_start = datetime.now().replace(day=1) - timedelta(days=i*30)
+        month_start = datetime.utcnow().replace(day=1) - timedelta(days=i*30)
         month_name = month_start.strftime('%B %Y')
         
         month_earnings = db.session.query(func.sum(Booking.price)).filter(
@@ -260,7 +260,7 @@ def get_availability():
     # Get availability for future dates
     availabilities = Availability.query.filter(
         Availability.coach_id == coach.id,
-        Availability.date >= datetime.now().date()
+        Availability.date >= datetime.utcnow().date()
     ).order_by(Availability.date, Availability.start_time).all()
     
     result = []
@@ -301,7 +301,7 @@ def add_availability():
         end_time = datetime.strptime(data['end_time'], '%H:%M').time()
         
         # Check if date is in the future
-        if date_obj < datetime.now().date():
+        if date_obj < datetime.utcnow().date():
             return jsonify({'error': 'Cannot add availability for past dates'}), 400
         
         # Check if end time is after start time
@@ -517,7 +517,7 @@ def apply_availability_template():
     if start_date > end_date:
         return jsonify({'error': 'Start date must be before or equal to end date'}), 400
     
-    if start_date < datetime.now().date():
+    if start_date < datetime.utcnow().date():
         return jsonify({'error': 'Start date cannot be in the past'}), 400
     
     # Extract template settings
@@ -666,7 +666,7 @@ def get_earnings(period):
     ).scalar() or 0
     
     # Current month earnings
-    now = datetime.now()
+    now = datetime.utcnow()
     this_month_earnings = db.session.query(func.sum(Booking.price)).filter(
         Booking.coach_id == coach.id,
         Booking.status == 'completed',
@@ -840,7 +840,7 @@ def get_coach_bookings(status):
     if status == 'upcoming':
         query = query.filter(
             Booking.status == 'upcoming',
-            Booking.date >= datetime.now().date()
+            Booking.date >= datetime.utcnow().date()
         ).order_by(Booking.date, Booking.start_time)
     elif status == 'completed':
         query = query.filter(
@@ -1073,7 +1073,7 @@ def sessions():
     upcoming_bookings = Booking.query.filter(
         Booking.coach_id == coach.id,
         Booking.status == 'upcoming',
-        Booking.date >= datetime.now().date()
+        Booking.date >= datetime.utcnow().date()
     ).order_by(Booking.date, Booking.start_time).all()
     
     return render_template(
@@ -1423,7 +1423,7 @@ def update_session_log():
     log.title = data.get('title', log.title)
     log.notes = data.get('notes', log.notes)
     log.coach_notes = data.get('coach_notes', log.coach_notes)
-    log.updated_at = datetime.now()
+    log.updated_at = datetime.utcnow()
     
     try:
         db.session.commit()
@@ -1679,7 +1679,7 @@ def defer_booking():
         reason = data.get('reason', '')
         
         # Check if date is in the future
-        if new_date < datetime.now().date():
+        if new_date < datetime.utcnow().date():
             return jsonify({'error': 'Cannot reschedule to a past date'}), 400
         
         # Check if end time is after start time
@@ -1886,7 +1886,7 @@ def update_package_status():
     
     # If approved, set activation date (you might want to add this field)
     if new_status == 'active':
-        package.activated_at = datetime.now()
+        package.activated_at = datetime.utcnow()
     
     # If rejected, add rejection reason
     if new_status == 'rejected' and 'reason' in data:
@@ -1950,7 +1950,7 @@ def upload_payment_proof(booking_id):
         os.makedirs(proof_dir, exist_ok=True)
         
         # Save file with unique name
-        filename = f"booking_{booking_id}_{proof_type}_{int(datetime.now().timestamp())}"
+        filename = f"booking_{booking_id}_{proof_type}_{int(datetime.utcnow().timestamp())}"
         image_path = save_uploaded_file(file, proof_dir, filename)
         
         if not image_path:
@@ -2355,7 +2355,7 @@ def get_academy_analytics():
     
     # Get revenue by month
     revenue_by_month = {}
-    now = datetime.now()
+    now = datetime.utcnow()
     
     for i in range(11, -1, -1):
         month_start = now.replace(day=1) - timedelta(days=i*30)
@@ -2478,7 +2478,7 @@ def get_academy_earnings():
     ).scalar() or 0
     
     # Current month earnings
-    now = datetime.now()
+    now = datetime.utcnow()
     this_month_earnings = db.session.query(func.sum(Booking.price)).filter(
         Booking.coach_id.in_(coach_ids),
         Booking.status == 'completed',
@@ -2601,7 +2601,7 @@ def get_academy_earnings_breakdown(period):
         return jsonify({'breakdown': {}})
     
     # Define date range based on period
-    now = datetime.now()
+    now = datetime.utcnow()
     start_date = None
     
     if period == 'this-month':
@@ -2817,7 +2817,7 @@ def approve_package_purchase():
     
     # Update status to active
     package.status = 'active'
-    package.activated_at = datetime.now()
+    package.activated_at = datetime.utcnow()
     
     # Create notification for student
     notification = Notification(
@@ -2918,7 +2918,7 @@ def upload_court_proof():
         os.makedirs(proofs_dir, exist_ok=True)
         
         # Save the file with a unique name
-        filename = f"court_proof_{booking_id}_{int(datetime.now().timestamp())}"
+        filename = f"court_proof_{booking_id}_{int(datetime.utcnow().timestamp())}"
         file_path = save_uploaded_file(file, proofs_dir, filename)
         
         if not file_path:
@@ -3225,7 +3225,7 @@ def purchase_package():
                 original_price=original_price,
                 discount_amount=discount_amount,
                 status='pending',  # Set initial status to pending
-                expires_at=datetime.now() + timedelta(days=90)  # 90-day expiration
+                expires_at=datetime.utcnow() + timedelta(days=90)  # 90-day expiration
             )
                 
         else:  # academy package
@@ -3270,7 +3270,7 @@ def purchase_package():
                 original_price=original_price,
                 discount_amount=discount_amount,
                 status='pending',  # Set initial status to pending
-                expires_at=datetime.now() + timedelta(days=90)  # 90-day expiration
+                expires_at=datetime.utcnow() + timedelta(days=90)  # 90-day expiration
             )
         
         # Save the package to the database
@@ -3793,7 +3793,7 @@ def get_student_bookings(status):
     if status == 'upcoming':
         query = query.filter(
             Booking.status == 'upcoming',
-            Booking.date >= datetime.now().date()
+            Booking.date >= datetime.utcnow().date()
         ).order_by(Booking.date, Booking.start_time)
     elif status == 'completed':
         query = query.filter(
@@ -3875,7 +3875,7 @@ def cancel_student_booking():
     
     # Check cancellation policy (e.g., 24-hour window)
     booking_datetime = datetime.combine(booking.date, booking.start_time)
-    hours_until_booking = (booking_datetime - datetime.now()).total_seconds() / 3600
+    hours_until_booking = (booking_datetime - datetime.utcnow()).total_seconds() / 3600
     
     if hours_until_booking < 24:
         # Could implement a penalty here, but for now just warn
@@ -3987,7 +3987,7 @@ def get_student_packages():
         BookingPackage.student_id == current_user.id,
         BookingPackage.coach_id == coach_id,
         BookingPackage.sessions_booked < BookingPackage.total_sessions,
-        (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
+        (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.utcnow()))
     ).all()
     
     # Get academies this coach belongs to
@@ -4006,7 +4006,7 @@ def get_student_packages():
             BookingPackage.academy_id.in_(academy_ids),
             BookingPackage.package_type == 'academy',
             BookingPackage.sessions_booked < BookingPackage.total_sessions,
-            (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
+            (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.utcnow()))
         ).all()
     
     # Combine and format packages

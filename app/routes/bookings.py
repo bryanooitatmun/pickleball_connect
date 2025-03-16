@@ -181,7 +181,7 @@ def create_booking_with_proofs():
                 AvailabilityReservation.availability_id == avail_id,
                 AvailabilityReservation.student_id == user_id,
                 AvailabilityReservation.reservation_token == reservation_token,
-                AvailabilityReservation.expires_at > datetime.now()
+                AvailabilityReservation.expires_at > datetime.utcnow()
             ).first()
             
             if not reservation:
@@ -566,7 +566,7 @@ def reserve_availability_slots():
         # Check for existing non-expired reservations
         existing_reservation = AvailabilityReservation.query.filter(
             AvailabilityReservation.availability_id == avail.id,
-            AvailabilityReservation.expires_at > datetime.now()
+            AvailabilityReservation.expires_at > datetime.utcnow()
         ).first()
         
         if existing_reservation and existing_reservation.student_id != current_user_id:
@@ -580,14 +580,14 @@ def reserve_availability_slots():
     # Create reservations
     reservations = []
     reservation_token = str(uuid.uuid4())
-    expires_at = datetime.now() + timedelta(minutes=15)  # 15-minute timeout
+    expires_at = datetime.utcnow() + timedelta(minutes=15)  # 15-minute timeout
     
     try:
         for avail_id in availability_ids:
             # Delete any existing expired reservations
             AvailabilityReservation.query.filter(
                 AvailabilityReservation.availability_id == avail_id,
-                AvailabilityReservation.expires_at <= datetime.now()
+                AvailabilityReservation.expires_at <= datetime.utcnow()
             ).delete()
             
             # Delete existing reservation by this user if any
@@ -649,7 +649,7 @@ def book_session(coach_id):
         BookingPackage.student_id == current_user.id,
         BookingPackage.coach_id == coach_id,
         BookingPackage.sessions_booked < BookingPackage.total_sessions,
-        (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
+        (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.utcnow()))
     ).all()
     
     # Get academy packages that can be used with this coach
@@ -670,7 +670,7 @@ def book_session(coach_id):
             BookingPackage.academy_id.in_(academy_ids),
             BookingPackage.package_type == 'academy',
             BookingPackage.sessions_booked < BookingPackage.total_sessions,
-            (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.now()))
+            (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.utcnow()))
         ).all()
     
     # Combine all available packages
@@ -718,8 +718,8 @@ def book_session(coach_id):
                     flash(f'You need to book at least {plan.sessions_required} sessions to use this package deal.')
                 # Seasonal discount
                 elif plan.discount_type == 'seasonal' and (
-                    (plan.valid_from and plan.valid_from > datetime.now().date()) or
-                    (plan.valid_to and plan.valid_to < datetime.now().date())
+                    (plan.valid_from and plan.valid_from > datetime.utcnow().date()) or
+                    (plan.valid_to and plan.valid_to < datetime.utcnow().date())
                 ):
                     flash('This promotional discount is not currently active.')
                 else:
@@ -754,7 +754,7 @@ def book_session(coach_id):
                             original_price=original_price,
                             discount_amount=discount_amount,
                             # Set expiration if needed (e.g., 90 days from now)
-                            expires_at=datetime.now() + timedelta(days=90) if plan.sessions_required > 1 else None
+                            expires_at=datetime.utcnow() + timedelta(days=90) if plan.sessions_required > 1 else None
                         )
                         
                         applied_package = package
@@ -907,7 +907,7 @@ def purchase_package(coach_id, plan_id):
             original_price=original_price,
             discount_amount=discount_amount,
             # Set expiration (e.g., 90 days from now)
-            expires_at=datetime.now() + timedelta(days=90)
+            expires_at=datetime.utcnow() + timedelta(days=90)
         )
         
         try:
@@ -1034,7 +1034,7 @@ def package_success():
             total_price=total_price,
             original_price=original_price,
             discount_amount=discount_amount,
-            expires_at=datetime.now() + timedelta(days=90)
+            expires_at=datetime.utcnow() + timedelta(days=90)
         )
         
         db.session.add(package)

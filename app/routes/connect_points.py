@@ -214,7 +214,7 @@ def update_config():
         return jsonify({'error': 'Minimum factor must be less than maximum factor'}), 400
     
     # Save changes
-    config.updated_at = datetime.now()
+    config.updated_at = datetime.utcnow()
     db.session.commit()
     
     return jsonify({
@@ -363,7 +363,7 @@ def update_voucher(voucher_id):
         
         voucher.code = data['code']
     
-    voucher.updated_at = datetime.now()
+    voucher.updated_at = datetime.utcnow()
     db.session.commit()
     
     return jsonify({

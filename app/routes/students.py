@@ -21,7 +21,7 @@ def dashboard():
     upcoming_bookings = Booking.query.filter(
         Booking.student_id == current_user.id,
         Booking.status == 'upcoming',
-        Booking.date >= datetime.now().date()
+        Booking.date >= datetime.utcnow().date()
     ).order_by(Booking.date, Booking.start_time).all()
     
     # Get recent completed sessions

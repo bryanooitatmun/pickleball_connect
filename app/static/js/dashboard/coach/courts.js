@@ -314,7 +314,7 @@ function initCourtsTab() {
           showLoading(this);
           await updateCourtBookingInstructions(
             instructionsData.court_id,
-            instructionsData
+            instructionsData.booking_instructions
           );
           hideLoading(this);
           

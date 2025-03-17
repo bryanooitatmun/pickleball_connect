@@ -81,7 +81,7 @@ let originalPackagesData = {
         <p class="mt-3 text-gray-600">${pkg.description}</p>
         
         <div class="flex justify-end mt-4">
-          <button class="text-blue-600 hover:text-blue-700 mr-4 view-package-btn" data-package-id="${pkg.id}">
+          <button class="text-blue-600 hover:text-blue-700 mr-4 view-package-btn hidden" data-package-id="${pkg.id}">
             <i class="fas fa-eye"></i> View
           </button>
           <button class="text-red-600 hover:text-red-700 delete-package-btn ${pkg.is_academy_package && !IS_ACADEMY_MANAGER ? 'hidden' : ''}" data-package-id="${pkg.id}">
@@ -94,12 +94,12 @@ let originalPackagesData = {
     });
     
     // Add event listeners
-    container.querySelectorAll('.view-package-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const packageId = this.getAttribute('data-package-id');
-        viewPackageDetails(packageId);
-      });
-    });
+    // container.querySelectorAll('.view-package-btn').forEach(btn => {
+    //   btn.addEventListener('click', function() {
+    //     const packageId = this.getAttribute('data-package-id');
+    //     viewPackageDetails(packageId);
+    //   });
+    // });
     
     container.querySelectorAll('.delete-package-btn').forEach(btn => {
       btn.addEventListener('click', function() {
@@ -149,8 +149,8 @@ let originalPackagesData = {
       // Format dates
       const purchaseDate = formatDate(purchase.purchase_date);
       let expiryDate = '';
-      if (purchase.expiry_date) {
-        expiryDate = formatDate(purchase.expiry_date);
+      if (purchase.expires_at) {
+        expiryDate = formatDate(purchase.expires_at);
       }
       
       // Create appropriate action buttons based on status
@@ -166,24 +166,21 @@ let originalPackagesData = {
       purchaseCard.innerHTML = `
         <div class="flex justify-between">
           <div>
-            <h3 class="font-semibold">${purchase.package.name}</h3>
+            <h3 class="font-semibold">${purchase.pricing_plan.name}</h3>
             <p class="text-gray-500 text-sm">
-              Purchased by ${purchase.student.first_name} ${purchase.student.last_name} on ${purchaseDate}
+              Purchased by ${purchase.student.name} on ${purchaseDate}
             </p>
           </div>
           <div class="text-right">
             <span class="px-2 py-1 rounded-full text-xs ${statusClass} capitalize">${purchase.status}</span>
             <p class="text-gray-600 text-sm mt-1">
-              ${purchase.sessions_used || 0}/${purchase.package.sessions} sessions used
+              ${purchase.sessions_used || 0}/${purchase.total_sessions} sessions used
             </p>
           </div>
         </div>
         
         <div class="mt-3 grid grid-cols-2 gap-4">
           <div>
-            <p class="text-sm text-gray-600">
-              <span class="font-medium">Amount Paid:</span> $${formatCurrency(purchase.amount_paid)}
-            </p>
             <p class="text-sm text-gray-600">
               <span class="font-medium">Purchase Date:</span> ${purchaseDate}
             </p>
@@ -264,16 +261,16 @@ let originalPackagesData = {
       purchaseCard.innerHTML = `
         <div class="flex justify-between">
           <div>
-            <h3 class="font-semibold">${purchase.package.name}</h3>
+            <h3 class="font-semibold">${purchase.pricing_plan.name}</h3>
             <p class="text-gray-500 text-sm">
-              Student: ${purchase.student.first_name} ${purchase.student.last_name} · 
-              Coach: ${purchase.coach?.first_name || ''} ${purchase.coach?.last_name || 'Not Assigned'}
+              Student: ${purchase.student.name} · 
+              Coach: ${purchase.coach?.name || 'Not Assigned'}
             </p>
           </div>
           <div class="text-right">
             <span class="px-2 py-1 rounded-full text-xs ${statusClass} capitalize">${purchase.status}</span>
             <p class="text-gray-600 text-sm mt-1">
-              ${purchase.sessions_used || 0}/${purchase.package.sessions} sessions used
+              ${purchase.sessions_used || 0}/${purchase.total_sessions} sessions used
             </p>
           </div>
         </div>
@@ -281,15 +278,12 @@ let originalPackagesData = {
         <div class="mt-3 grid grid-cols-2 gap-4">
           <div>
             <p class="text-sm text-gray-600">
-              <span class="font-medium">Amount Paid:</span> $${formatCurrency(purchase.amount_paid)}
-            </p>
-            <p class="text-sm text-gray-600">
               <span class="font-medium">Purchase Date:</span> ${formatDate(purchase.purchase_date)}
             </p>
           </div>
           <div>
             <p class="text-sm text-gray-600">
-              <span class="font-medium">Expiry Date:</span> ${purchase.expiry_date ? formatDate(purchase.expiry_date) : 'N/A'}
+              <span class="font-medium">Expiry Date:</span> ${purchase.expirys_at ? formatDate(purchase.expirys_at) : 'N/A'}
             </p>
             <p class="text-sm text-gray-600">
               <span class="font-medium">Payment Method:</span> ${purchase.payment_method || 'N/A'}
@@ -509,7 +503,7 @@ let originalPackagesData = {
       });
     });
     
-    // Approve purchase
+    // // Approve purchase
     document.getElementById('approve-purchase-btn')?.addEventListener('click', async function() {
       const purchaseId = this.getAttribute('data-purchase-id');
       const isAcademy = this.getAttribute('data-is-academy') === 'true';
@@ -595,14 +589,14 @@ let originalPackagesData = {
       const purchaseData = await fetchAPI(endpoint);
       
       // Populate modal
-      document.getElementById('purchase-package-name').textContent = purchaseData.package.name;
+      document.getElementById('purchase-package-name').textContent = purchaseData.pricing_plan.name;
       document.getElementById('purchase-student-name').textContent = 
-        `${purchaseData.student.first_name} ${purchaseData.student.last_name}`;
+        `${purchaseData.student.name}`;
       
       // Set payment proof image
       if (purchaseData.payment_proof) {
-        document.getElementById('payment-proof-link').href = purchaseData.payment_proof;
-        document.getElementById('payment-proof-img').src = purchaseData.payment_proof;
+        document.getElementById('payment-proof-link').href = purchaseData.payment_proof.image_url;
+        document.getElementById('payment-proof-img').src = purchaseData.payment_proof.image_url;
         document.getElementById('payment-proof-container').classList.remove('hidden');
       } else {
         document.getElementById('payment-proof-container').classList.add('hidden');
@@ -632,8 +626,8 @@ let originalPackagesData = {
       
       fetchAPI(endpoint)
         .then(data => {
-          if (data.payment_proof_url) {
-            window.open(data.payment_proof_url, '_blank');
+          if (data.image_url) {
+            window.open(data.image_url, '_blank');
           } else {
             showToast('Info', 'No payment proof available for this purchase.', 'info');
           }

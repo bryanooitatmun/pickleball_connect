@@ -62,27 +62,28 @@ def get_availability(coach_id, court_id, date):
         # Organize pricing plans for easier client-side processing
         formatted_plans = []
         for plan in pricing_plans:
-            plan_data = {
-                'id': plan.id,
-                'name': plan.name,
-                'description': plan.description,
-                'discount_type': plan.discount_type,
-                'sessions_required': plan.sessions_required,
-                'first_time_only': plan.first_time_only,
-            }
-            
-            if plan.percentage_discount:
-                plan_data['discount_amount'] = plan.percentage_discount
-                plan_data['discount_type_amount'] = 'percentage'
-            elif plan.fixed_discount:
-                plan_data['discount_amount'] = plan.fixed_discount
-                plan_data['discount_type_amount'] = 'fixed'
+            if plan.discount_type != 'package':
+                plan_data = {
+                    'id': plan.id,
+                    'name': plan.name,
+                    'description': plan.description,
+                    'discount_type': plan.discount_type,
+                    'sessions_required': plan.sessions_required,
+                    'first_time_only': plan.first_time_only,
+                }
                 
-            if plan.valid_from and plan.valid_to:
-                plan_data['valid_from'] = plan.valid_from.isoformat() if plan.valid_from else None
-                plan_data['valid_to'] = plan.valid_to.isoformat() if plan.valid_to else None
-                
-            formatted_plans.append(plan_data)
+                if plan.percentage_discount:
+                    plan_data['discount_amount'] = plan.percentage_discount
+                    plan_data['discount_type_amount'] = 'percentage'
+                elif plan.fixed_discount:
+                    plan_data['discount_amount'] = plan.fixed_discount
+                    plan_data['discount_type_amount'] = 'fixed'
+                    
+                if plan.valid_from and plan.valid_to:
+                    plan_data['valid_from'] = plan.valid_from.isoformat() if plan.valid_from else None
+                    plan_data['valid_to'] = plan.valid_to.isoformat() if plan.valid_to else None
+                    
+                formatted_plans.append(plan_data)
         
         # Format court fees for client-side use
         formatted_fees = []

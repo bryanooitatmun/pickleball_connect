@@ -221,7 +221,8 @@ def seed_database():
             sessions_completed=120,
             biography="John is a passionate pickleball coach with over 5 years of experience. He specializes in helping beginners develop their skills and advanced players refine their strategies.",
             years_experience=5,
-            specialties="Beginner Training, Strategy Development, Footwork"
+            specialties="Beginner Training, Strategy Development, Footwork",
+            default_court_booking_responsibility=random.choice(['student', 'coach'])
         )
         db.session.add(john_coach)
         
@@ -231,7 +232,8 @@ def seed_database():
             sessions_completed=150,
             biography="Jane is a tournament champion and experienced coach. She focuses on competitive play and advanced techniques.",
             years_experience=7,
-            specialties="Tournament Preparation, Advanced Techniques, Mental Game"
+            specialties="Tournament Preparation, Advanced Techniques, Mental Game",
+            default_court_booking_responsibility=random.choice(['student', 'coach'])
         )
         db.session.add(jane_coach)
         
@@ -241,7 +243,8 @@ def seed_database():
             sessions_completed=200,
             biography="Michael is a professional pickleball player who has competed nationally. He specializes in doubles strategy and advanced shot placement.",
             years_experience=10,
-            specialties="Doubles Strategy, Competition Preparation, Shot Placement"
+            specialties="Doubles Strategy, Competition Preparation, Shot Placement",
+            default_court_booking_responsibility=random.choice(['student', 'coach'])
         )
         db.session.add(michael_coach)
 
@@ -1086,7 +1089,18 @@ def seed_database():
                     )
                     
                     db.session.add(package)
-                    
+                    db.session.flush()
+
+                    proof = PaymentProof(
+                        package_id=package.id,
+                        proof_type='package',
+                        image_path=f"uploads/payment_proofs/package_{package.id}_package_{int(datetime.utcnow().timestamp())}.png",
+                        status='pending',
+                        notes=""
+                    )
+
+                    db.session.add(proof)
+
                     # Associate some random bookings with this package
                     if sessions_booked > 0:
                         # Get the student's bookings with this coach

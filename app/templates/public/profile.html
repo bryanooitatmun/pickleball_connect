@@ -187,8 +187,8 @@
   font-weight: bold;
 }
 
-/* Package card styles */
-.package-card {
+/* Credit card styles */
+.credit-card {
   background-color: white;
   border-radius: 0.75rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -196,21 +196,21 @@
   overflow: hidden;
 }
 
-.package-card:hover {
+.credit-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
-.package-card-header {
+.credit-card-header {
   padding: 1.25rem;
   border-bottom: 1px solid #f3f4f6;
 }
 
-.package-card-body {
+.credit-card-body {
   padding: 1.25rem;
 }
 
-.package-card-footer {
+.credit-card-footer {
   padding: 1rem;
   background-color: #f9fafb;
   border-top: 1px solid #f3f4f6;
@@ -223,6 +223,105 @@
   padding: 0.25rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 500;
+}
+
+/* Step progression styling */
+.step-container {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.step-progress {
+  display: flex;
+  position: relative;
+  z-index: 10;
+  margin-bottom: 1.5rem;
+}
+
+.step-progress::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #e5e7eb;
+  z-index: -1;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.step-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #e5e7eb;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.step-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  transition: all 0.3s ease;
+}
+
+.step-item.active .step-circle {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.step-item.active .step-text {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.step-item.completed .step-circle {
+  background-color: #10b981;
+  color: white;
+}
+
+.step-content {
+  display: none;
+  padding: 1rem 0;
+  transition: all 0.3s ease;
+}
+
+.step-content.active {
+  display: block;
+}
+
+/* Coach contact info card */
+.contact-card {
+  background-color: #f0f9ff;
+  border-radius: 0.75rem;
+  border-left: 4px solid #3b82f6;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+/* Credits summary card */
+.credits-summary {
+  background-color: #f0f9ff;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.credits-count {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #3b82f6;
 }
 {% endblock %}
 
@@ -239,6 +338,64 @@
   
   <!-- Main Content -->
   <div class="container mx-auto px-6 py-12">
+    <!-- Booking Options Section -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+      <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">How Would You Like to Book With This Coach?</h2>
+      <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">
+        There are two ways to book sessions with our coaches. Choose the option that works best for you.
+      </p>
+      
+      <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <!-- Direct Booking Option -->
+        <div class="bg-blue-50 rounded-xl p-6 border border-blue-200 flex flex-col h-full">
+          <div class="flex items-center mb-4">
+            <div class="rounded-full bg-blue-500 p-3 mr-3">
+              <i class="fas fa-calendar-check text-white text-xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-blue-800">Book a Session Now</h3>
+          </div>
+          
+          <div class="text-gray-700 mb-4 flex-grow">
+            <p class="mb-3">Choose this option if you:</p>
+            <ul class="space-y-2 pl-5 list-disc mb-4">
+              <li>Are comfortable booking courts yourself</li>
+              <li>Have specific dates and times in mind</li>
+              <li>Prefer to schedule individual sessions</li>
+            </ul>
+            <p class="font-medium text-blue-700">You'll book your court first, then pay the coach.</p>
+          </div>
+          
+          <button id="schedule-btn-main" class="block w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium text-center hover:shadow-lg transform hover:scale-105 transition-all">
+            Schedule a Session
+          </button>
+        </div>
+        
+        <!-- Credits Option -->
+        <div class="bg-green-50 rounded-xl p-6 border border-green-200 flex flex-col h-full">
+          <div class="flex items-center mb-4">
+            <div class="rounded-full bg-green-500 p-3 mr-3">
+              <i class="fas fa-ticket-alt text-white text-xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-green-800">Purchase Credits</h3>
+          </div>
+          
+          <div class="text-gray-700 mb-4 flex-grow">
+            <p class="mb-3">Choose this option if you:</p>
+            <ul class="space-y-2 pl-5 list-disc mb-4">
+              <li>Prefer the coach to help with court booking</li>
+              <li>Want more flexibility with scheduling</li>
+              <li>Plan to take multiple sessions</li>
+            </ul>
+            <p class="font-medium text-green-700">Coach will help you find and book available courts.</p>
+          </div>
+          
+          <button id="view-credits-btn-main" class="block w-full bg-gradient-to-r from-green-500 to-teal-600 text-white py-3 rounded-lg font-medium text-center hover:shadow-lg transform hover:scale-105 transition-all">
+            View Credit Packages
+          </button>
+        </div>
+      </div>
+    </div>
+    
     <div class="flex flex-col lg:flex-row gap-8">
       <!-- Coach Info Section -->
       <div class="lg:w-1/3">
@@ -319,11 +476,55 @@
             </ul>
           </div>
           
-          <!-- Book button -->
-          <button id="schedule-btn" class="block w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium text-center hover:shadow-lg transform hover:scale-105 transition-all">
-            Book a Session
-          </button>
+          <!-- Actions buttons -->
+          <div class="grid grid-cols-1 gap-3">
+            <button id="schedule-btn" class="block w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium text-center hover:shadow-lg transform hover:scale-105 transition-all">
+              Schedule a Session
+            </button>
+            
+            <!-- Credits button for logged in users -->
+            {% if current_user.is_authenticated %}
+            <button id="view-credits-btn" class="block w-full bg-white border-2 border-blue-500 text-blue-600 py-3 rounded-lg font-medium text-center hover:bg-blue-50 transition-all">
+              View My Credits
+            </button>
+            {% endif %}
+          </div>
         </div>
+        
+        <!-- Credits Summary (for logged in users) -->
+        {% if current_user.is_authenticated %}
+        <div id="credits-summary-container" class="bg-white rounded-xl shadow-sm p-6 mt-4 hidden">
+          <h3 class="font-semibold mb-4">Your Credits Summary</h3>
+          <div id="credits-summary" class="credits-summary">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-gray-600">Available Credits:</span>
+              <span class="credits-count" id="total-available-credits">0</span>
+            </div>
+            <div class="text-sm text-gray-500" id="credits-expiry-info">
+              <!-- Credits expiry info will be displayed here -->
+            </div>
+          </div>
+          
+          <div id="coach-contact-info" class="contact-card hidden">
+            <h4 class="font-medium text-gray-800 mb-2">Contact Coach Directly</h4>
+            <p class="text-sm text-gray-600 mb-3">Use your credits by contacting the coach to schedule sessions:</p>
+            <div class="space-y-2">
+              <div class="flex items-center">
+                <i class="fas fa-phone-alt text-blue-500 w-6"></i>
+                <a href="#" id="coach-phone-link" class="text-blue-600 hover:underline ml-2">Not available</a>
+              </div>
+              <div class="flex items-center">
+                <i class="fas fa-envelope text-blue-500 w-6"></i>
+                <a href="#" id="coach-email-link" class="text-blue-600 hover:underline ml-2">Not available</a>
+              </div>
+              <div class="flex items-center">
+                <i class="fab fa-whatsapp text-green-500 w-6"></i>
+                <a href="#" id="coach-whatsapp-link" class="text-green-600 hover:underline ml-2">WhatsApp</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
       </div>
       
       <!-- Biography and Showcase Section -->
@@ -344,23 +545,92 @@
           </div>
         </div>
         
-        <!-- Coach Packages Section -->
-        <div id="coach-packages-container" class="bg-white rounded-xl shadow-sm p-6 mb-8 hidden">
-          <h2 class="text-xl font-semibold mb-4">Available Packages From The Coach</h2>
-          <div id="coach-packages" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Coach packages will be inserted here by JavaScript -->
-            <p class="text-gray-500 text-sm col-span-full">Loading packages...</p>
+        <!-- Coach Credits Section -->
+        <div id="coach-credits-container" class="bg-white rounded-xl shadow-sm p-6 mb-8 hidden">
+          <h2 class="text-xl font-semibold mb-4">Available Coaching Credits</h2>
+          
+          <div class="mb-6 bg-green-50 p-5 rounded-lg border border-green-200">
+            <h3 class="font-semibold text-green-800 mb-2 flex items-center">
+              <i class="fas fa-info-circle mr-2"></i>How Credits Work
+            </h3>
+            <p class="text-gray-700 mb-3">Credits give you more flexibility for scheduling sessions with your coach:</p>
+            
+            <ul class="space-y-2 text-gray-700">
+              <li class="flex items-start">
+                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                <span>Your coach will help find and book courts for your sessions</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                <span>Coordinate directly with your coach for the best time and location</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                <span>Save money with package discounts compared to individual sessions</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                <span>Credits are valid for 90 days from purchase</span>
+              </li>
+            </ul>
+          </div>
+          
+          <div id="coach-credits" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Coach credits will be inserted here by JavaScript -->
+            <p class="text-gray-500 text-sm col-span-full">Loading credits...</p>
           </div>
         </div>
         
-        <!-- Academy Packages Section -->
-        <div id="academy-packages-container" class="bg-white rounded-xl shadow-sm p-6 mb-8 hidden">
-          <h2 class="text-xl font-semibold mb-4">Academy Packages</h2>
-          <div id="academy-packages" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Academy packages will be inserted here by JavaScript -->
-            <p class="text-gray-500 text-sm col-span-full">Loading packages...</p>
+        <!-- My Credits Section (For logged in users) -->
+        {% if current_user.is_authenticated %}
+        <div id="my-credits-container" class="bg-white rounded-xl shadow-sm p-6 mb-8 hidden">
+          <h2 class="text-xl font-semibold mb-4">My Purchased Credits</h2>
+          
+          <div class="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
+            <h3 class="text-lg font-medium text-blue-800 mb-2">Share Your Availability</h3>
+            <p class="text-gray-600 mb-3">Help your coach find suitable times for your sessions. Select days and times when you're typically available:</p>
+            
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Days I'm Usually Available</label>
+                <div class="grid grid-cols-7 gap-1">
+                  <button class="my-day-btn p-1 rounded border border-gray-300 text-xs" data-day="Mon">Mon</button>
+                  <button class="my-day-btn p-1 rounded border border-gray-300 text-xs" data-day="Tue">Tue</button>
+                  <button class="my-day-btn p-1 rounded border border-gray-300 text-xs" data-day="Wed">Wed</button>
+                  <button class="my-day-btn p-1 rounded border border-gray-300 text-xs" data-day="Thu">Thu</button>
+                  <button class="my-day-btn p-1 rounded border border-gray-300 text-xs" data-day="Fri">Fri</button>
+                  <button class="my-day-btn p-1 rounded border border-gray-300 text-xs" data-day="Sat">Sat</button>
+                  <button class="my-day-btn p-1 rounded border border-gray-300 text-xs" data-day="Sun">Sun</button>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Time Preferences</label>
+                <div class="grid grid-cols-3 gap-1">
+                  <button class="my-time-btn p-1 rounded border border-gray-300 text-xs" data-time="Morning">Morning</button>
+                  <button class="my-time-btn p-1 rounded border border-gray-300 text-xs" data-time="Afternoon">Afternoon</button>
+                  <button class="my-time-btn p-1 rounded border border-gray-300 text-xs" data-time="Evening">Evening</button>
+                </div>
+                
+                <div class="mt-3">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Notes for Coach</label>
+                  <textarea id="my-availability-notes" class="w-full p-2 border rounded-lg text-sm" placeholder="Any specific dates or additional preferences..."></textarea>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-4 text-right">
+              <button id="my-send-availability-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                Save Availability
+              </button>
+            </div>
+          </div>
+          
+          <div id="student-credits" class="space-y-3">
+            <p class="text-gray-500 text-sm">Loading your credits...</p>
           </div>
         </div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -371,50 +641,91 @@
     <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-3/4 lg:w-3/4 p-6 scrollable-modal">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold text-gray-800">Schedule a Session</h2>
+        <button id="close-schedule-modal" class="text-gray-400 hover:text-gray-600">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left Column: Calendar -->
-        <div class="lg:col-span-2">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Left side: Court and Calendar -->
-            <div>
-              <!-- Court Selection -->
-              <div class="mb-6 bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
-                <label for="court-select" class="font-bold mb-2 block text-lg text-blue-800">1. Select a Court</label>
-                <p class="mb-2 text-gray-600 text-sm">Choose a court to see available time slots</p>
-                <select id="court-select"
-                  class="w-full p-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
-                  <option value="">-- Select a court --</option>
-                  <!-- Court options will be populated dynamically -->
-                </select>
-              </div>
+      <!-- Booking Steps Progress -->
+      <div class="step-container mb-6">
+        <div class="step-progress">
+          <div class="step-item active" data-step="1">
+            <div class="step-circle">1</div>
+            <div class="step-text">Select Court</div>
+          </div>
+          <div class="step-item" data-step="2">
+            <div class="step-circle">2</div>
+            <div class="step-text">Select Date</div>
+          </div>
+          <div class="step-item" data-step="3">
+            <div class="step-circle">3</div>
+            <div class="step-text">Select Time</div>
+          </div>
+        </div>
+      </div>
 
-              <!-- Date Selection -->
-              <div class="mb-2">
-                <label class="font-bold mb-2 block text-lg text-gray-700">2. Select a Date</label>
-              </div>
+      <!-- Step 1: Court Selection -->
+      <div class="step-content active" data-step="1">
+        <div class="bg-blue-50 p-6 rounded-lg border-2 border-blue-200 mb-4">
+          <label for="court-select" class="font-bold mb-2 block text-lg text-blue-800">Select a Court</label>
+          <p class="mb-4 text-gray-600">Choose a court where you'd like to book your coaching session.</p>
+          <select id="court-select"
+            class="w-full p-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
+            <option value="">-- Select a court --</option>
+            <!-- Court options will be populated dynamically -->
+          </select>
+        </div>
+        
+        <div class="flex justify-end">
+          <button id="next-to-date" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all opacity-50 cursor-not-allowed" disabled>
+            Continue to Date Selection
+          </button>
+        </div>
+      </div>
 
-              <div id="calendar-container" class="transition-all duration-300">
-                <!-- Month Navigation and Display -->
-                <div class="flex justify-between items-center mb-3">
-                  <button id="prev-month" class="text-gray-700 hover:text-blue-600 transition-colors">&#10094;</button>
-                  <h3 id="current-month-year" class="text-lg font-bold"></h3>
-                  <button id="next-month" class="text-gray-700 hover:text-blue-600 transition-colors">&#10095;</button>
-                </div>
-                
-                <!-- Calendar -->
-                <div id="calendar" class="grid grid-cols-7 gap-1 text-sm">
-                  <!-- Calendar days will be dynamically populated here -->
-                </div>
-              </div>
+      <!-- Step 2: Date Selection -->
+      <div class="step-content" data-step="2">
+        <div class="bg-blue-50 p-6 rounded-lg border-2 border-blue-200 mb-4">
+          <label class="font-bold mb-2 block text-lg text-blue-800">Select a Date</label>
+          <p class="mb-4 text-gray-600">Choose a date for your coaching session.</p>
+          
+          <div id="calendar-container" class="transition-all duration-300">
+            <!-- Month Navigation and Display -->
+            <div class="flex justify-between items-center mb-3">
+              <button id="prev-month" class="text-gray-700 hover:text-blue-600 transition-colors">&#10094;</button>
+              <h3 id="current-month-year" class="text-lg font-bold"></h3>
+              <button id="next-month" class="text-gray-700 hover:text-blue-600 transition-colors">&#10095;</button>
             </div>
+            
+            <!-- Calendar -->
+            <div id="calendar" class="grid grid-cols-7 gap-1 text-sm">
+              <!-- Calendar days will be dynamically populated here -->
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex justify-between">
+          <button id="back-to-court" class="px-6 py-2 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600 transition-colors">
+            Back to Court Selection
+          </button>
+          
+          <button id="next-to-time" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all opacity-50 cursor-not-allowed" disabled>
+            Continue to Time Selection
+          </button>
+        </div>
+      </div>
 
-            <!-- Right side: Time Slots -->
-            <div>
-              <!-- Selected Date Display -->
-              <h3 id="selected-date" class="text-lg font-bold mb-2"></h3>
-
+      <!-- Step 3: Time Selection -->
+      <div class="step-content" data-step="3">
+        <div class="bg-blue-50 p-6 rounded-lg border-2 border-blue-200 mb-4">
+          <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-6">
+            <!-- Left Column: Time Slots -->
+            <div class="md:w-3/5">
+              <label class="font-bold mb-2 block text-lg text-blue-800">Select Time Slots</label>
+              <h3 id="selected-date" class="text-lg font-bold mb-3"></h3>
+              
               <!-- Availability Legend -->
               <div class="flex flex-wrap gap-3 text-xs text-gray-600 mb-2">
                 <div class="flex items-center space-x-1">
@@ -430,109 +741,51 @@
                   <span>Unavailable</span>
                 </div>
               </div>
-
-              <!-- Selected sessions info -->
-              <div class="flex items-center space-x-4 my-5">
-                <div class="text-sm font-medium bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                  Sessions: <span id="session-count">0</span>
-                </div>
-                <div>
-                  <span class="text-lg font-bold text-blue-600">Total: $<span id="current-total">0</span></span>
-                  <div id="savings-container" class="text-sm text-green-600 hidden">
-                    Savings: $<span id="total-savings">0</span>
-                  </div>
-                </div>
-              </div>
-
+              
               <!-- Availability Grid -->
-              <div>
-                <h4 class="font-bold mb-2">Available Time Slots</h4>
-                <div id="availability-grid"
-                  class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
-                  <!-- Time slots will be populated here -->
-                </div>
+              <div id="availability-grid"
+                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
+                <!-- Time slots will be populated here -->
               </div>
-
-              <!-- Court Fee Information -->
-              <div class="mt-4 p-3 bg-gray-50 rounded-lg text-sm">
-                <h4 class="font-bold mb-2">Court Information</h4>
-                <div id="court-fee-info" class="text-gray-600 mb-2">
-                  <p>Select a court to view fee information.</p>
+            </div>
+            
+            <!-- Right Column: Selected Sessions -->
+            <div class="md:w-2/5">
+              <div class="bg-white p-4 rounded-lg border border-gray-200">
+                <h4 class="font-bold mb-3">Selected Sessions</h4>
+                
+                <!-- Count and Price -->
+                <div class="flex justify-between items-center mb-3 bg-blue-50 p-2 rounded">
+                  <div class="text-sm font-medium text-blue-800">
+                    Sessions: <span id="session-count">0</span>
+                  </div>
+                  <div class="text-lg font-bold text-blue-600">
+                    Total: $<span id="current-total">0</span>
+                  </div>
                 </div>
-                <div id="court-booking-info" class="text-gray-600 hidden">
-                  <div class="flex items-center text-sm text-blue-600">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    <span id="booking-responsibility-text">Loading booking information...</span>
+                
+                <!-- Selected timeslots -->
+                <div id="selected-timeslots" class="space-y-2 max-h-40 overflow-y-auto mb-2">
+                  <!-- Selected timeslots will be dynamically populated here -->
+                  <div class="text-center py-3 text-gray-500">
+                    <p>No sessions selected yet</p>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Pricing Plans Section -->
-          <div class="mt-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-            <h3 class="font-bold text-lg text-blue-800 mb-3">3. Special Pricing & Packages</h3>
-            <div id="pricing-plans-container" class="space-y-3">
-              <!-- Pricing plans will be populated here -->
-              <p class="text-sm text-gray-500">No special pricing plans available</p>
-            </div>
-          </div>
-          <div class="mt-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-200" id="packages-container">
-            <h3 class="font-bold text-lg text-blue-800 mb-3">Your Available Packages</h3>
-            <div id="student-packages" class="space-y-3">
-              <p class="text-sm text-gray-500">Loading your packages...</p>
             </div>
           </div>
         </div>
-
-        <!-- Right Column: Selected Sessions and Fee Breakdown -->
-        <div class="bg-gray-50 p-4 rounded-lg">
-          <h3 class="font-bold text-lg mb-3">Selected Session</h3>
-          <div id="selected-timeslots" class="space-y-2 max-h-40 overflow-y-auto mb-4">
-            <!-- Selected timeslots will be dynamically populated here -->
-            <div class="text-center py-6 text-gray-500">
-              <p>No sessions selected yet</p>
-            </div>
-          </div>
-
-          <hr class="my-4 border-gray-300">
-
-          <!-- Fee Breakdown -->
-          <div class="mb-4">
-            <h4 class="font-bold mb-2">Fee Breakdown</h4>
-            <div class="space-y-2 text-sm">
-              <div class="flex justify-between">
-                <span>Coach Fees:</span>
-                <span>$<span id="coach-fee-total">0.00</span></span>
-              </div>
-              <div class="flex justify-between">
-                <span>Court Fees:</span>
-                <span>$<span id="court-fee-total">0.00</span></span>
-              </div>
-              <div id="discount-info" class="text-green-600 hidden">
-                <div class="flex justify-between">
-                  <span>Discount:</span>
-                  <span>-$<span id="discount-amount">0.00</span></span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Total Cost -->
-          <div class="bg-blue-100 p-3 rounded-lg">
-            <div class="flex justify-between text-lg font-bold">
-              <span>Total Cost:</span>
-              <span>$<span id="current-total-copy">0.00</span></span>
-            </div>
-          </div>
+        
+        <div class="flex justify-between">
+          <button id="back-to-date" class="px-6 py-2 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600 transition-colors">
+            Back to Date Selection
+          </button>
+          
+          <button id="continue-to-booking" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all opacity-50 cursor-not-allowed" disabled>
+            Continue to Booking
+          </button>
         </div>
       </div>
-
-      <!-- Schedule Button -->
-      <button id="schedule-button"
-        class="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-xl transform hover:scale-105 transition-all w-full">
-        Continue to Booking
-      </button>
     </div>
   </div>
 
@@ -557,9 +810,63 @@
           <h3 class="text-xl font-bold text-blue-800 mb-4">Payment & Booking Instructions</h3>
           
           <div class="payment-steps">
-            <!-- Step 1: Coach Payment -->
+            <!-- Step 1: Court Booking -->
             <div class="payment-step mb-6">
-              <h4 class="font-bold text-lg text-gray-800 mb-2">Coach Payment</h4>
+              <h4 class="font-bold text-lg text-gray-800 mb-2">Court Booking</h4>
+              <div id="court-booking-instructions" class="bg-white p-4 rounded-lg mb-3">
+                <div class="text-amber-700 bg-amber-50 p-3 rounded-lg mb-3">
+                  <div class="flex">
+                    <div class="flex-shrink-0">
+                      <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                      </svg>
+                    </div>
+                    <div class="ml-3">
+                      <h5 class="text-sm font-medium">Important Notice</h5>
+                      <p class="text-xs mt-1">You need to book the court first before proceeding with coach payment.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <p id="court-booking-text" class="text-sm text-gray-700 mb-3">Please book your court at the venue's website using the link below:</p>
+                <div id="specific-court-instructions" class="pl-4 border-l-2 border-blue-200 mb-3"></div>
+                
+                <div id="court-booking-link-box" class="mb-3">
+                  <a id="confirmation-court-link" href="#" target="_blank" class="text-blue-600 hover:underline flex items-center">
+                    <i class="fas fa-external-link-alt mr-2"></i> Book court now
+                  </a>
+                </div>
+              </div>
+              
+              <!-- Court Booking Proof Upload -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Court Booking Proof</label>
+                <p class="text-sm text-gray-500 mb-2">Upload a screenshot of your court booking confirmation.</p>
+                <div class="file-upload-container">
+                  <label for="court-booking-proof" class="file-upload-label">
+                    <div class="flex flex-col items-center justify-center py-4">
+                      <svg class="w-8 h-8 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                      </svg>
+                      <p class="text-sm text-gray-600">Upload screenshot of your court booking</p>
+                      <p class="text-xs text-gray-500">PNG, JPG or JPEG (max. 5MB)</p>
+                    </div>
+                  </label>
+                  <input type="file" id="court-booking-proof" name="court_booking_proof" accept="image/*" class="file-upload-input" required>
+                  <div id="court-booking-preview" class="file-preview"></div>
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center">
+                <button type="button" id="proceed-to-coach-payment" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all">
+                  Proceed to Coach Payment
+                </button>
+              </div>
+            </div>
+            
+            <!-- Step 2: Coach Payment (hidden initially) -->
+            <div id="coach-payment-section" class="payment-step mb-6 hidden">
+              <h4 class="font-bold text-lg text-gray-800 mb-2">Coach Payment <span id="coach-payment-amount" class="text-blue-600"></span></h4>
               <div id="coach-payment-methods" class="mb-4">
                 <div id="bank-transfer-details" class="bg-white p-4 rounded-lg mb-3">
                   <h5 class="font-medium text-gray-800 mb-2">Bank Transfer</h5>
@@ -597,65 +904,19 @@
               <!-- Coach Payment Proof Upload -->
               <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Upload Coach Payment Proof</label>
+                <p class="text-sm text-gray-500 mb-2">Upload a screenshot of your payment to the coach.</p>
                 <div class="file-upload-container">
                   <label for="coach-payment-proof" class="file-upload-label">
                     <div class="flex flex-col items-center justify-center py-4">
                       <svg class="w-8 h-8 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                       </svg>
-                      <p class="text-sm text-gray-600">Click to upload or drag and drop</p>
+                      <p class="text-sm text-gray-600">Upload payment proof</p>
                       <p class="text-xs text-gray-500">PNG, JPG or JPEG (max. 5MB)</p>
                     </div>
                   </label>
                   <input type="file" id="coach-payment-proof" name="coach_payment_proof" accept="image/*" class="file-upload-input" required>
                   <div id="coach-payment-preview" class="file-preview"></div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Step 2: Court Booking (conditional) -->
-            <div id="court-booking-section" class="payment-step mb-6 hidden">
-              <h4 class="font-bold text-lg text-gray-800 mb-2">Court Booking</h4>
-              <div id="court-booking-instructions" class="bg-white p-4 rounded-lg mb-3">
-                <div class="text-amber-700 bg-amber-50 p-3 rounded-lg mb-3">
-                  <div class="flex">
-                    <div class="flex-shrink-0">
-                      <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                      </svg>
-                    </div>
-                    <div class="ml-3">
-                      <h5 class="text-sm font-medium">Important Notice</h5>
-                      <p class="text-xs mt-1">You must book the VIP courts as specified below. Bookings on regular courts may be cancelled by the coach.</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <p id="court-booking-text" class="text-sm text-gray-700 mb-3">Please follow these instructions to book your court:</p>
-                <div id="specific-court-instructions" class="pl-4 border-l-2 border-blue-200 mb-3"></div>
-                
-                <div id="court-booking-link-box" class="mb-3">
-                  <a id="confirmation-court-link" href="#" target="_blank" class="text-blue-600 hover:underline flex items-center">
-                    <i class="fas fa-external-link-alt mr-2"></i> Book court now
-                  </a>
-                </div>
-              </div>
-              
-              <!-- Court Booking Proof Upload -->
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Court Booking Proof</label>
-                <div class="file-upload-container">
-                  <label for="court-booking-proof" class="file-upload-label">
-                    <div class="flex flex-col items-center justify-center py-4">
-                      <svg class="w-8 h-8 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                      </svg>
-                      <p class="text-sm text-gray-600">Upload screenshot of your court booking</p>
-                      <p class="text-xs text-gray-500">PNG, JPG or JPEG (max. 5MB)</p>
-                    </div>
-                  </label>
-                  <input type="file" id="court-booking-proof" name="court_booking_proof" accept="image/*" class="file-upload-input">
-                  <div id="court-booking-preview" class="file-preview"></div>
                 </div>
               </div>
             </div>
@@ -666,7 +927,7 @@
           <button type="button" id="cancel-button" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
             Cancel
           </button>
-          <button type="submit" id="confirm-button" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all">
+          <button type="submit" id="confirm-button" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all hidden">
             Complete Booking
           </button>
         </div>
@@ -693,43 +954,42 @@
     </div>
   </div>
 
-  <!-- Package Purchase Modal -->
-  <div id="package-purchase-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <!-- Credit Purchase Modal -->
+  <div id="credit-purchase-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-2/3 max-w-3xl p-8 scrollable-modal">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold text-gray-800">Purchase Package</h2>
-        <button id="close-package-modal" class="text-gray-400 hover:text-gray-600">
+        <h2 class="text-2xl font-bold text-gray-800">Purchase Credits</h2>
+        <button id="close-credit-modal" class="text-gray-400 hover:text-gray-600">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
       
-      <form id="package-purchase-form" enctype="multipart/form-data">
-        <input type="hidden" id="package-id" name="package_id">
-        <input type="hidden" id="package-type" name="package_type">
-        <input type="hidden" id="package-coach-id" name="coach_id">
-        <input type="hidden" id="package-academy-id" name="academy_id">
+      <form id="credit-purchase-form" enctype="multipart/form-data">
+        <input type="hidden" id="credit-id" name="package_id">
+        <input type="hidden" id="credit-type" name="package_type">
+        <input type="hidden" id="credit-coach-id" name="coach_id">
         
         <div class="mb-6">
-          <div id="package-details" class="bg-blue-50 p-6 rounded-lg">
-            <!-- Package details will be populated here -->
+          <div id="credit-details" class="bg-blue-50 p-6 rounded-lg">
+            <!-- Credit details will be populated here -->
           </div>
         </div>
         
         <div class="mb-6">
           <h3 class="text-xl font-bold text-blue-800 mb-4">Payment Instructions</h3>
-          <div id="package-payment-details" class="bg-white p-4 rounded-lg mb-4">
+          <div id="credit-payment-details" class="bg-white p-4 rounded-lg mb-4">
             <!-- Payment details will be populated here -->
           </div>
         </div>
         
         <div class="mb-6">
           <h3 class="text-lg font-bold text-gray-800 mb-2">Upload Payment Proof</h3>
-          <p class="text-sm text-gray-600 mb-4">Please upload proof of your payment for this package.</p>
+          <p class="text-sm text-gray-600 mb-4">Please upload proof of your payment for these credits.</p>
           
           <div class="file-upload-container">
-            <label for="package-payment-proof" class="file-upload-label">
+            <label for="credit-payment-proof" class="file-upload-label">
               <div class="flex flex-col items-center justify-center py-4">
                 <svg class="w-8 h-8 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -738,13 +998,13 @@
                 <p class="text-xs text-gray-500">PNG, JPG or JPEG (max. 5MB)</p>
               </div>
             </label>
-            <input type="file" id="package-payment-proof" name="payment_proof" accept="image/*" class="file-upload-input" required>
-            <div id="package-payment-preview" class="file-preview"></div>
+            <input type="file" id="credit-payment-proof" name="payment_proof" accept="image/*" class="file-upload-input" required>
+            <div id="credit-payment-preview" class="file-preview"></div>
           </div>
         </div>
         
         <div class="flex justify-end space-x-4">
-          <button type="button" id="package-cancel-button" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+          <button type="button" id="credit-cancel-button" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
             Cancel
           </button>
           <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all">
@@ -755,21 +1015,113 @@
     </div>
   </div>
   
-  <!-- Package Purchase Success Modal -->
-  <div id="package-success-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-1/2 max-w-lg p-8 text-center">
-      <div class="mb-6">
+  <!-- Credit Purchase Success Modal -->
+  <div id="credit-success-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-3/4 max-w-2xl p-8">
+      <div class="mb-6 text-center">
         <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
         </svg>
+        <h2 class="text-2xl font-bold mb-2 text-gray-800">Credits Purchased Successfully!</h2>
+        <p class="text-lg text-gray-600 mb-4">Your credits purchase has been submitted successfully.</p>
+        <p class="text-sm text-gray-500 mb-3">The coach will review your payment and activate your credits soon.</p>
       </div>
-      <h2 class="text-2xl font-bold mb-2 text-gray-800">Package Purchase Submitted!</h2>
-      <p class="text-lg text-gray-600 mb-4">Your package purchase request has been submitted successfully.</p>
-      <p class="text-sm text-gray-500 mb-6">The coach/academy will review your payment and activate your package soon.</p>
       
-      <button id="package-success-done-btn" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
-        Done
-      </button>
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Coach Contact Information -->
+        <div id="credit-success-contact" class="bg-blue-50 p-4 rounded-lg text-left">
+          <h3 class="font-medium text-gray-800 mb-2">Coach Contact Information</h3>
+          <p class="text-sm text-gray-600 mb-3">Contact the coach directly to schedule your sessions:</p>
+          <div class="space-y-2">
+            <div class="flex items-center">
+              <i class="fas fa-phone-alt text-blue-500 w-6"></i>
+              <a href="#" id="success-coach-phone" class="text-blue-600 hover:underline ml-2">Not available</a>
+            </div>
+            <div class="flex items-center">
+              <i class="fas fa-envelope text-blue-500 w-6"></i>
+              <a href="#" id="success-coach-email" class="text-blue-600 hover:underline ml-2">Not available</a>
+            </div>
+            <div class="flex items-center">
+              <i class="fab fa-whatsapp text-green-500 w-6"></i>
+              <a href="#" id="success-coach-whatsapp" class="text-green-600 hover:underline ml-2">WhatsApp</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Availability Selector -->
+        <div class="bg-green-50 p-4 rounded-lg">
+          <h3 class="font-medium text-gray-800 mb-2">Share Your Availability</h3>
+          <p class="text-sm text-gray-600 mb-3">Help your coach find suitable times for your sessions:</p>
+          
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Days I'm Usually Available</label>
+              <div class="grid grid-cols-7 gap-1">
+                <button class="day-btn p-1 rounded border border-gray-300 text-xs" data-day="Mon">Mon</button>
+                <button class="day-btn p-1 rounded border border-gray-300 text-xs" data-day="Tue">Tue</button>
+                <button class="day-btn p-1 rounded border border-gray-300 text-xs" data-day="Wed">Wed</button>
+                <button class="day-btn p-1 rounded border border-gray-300 text-xs" data-day="Thu">Thu</button>
+                <button class="day-btn p-1 rounded border border-gray-300 text-xs" data-day="Fri">Fri</button>
+                <button class="day-btn p-1 rounded border border-gray-300 text-xs" data-day="Sat">Sat</button>
+                <button class="day-btn p-1 rounded border border-gray-300 text-xs" data-day="Sun">Sun</button>
+              </div>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Time Preferences</label>
+              <div class="grid grid-cols-3 gap-1">
+                <button class="time-btn p-1 rounded border border-gray-300 text-xs" data-time="Morning">Morning</button>
+                <button class="time-btn p-1 rounded border border-gray-300 text-xs" data-time="Afternoon">Afternoon</button>
+                <button class="time-btn p-1 rounded border border-gray-300 text-xs" data-time="Evening">Evening</button>
+              </div>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Notes for Coach</label>
+              <textarea id="availability-notes" class="w-full p-2 border rounded-lg text-sm" placeholder="Any specific dates or additional preferences..."></textarea>
+            </div>
+            
+            <button id="send-availability-btn" class="w-full py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors">
+              Send Availability to Coach
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-6 text-center">
+        <button id="credit-success-done-btn" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login/Register Modal -->
+  <div id="auth-modal" class="custom-modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-1/2 max-w-md p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-800">Login Required</h2>
+        <button id="close-auth-modal" class="text-gray-400 hover:text-gray-600">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="mb-6 text-center">
+        <p class="text-gray-600 mb-4">Please login or create an account to continue.</p>
+        
+        <div class="flex flex-col space-y-3">
+          <a href="/login?next={{ request.path }}" class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium text-center hover:bg-blue-700 transition-colors">
+            Login
+          </a>
+          <a href="/register?next={{ request.path }}" class="w-full bg-green-600 text-white py-3 rounded-lg font-medium text-center hover:bg-green-700 transition-colors">
+            Create Account
+          </a>
+        </div>
+        
+        <p class="mt-4 text-sm text-gray-500">You'll be redirected back to this page after logging in.</p>
+      </div>
     </div>
   </div>
 
@@ -872,20 +1224,15 @@
 {% block scripts %}
   <!-- Script for Profile and Booking Functionality -->
   <script>
-//    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function () {
       // DOM Elements
-      const mobileMenuButton = document.getElementById('mobile-menu-button');
-      const mobileMenu = document.getElementById('mobile-menu');
       const loadingOverlay = document.getElementById('loading-overlay');
-      const loginModal = document.getElementById('login-modal');
-      const registerModal = document.getElementById('register-modal');
-      const passwordModal = document.getElementById('password-modal');
       const scheduleModal = document.getElementById('schedule-modal');
       const confirmationModal = document.getElementById('confirmation-modal');
-      const guestInfoModal = document.getElementById('guest-info-modal');
       const successModal = document.getElementById('success-modal');
-      const packagePurchaseModal = document.getElementById('package-purchase-modal');
-      const packageSuccessModal = document.getElementById('package-success-modal');
+      const creditPurchaseModal = document.getElementById('credit-purchase-modal');
+      const creditSuccessModal = document.getElementById('credit-success-modal');
+      const authModal = document.getElementById('auth-modal');
 
       // Coach profile elements
       const coachName = document.getElementById('coach-name');
@@ -897,6 +1244,7 @@
       const coachTags = document.getElementById('coach-tags');
       const coachBio = document.getElementById('coach-bio');
       const scheduleBtn = document.getElementById('schedule-btn');
+      const viewCreditsBtn = document.getElementById('view-credits-btn');
 
       // Schedule elements
       const courtSelect = document.getElementById('court-select');
@@ -906,8 +1254,13 @@
       const availabilityGrid = document.getElementById('availability-grid');
       const selectedTimeslots = document.getElementById('selected-timeslots');
       const currentTotal = document.getElementById('current-total');
-      const currentTotalCopy = document.getElementById('current-total-copy');
-      const scheduleButton = document.getElementById('schedule-button');
+      const continueToBookingBtn = document.getElementById('continue-to-booking');
+
+      // Step navigation buttons
+      const nextToDateBtn = document.getElementById('next-to-date');
+      const backToCourtBtn = document.getElementById('back-to-court');
+      const nextToTimeBtn = document.getElementById('next-to-time');
+      const backToDateBtn = document.getElementById('back-to-date');
 
       // Payment elements
       const coachBankName = document.getElementById('coach-bank-name');
@@ -915,6 +1268,9 @@
       const coachAccountNumber = document.getElementById('coach-account-number');
       const qrPaymentDetails = document.getElementById('qr-payment-details');
       const coachQrCode = document.getElementById('coach-qr-code');
+      const proceedToCoachPaymentBtn = document.getElementById('proceed-to-coach-payment');
+      const coachPaymentSection = document.getElementById('coach-payment-section');
+      const confirmButton = document.getElementById('confirm-button');
 
       // Form file inputs
       const coachPaymentProof = document.getElementById('coach-payment-proof');
@@ -923,13 +1279,13 @@
       const courtBookingPreview = document.getElementById('court-booking-preview');
       const bookingPaymentForm = document.getElementById('booking-payment-form');
       
-      // Package purchase elements
-      const packagePaymentProof = document.getElementById('package-payment-proof');
-      const packagePaymentPreview = document.getElementById('package-payment-preview');
-      const packagePurchaseForm = document.getElementById('package-purchase-form');
-      const closePackageModal = document.getElementById('close-package-modal');
-      const packageCancelButton = document.getElementById('package-cancel-button');
-      const packageSuccessDoneBtn = document.getElementById('package-success-done-btn');
+      // Credit purchase elements
+      const creditPaymentProof = document.getElementById('credit-payment-proof');
+      const creditPaymentPreview = document.getElementById('credit-payment-preview');
+      const creditPurchaseForm = document.getElementById('credit-purchase-form');
+      const closeCreditModal = document.getElementById('close-credit-modal');
+      const creditCancelButton = document.getElementById('credit-cancel-button');
+      const creditSuccessDoneBtn = document.getElementById('credit-success-done-btn');
 
       // Global state
       let coachData = null;
@@ -937,22 +1293,19 @@
       let currentDate = new Date();
       let allAvailabilities = {};
       let selectedSlots = [];
-      let selectedPricingPlan = null;
-      let availablePricingPlans = [];
-      let studentPackages = [];
       let selectedPackage = null;
-      let bookingResponsibilities = {}; // Track who books the court for each availability
+      let studentPackages = [];
       let successfulBookingId = null; // Store the ID of a successful booking
       let previousCourtId = null; 
       const isUserLoggedIn = {% if current_user.is_authenticated %}true{% else %}false{% endif %};
       
       // Package data
-      let coachPackages = [];
-      let academyPackages = [];
-      let currentPackageData = null; // Store the currently selected package for purchase
+      let coachCredits = [];
+      let currentCreditData = null; // Store the currently selected credit for purchase
       let reservationToken = null;
       let reservationExpiry = null;
       let countdownInterval = null;
+      let pendingAction = null; // Store pending action that requires login
 
       // Utility Functions
       function formatMoney(amount) {
@@ -1007,8 +1360,33 @@
         });
       }
 
+      // Step progression handling
+      function showStep(stepNumber) {
+        // Update step indicators
+        document.querySelectorAll('.step-item').forEach(item => {
+          const itemStep = parseInt(item.dataset.step);
+          item.classList.remove('active', 'completed');
+          
+          if (itemStep === stepNumber) {
+            item.classList.add('active');
+          } else if (itemStep < stepNumber) {
+            item.classList.add('completed');
+          }
+        });
+        
+        // Show selected step content and hide others
+        document.querySelectorAll('.step-content').forEach(content => {
+          content.classList.remove('active');
+          if (parseInt(content.dataset.step) === stepNumber) {
+            content.classList.add('active');
+          }
+        });
+      }
+
       // Set up file upload previews
       function setupFileUploadPreview(fileInput, previewContainer) {
+        if (!fileInput || !previewContainer) return;
+        
         fileInput.addEventListener('change', function(e) {
           previewContainer.innerHTML = '';
           
@@ -1031,7 +1409,7 @@
       // Set up payment preview functionality
       setupFileUploadPreview(coachPaymentProof, coachPaymentPreview);
       setupFileUploadPreview(courtBookingProof, courtBookingPreview);
-      setupFileUploadPreview(packagePaymentProof, packagePaymentPreview);
+      setupFileUploadPreview(creditPaymentProof, creditPaymentPreview);
 
       // Fetch coach data
       async function fetchCoachData(coachId) {
@@ -1148,25 +1526,17 @@
           // Set payment information in confirmation modal
           updateCoachPaymentInfo();
           
-          // Fetch coach packages
-          fetchCoachPackages(coachId);
+          // Fetch coach credits (packages renamed to credits)
+          fetchCoachCredits(coachId);
           
-          // Fetch academy packages if coach has academy affiliations
-          if (coach.academy_affiliations && coach.academy_affiliations.length > 0) {
-            const academyIds = coach.academy_affiliations.map(academy => academy.id);
-            fetchAcademyPackages(academyIds);
-          }
-          
-          // Fetch student packages if user is logged in
+          // Fetch student credits if user is logged in
           if (isUserLoggedIn) {
-            fetchStudentPackages();
-          } else {
-            // Hide packages container if not logged in
-            const packagesContainer = document.getElementById('packages-container');
-            if (packagesContainer) {
-              packagesContainer.classList.add('hidden');
-            }
+            fetchStudentCredits();
+            document.getElementById('credits-summary-container').classList.remove('hidden');
           }
+
+          // Update coach contact information in success modals
+          updateCoachContactInfo();
 
           // Hide loading overlay
           loadingOverlay.classList.add('hidden');
@@ -1178,26 +1548,26 @@
         }
       }
       
-      // Fetch coach packages
-      async function fetchCoachPackages(coachId) {
+      // Fetch coach credits (former packages)
+      async function fetchCoachCredits(coachId) {
         try {
           const response = await fetch(`/api/coach/pricing-plans/${coachId}`);
           if (!response.ok) {
-            throw new Error('Failed to fetch coach packages');
+            throw new Error('Failed to fetch coach credits');
           }
           
           const packages = await response.json();
-          coachPackages = packages.filter(pkg => pkg.discount_type === 'package');
+          coachCredits = packages.filter(pkg => pkg.discount_type === 'package');
           
-          // Update packages UI
-          updateCoachPackagesUI();
+          // Update credits UI
+          updateCoachCreditsUI();
         } catch (error) {
-          console.error('Error fetching coach packages:', error);
-          const coachPackagesContainer = document.getElementById('coach-packages-container');
-          if (coachPackagesContainer) {
-            const packagesContainer = document.getElementById('coach-packages');
-            packagesContainer.innerHTML = `
-              <p class="text-sm text-red-500 col-span-full">Could not load coach packages. Please try again later.</p>
+          console.error('Error fetching coach credits:', error);
+          const coachCreditsContainer = document.getElementById('coach-credits-container');
+          if (coachCreditsContainer) {
+            const creditsContainer = document.getElementById('coach-credits');
+            creditsContainer.innerHTML = `
+              <p class="text-sm text-red-500 col-span-full">Could not load coaching credits. Please try again later.</p>
             `;
           }
         }
@@ -1211,7 +1581,6 @@
               
               const availabilityIds = selectedSlots.map(slot => slot.availabilityId);
               
-
               if (availabilityIds.length === 0) {
                   alert('Please select at least one time slot');
                   loadingOverlay.classList.add('hidden');
@@ -1235,7 +1604,7 @@
                   // Handle error - another student may have booked the slot
                   if (response.status === 409) {
                       // Conflict - slot no longer available
-                      alert(`The slot at ${data.start_time} ${data.availability_date} are no longer available. Please choose different times.`);
+                      alert(`The slot at ${data.start_time} ${data.availability_date} is no longer available. Please choose different times.`);
                       
                       // Refresh availability display
                       await fetchAvailability(selectedCourtId, currentDate.getFullYear(), currentDate.getMonth());
@@ -1251,8 +1620,7 @@
                           updateSelectedTimeslotsUI();
                           updateTotalPrice();
                           const sessionCount = document.getElementById('session-count');
-                          sessionCount.textContent = sessionCount.textContent - 1;
-
+                          sessionCount.textContent = selectedSlots.length;
                       }
 
                       loadingOverlay.classList.add('hidden');
@@ -1287,9 +1655,8 @@
           } catch (error) {
               console.error('Error reserving slots:', error);
               alert('An error occurred while submitting your booking. Please try again.');
-              return false;
-          } finally {
               loadingOverlay.classList.add('hidden');
+              return false;
           }
       }
 
@@ -1300,10 +1667,10 @@
           
           timerElement.classList.remove('hidden');
           
-          const countdownInterval = setInterval(() => {
+          countdownInterval = setInterval(() => {
               const now = Date.now();
 
-              const timeRemaining = Math.max(0, Math.floor((reservationExpiry  - now) / 1000));
+              const timeRemaining = Math.max(0, Math.floor((reservationExpiry - now) / 1000));
 
               if (timeRemaining <= 0) {
                   clearInterval(countdownInterval);
@@ -1312,7 +1679,6 @@
                   </div>`;
                   
                   // Disable booking button
-                  const confirmButton = document.getElementById('confirm-button');
                   if (confirmButton) {
                       confirmButton.disabled = true;
                       confirmButton.classList.add('bg-gray-400', 'cursor-not-allowed');
@@ -1331,46 +1697,14 @@
           }, 1000);
       }
 
-      // Fetch academy packages
-      async function fetchAcademyPackages(academyIds) {
-        try {
-          // Create a comma-separated list of academy IDs
-          academyPackages = []
-          for (const idParam of academyIds){
-
-            const response = await fetch(`/academy/${idParam}/pricing-plans`);
-            if (!response.ok) {
-              throw new Error('Failed to fetch academy packages');
-            }
-            
-            const packages = await response.json();
-            for (const package of packages){
-              academyPackages.push(package);
-            }
-          }
-
-          // Update academy packages UI
-          updateAcademyPackagesUI();
-        } catch (error) {
-          console.error('Error fetching academy packages:', error);
-          const academyPackagesContainer = document.getElementById('academy-packages-container');
-          if (academyPackagesContainer) {
-            const packagesContainer = document.getElementById('academy-packages');
-            packagesContainer.innerHTML = `
-              <p class="text-sm text-red-500 col-span-full">Could not load academy packages. Please try again later.</p>
-            `;
-          }
-        }
-      }
-      
-      // Update coach packages UI
-      function updateCoachPackagesUI() {
-        const container = document.getElementById('coach-packages-container');
-        const packagesContainer = document.getElementById('coach-packages');
+      // Update coach credits UI (formerly packages)
+      function updateCoachCreditsUI() {
+        const container = document.getElementById('coach-credits-container');
+        const creditsContainer = document.getElementById('coach-credits');
         
-        if (!container || !packagesContainer) return;
+        if (!container || !creditsContainer) return;
         
-        if (!coachPackages || coachPackages.length === 0) {
+        if (!coachCredits || coachCredits.length === 0) {
           container.classList.add('hidden');
           return;
         }
@@ -1379,11 +1713,10 @@
         container.classList.remove('hidden');
         
         // Clear previous content
-        packagesContainer.innerHTML = '';
+        creditsContainer.innerHTML = '';
         
-        // Create a card for each package
-        coachPackages.forEach(pkg => {
-
+        // Create a card for each credit package
+        coachCredits.forEach(pkg => {
           const discount_type_amount = pkg.percentage_discount  
             ? 'percentage' 
             : 'fixed';
@@ -1406,14 +1739,14 @@
           const savings = originalPrice - discountedPrice;
           const savingsPercent = Math.round((savings / originalPrice) * 100);
           
-          const packageCard = document.createElement('div');
-          packageCard.className = 'package-card';
-          packageCard.innerHTML = `
-            <div class="package-card-header">
+          const creditCard = document.createElement('div');
+          creditCard.className = 'credit-card';
+          creditCard.innerHTML = `
+            <div class="credit-card-header">
               <h3 class="text-lg font-bold text-gray-800">${pkg.name}</h3>
-              <p class="text-sm text-gray-600">${pkg.description || 'Package deal with coach'}</p>
+              <p class="text-sm text-gray-600">${pkg.description || 'Coaching credit package'}</p>
             </div>
-            <div class="package-card-body">
+            <div class="credit-card-body">
               <div class="flex justify-between mb-2">
                 <span class="text-gray-600">Sessions:</span>
                 <span class="font-medium">${pkg.sessions_required}</span>
@@ -1423,7 +1756,7 @@
                 <span class="font-medium line-through text-gray-600">$${formatMoney(originalPrice)}</span>
               </div>
               <div class="flex justify-between mb-2">
-                <span class="text-gray-600">Package Price:</span>
+                <span class="text-gray-600">Credit Price:</span>
                 <span class="font-bold text-green-600">$${formatMoney(discountedPrice)}</span>
               </div>
               <div class="mb-4">
@@ -1433,229 +1766,353 @@
                 <p>Valid for 90 days after purchase</p>
               </div>
             </div>
-            <div class="package-card-footer">
-              <button class="w-full py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all buy-package-btn" data-package-id="${pkg.id}" data-package-type="coach">
-                Buy Package
+            <div class="credit-card-footer">
+              <button class="w-full py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all buy-credit-btn" data-credit-id="${pkg.id}">
+                Buy Credits
               </button>
             </div>
           `;
           
-          packagesContainer.appendChild(packageCard);
+          creditsContainer.appendChild(creditCard);
         });
         
         // Add event listeners to the buy buttons
-        document.querySelectorAll('.buy-package-btn').forEach(btn => {
+        document.querySelectorAll('.buy-credit-btn').forEach(btn => {
           btn.addEventListener('click', function() {
-            const packageId = parseInt(this.getAttribute('data-package-id'));
-            const packageType = this.getAttribute('data-package-type');
+            const creditId = parseInt(this.getAttribute('data-credit-id'));
             
-            // Find the package
-            const packageData = packageType === 'coach' 
-              ? coachPackages.find(p => p.id === packageId)
-              : academyPackages.find(p => p.id === packageId);
+            // Check if user is logged in
+            if (!isUserLoggedIn) {
+              // Store the credit ID for after login
+              pendingAction = {
+                type: 'buy-credit',
+                creditId: creditId
+              };
+              
+              // Show login modal
+              showModal(authModal);
+              return;
+            }
             
-            if (packageData) {
-              openPackagePurchaseModal(packageData, packageType);
+            // Find the credit package
+            const creditData = coachCredits.find(p => p.id === creditId);
+            
+            if (creditData) {
+              openCreditPurchaseModal(creditData);
             }
           });
         });
       }
       
-      // Update academy packages UI
-      function updateAcademyPackagesUI() {
-        const container = document.getElementById('academy-packages-container');
-        const packagesContainer = document.getElementById('academy-packages');
+      async function fetchStudentCredits() {
+        if (!isUserLoggedIn) return;
         
-        if (!container || !packagesContainer) return;
-        
-        if (!academyPackages || academyPackages.length === 0) {
-          container.classList.add('hidden');
-          return;
+        try {
+          // Fetch credits that can be used with this coach
+          const response = await fetch(`/api/student/packages?coach_id=${coachData.id}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch credits');
+          }
+          
+          const data = await response.json();
+          studentPackages = data;
+          
+          // Update the credits UI
+          updateStudentCreditsUI();
+          
+          // Update credits summary
+          updateCreditsSummary();
+          
+          // Show coach contact if there are active credits
+          const hasActiveCredits = studentPackages.some(pkg => pkg.status === 'active' && (pkg.total_sessions - pkg.sessions_booked) > 0);
+          if (hasActiveCredits) {
+            updateCoachContactInfo(true); // true = show in summary section
+          }
+        } catch (error) {
+          console.error('Error fetching student credits:', error);
+          const creditsContainer = document.getElementById('student-credits');
+          if (creditsContainer) {
+            creditsContainer.innerHTML = `
+              <p class="text-sm text-red-500">Could not load your credits. Please try again later.</p>
+            `;
+          }
         }
+      }
+      
+      function updateCreditsSummary() {
+        const totalAvailableCredits = document.getElementById('total-available-credits');
+        const creditsExpiryInfo = document.getElementById('credits-expiry-info');
+        
+        if (!totalAvailableCredits || !creditsExpiryInfo) return;
+        
+        // Calculate total available credits
+        let totalCredits = 0;
+        let nearestExpiry = null;
+        
+        studentPackages.forEach(pkg => {
+          if (pkg.status === 'active') {
+            const remainingCredits = pkg.total_sessions - pkg.sessions_booked;
+            totalCredits += remainingCredits;
+            
+            // Track nearest expiry date
+            if (remainingCredits > 0 && pkg.expires_at) {
+              const expiryDate = new Date(pkg.expires_at);
+              if (!nearestExpiry || expiryDate < nearestExpiry.date) {
+                nearestExpiry = {
+                  date: expiryDate,
+                  credits: remainingCredits
+                };
+              }
+            }
+          }
+        });
+        
+        // Update UI
+        totalAvailableCredits.textContent = totalCredits;
+        
+        // Show expiry warning if applicable
+        if (nearestExpiry) {
+          const now = new Date();
+          const daysToExpiry = Math.ceil((nearestExpiry.date - now) / (1000 * 60 * 60 * 24));
+          
+          if (daysToExpiry <= 30) {
+            creditsExpiryInfo.innerHTML = `
+              <div class="flex items-start mt-2">
+                <i class="fas fa-exclamation-circle text-amber-500 mt-1 mr-2"></i>
+                <div>
+                  <p class="text-amber-600 font-medium">${nearestExpiry.credits} credits expiring soon!</p>
+                  <p class="text-gray-600">Use before ${nearestExpiry.date.toLocaleDateString()}</p>
+                </div>
+              </div>
+            `;
+          } else {
+            creditsExpiryInfo.innerHTML = `
+              <p class="text-gray-600 mt-2">Next expiry: ${nearestExpiry.date.toLocaleDateString()}</p>
+            `;
+          }
+        } else {
+          creditsExpiryInfo.innerHTML = '';
+        }
+      }
+
+      function updateStudentCreditsUI() {
+        const container = document.getElementById('my-credits-container');
+        const creditsContainer = document.getElementById('student-credits');
+        
+        if (!container || !creditsContainer) return;
         
         // Show container
         container.classList.remove('hidden');
         
-        // Clear previous content
-        packagesContainer.innerHTML = '';
+        // Hide container if no credits
+        if (!studentPackages || studentPackages.length === 0) {
+          creditsContainer.innerHTML = `
+            <p class="text-gray-500">You don't have any credits with this coach.</p>
+          `;
+          return;
+        }
         
-        // Group packages by academy
-        const packagesByAcademy = {};
-        academyPackages.forEach(pkg => {
-          if (!packagesByAcademy[pkg.academy_id]) {
-            packagesByAcademy[pkg.academy_id] = [];
+        // Clear previous content
+        creditsContainer.innerHTML = '';
+        
+        // Group credits by status
+        const activeCredits = [];
+        const pendingCredits = [];
+        const expiredCredits = [];
+        
+        studentPackages.forEach(pkg => {
+          if (pkg.status === 'active') {
+            activeCredits.push(pkg);
+          } else if (pkg.status === 'pending') {
+            pendingCredits.push(pkg);
+          } else {
+            expiredCredits.push(pkg);
           }
-          packagesByAcademy[pkg.academy_id].push(pkg);
         });
         
-        // Create a section for each academy
-        Object.keys(packagesByAcademy).forEach(academyId => {
-          // Find academy info
-          const academyAffiliation = coachData.academy_affiliations.find(a => a.id === parseInt(academyId));
+        // Create section for active credits
+        if (activeCredits.length > 0) {
+          const activeSectionHeader = document.createElement('h3');
+          activeSectionHeader.className = 'font-semibold text-lg text-gray-800 mb-3';
+          activeSectionHeader.textContent = 'Active Credits';
+          creditsContainer.appendChild(activeSectionHeader);
           
-          if (!academyAffiliation) return;
-          
-          // Create academy header
-          const academyHeader = document.createElement('div');
-          academyHeader.className = 'col-span-full mb-4';
-          academyHeader.innerHTML = `
-            <h3 class="text-lg font-semibold text-gray-800">${academyAffiliation.name} Packages</h3>
-          `;
-          
-          packagesContainer.appendChild(academyHeader);
-          
-          // Create cards for each package in this academy
-          packagesByAcademy[academyId].forEach(pkg => {
-            const discount_type_amount = pkg.percentage_discount  
-              ? 'percentage' 
-              : 'fixed';
-
-            const discountText = discount_type_amount === 'percentage'
-              ? `${pkg.percentage_discount}% off` 
-              : `$${pkg.fixed_discount} off`;
+          activeCredits.forEach(credit => {
+            const sessionsRemaining = credit.total_sessions - credit.sessions_booked;
+            const expiryDate = credit.expires_at ? new Date(credit.expires_at).toLocaleDateString() : 'Never';
             
-            // Use academy rate or default to coach rate
-            const hourlyRate = pkg.academy_rate || coachData.hourly_rate;
+            const creditDiv = document.createElement('div');
+            creditDiv.className = 'bg-white p-4 rounded-lg border border-green-200 hover:shadow-md transition-all mb-3';
             
-            // Calculate original price and discounted price
-            const originalPrice = hourlyRate * pkg.sessions_required;
-            let discountedPrice = originalPrice;
-            
-            if (discount_type_amount === 'percentage') {
-              discountedPrice = originalPrice * (1 - pkg.percentage_discount / 100);
-            } else if (discount_type_amount === 'fixed') {
-              discountedPrice = originalPrice - pkg.fixed_discount;
-            }
-            
-            // Calculate savings
-            const savings = originalPrice - discountedPrice;
-            const savingsPercent = Math.round((savings / originalPrice) * 100);
-            
-            const packageCard = document.createElement('div');
-            packageCard.className = 'package-card';
-            packageCard.innerHTML = `
-              <div class="package-card-header">
-                <h3 class="text-lg font-bold text-gray-800">${pkg.name}</h3>
-                <p class="text-sm text-gray-600">${pkg.description || 'Academy package deal'}</p>
-              </div>
-              <div class="package-card-body">
-                <div class="flex justify-between mb-2">
-                  <span class="text-gray-600">Sessions:</span>
-                  <span class="font-medium">${pkg.sessions_required}</span>
+            creditDiv.innerHTML = `
+              <div class="flex justify-between mb-1">
+                <div>
+                  <span class="font-semibold">${credit.pricing_plan.name}</span>
+                  <div class="mt-1">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Active</span>
+                  </div>
                 </div>
-                <div class="flex justify-between mb-2">
-                  <span class="text-gray-600">Original Price:</span>
-                  <span class="font-medium line-through text-gray-600">$${formatMoney(originalPrice)}</span>
-                </div>
-                <div class="flex justify-between mb-2">
-                  <span class="text-gray-600">Package Price:</span>
-                  <span class="font-bold text-green-600">$${formatMoney(discountedPrice)}</span>
-                </div>
-                <div class="mb-4">
-                  <span class="badge-discount">${discountText} (Save ${savingsPercent}%)</span>
-                </div>
-                <div class="text-sm text-gray-600">
-                  <p>Valid for 90 days after purchase</p>
-                  <p>Use with any coach in ${academyAffiliation.name}</p>
+                <div class="text-right">
+                  <span class="text-blue-700">${sessionsRemaining} sessions remaining</span>
+                  <p class="text-xs text-gray-500 mt-1">Expires: ${expiryDate}</p>
                 </div>
               </div>
-              <div class="package-card-footer">
-                <button class="w-full py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all buy-package-btn" data-package-id="${pkg.id}" data-package-type="academy" data-academy-id="${academyId}">
-                  Buy Package
-                </button>
+              <div class="flex flex-wrap justify-between items-center mt-2">
+                <p class="text-sm text-gray-600">Purchase date: ${new Date(credit.purchase_date).toLocaleDateString()}</p>
+                <a href="#" class="text-sm px-3 py-1 text-blue-600 hover:underline contact-coach-btn">
+                  Contact Coach to Schedule
+                </a>
               </div>
             `;
             
-            packagesContainer.appendChild(packageCard);
+            creditsContainer.appendChild(creditDiv);
           });
-        });
+        }
         
-        // Add event listeners to the buy buttons
-        document.querySelectorAll('.buy-package-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const packageId = parseInt(this.getAttribute('data-package-id'));
-            const packageType = this.getAttribute('data-package-type');
-            const academyId = parseInt(this.getAttribute('data-academy-id') || '0');
+        // Create section for pending credits
+        if (pendingCredits.length > 0) {
+          const pendingSectionHeader = document.createElement('h3');
+          pendingSectionHeader.className = 'font-semibold text-lg text-gray-800 mb-3 mt-6';
+          pendingSectionHeader.textContent = 'Pending Credits';
+          creditsContainer.appendChild(pendingSectionHeader);
+          
+          pendingCredits.forEach(credit => {
+            const creditDiv = document.createElement('div');
+            creditDiv.className = 'bg-white p-4 rounded-lg border border-yellow-200 hover:shadow-md transition-all mb-3';
             
-            // Find the package
-            const packageData = packageType === 'coach' 
-              ? coachPackages.find(p => p.id === packageId)
-              : academyPackages.find(p => p.id === packageId);
+            creditDiv.innerHTML = `
+              <div class="flex justify-between mb-1">
+                <div>
+                  <span class="font-semibold">${credit.pricing_plan.name}</span>
+                  <div class="mt-1">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="text-gray-700">${credit.total_sessions} sessions</span>
+                  <p class="text-xs text-gray-500 mt-1">Submitted: ${new Date(credit.purchase_date).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <p class="text-sm text-gray-600 mt-2">Awaiting coach approval. Please check back later.</p>
+            `;
             
-            if (packageData) {
-              if (packageType === 'academy') {
-                packageData.academy_id = academyId;
-              }
-              openPackagePurchaseModal(packageData, packageType);
+            creditsContainer.appendChild(creditDiv);
+          });
+        }
+        
+        // Create section for expired/used credits
+        if (expiredCredits.length > 0) {
+          const expiredSectionHeader = document.createElement('h3');
+          expiredSectionHeader.className = 'font-semibold text-lg text-gray-800 mb-3 mt-6';
+          expiredSectionHeader.textContent = 'Past Credits';
+          creditsContainer.appendChild(expiredSectionHeader);
+          
+          expiredCredits.forEach(credit => {
+            const creditDiv = document.createElement('div');
+            creditDiv.className = 'bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-all mb-3';
+            
+            let statusBadge = '';
+            if (credit.status === 'expired') {
+              statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Expired</span>`;
+            } else if (credit.status === 'completed') {
+              statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Completed</span>`;
+            } else {
+              statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">${credit.status}</span>`;
+            }
+            
+            creditDiv.innerHTML = `
+              <div class="flex justify-between mb-1">
+                <div>
+                  <span class="font-semibold">${credit.pricing_plan.name}</span>
+                  <div class="mt-1">
+                    ${statusBadge}
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="text-gray-700">${credit.sessions_booked}/${credit.total_sessions} sessions used</span>
+                  <p class="text-xs text-gray-500 mt-1">Expired: ${credit.expires_at ? new Date(credit.expires_at).toLocaleDateString() : 'N/A'}</p>
+                </div>
+              </div>
+            `;
+            
+            creditsContainer.appendChild(creditDiv);
+          });
+        }
+        
+        // Add event listeners to contact buttons
+        document.querySelectorAll('.contact-coach-btn').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Scroll to contact info
+            const contactInfo = document.getElementById('coach-contact-info');
+            if (contactInfo) {
+              contactInfo.scrollIntoView({ behavior: 'smooth' });
+              // Highlight temporarily
+              contactInfo.classList.add('ring-2', 'ring-blue-500');
+              setTimeout(() => {
+                contactInfo.classList.remove('ring-2', 'ring-blue-500');
+              }, 1500);
             }
           });
         });
       }
-      
-      // Open package purchase modal
-      function openPackagePurchaseModal(packageData, packageType) {
-        if (!isUserLoggedIn) {
-          alert('Please log in to purchase packages.');
-          return;
-        }
-        
-        currentPackageData = packageData;
+
+      // Open credit purchase modal
+      function openCreditPurchaseModal(creditData) {
+        currentCreditData = creditData;
         
         // Set hidden form fields
-        document.getElementById('package-id').value = packageData.id;
-        document.getElementById('package-type').value = packageType;
-        document.getElementById('package-coach-id').value = packageType === 'coach' ? coachData.id : '';
-        document.getElementById('package-academy-id').value = packageType === 'academy' ? packageData.academy_id : '';
+        document.getElementById('credit-id').value = creditData.id;
+        document.getElementById('credit-type').value = 'coach';
+        document.getElementById('credit-coach-id').value = coachData.id;
         
         // Calculate pricing details
-        const hourlyRate = packageType === 'academy' && packageData.academy_rate 
-          ? packageData.academy_rate 
-          : coachData.hourly_rate;
+        const hourlyRate = coachData.hourly_rate;
         
-        const originalPrice = hourlyRate * packageData.sessions_required;
+        const originalPrice = hourlyRate * creditData.sessions_required;
         let discountedPrice = originalPrice;
         
-        const discount_type_amount = packageData.percentage_discount  
+        const discount_type_amount = creditData.percentage_discount  
           ? 'percentage' 
           : 'fixed';
 
         if (discount_type_amount === 'percentage') {
-          discountedPrice = originalPrice * (1 - packageData.percentage_discount / 100);
+          discountedPrice = originalPrice * (1 - creditData.percentage_discount / 100);
         } else if (discount_type_amount === 'fixed') {
-          discountedPrice = originalPrice - packageData.fixed_discount;
+          discountedPrice = originalPrice - creditData.fixed_discount;
         }
         
-        // Fill package details
-        const packageDetails = document.getElementById('package-details');
-        packageDetails.innerHTML = `
-          <h3 class="text-xl font-bold text-gray-800 mb-4">${packageData.name}</h3>
-          <p class="text-gray-600 mb-4">${packageData.description || 'Package deal for coaching sessions'}</p>
+        // Fill credit details
+        const creditDetails = document.getElementById('credit-details');
+        creditDetails.innerHTML = `
+          <h3 class="text-xl font-bold text-gray-800 mb-4">${creditData.name}</h3>
+          <p class="text-gray-600 mb-4">${creditData.description || 'Purchase coaching session credits'}</p>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h4 class="font-semibold text-gray-700 mb-2">Package Details</h4>
+              <h4 class="font-semibold text-gray-700 mb-2">Credit Details</h4>
               <ul class="space-y-2">
                 <li class="flex justify-between">
-                  <span class="text-gray-600">Provider:</span>
-                  <span class="font-medium">${packageType === 'coach' ? `${coachData.first_name} ${coachData.last_name}` : findAcademyName(packageData.academy_id)}</span>
+                  <span class="text-gray-600">Coach:</span>
+                  <span class="font-medium">${coachData.first_name} ${coachData.last_name}</span>
                 </li>
                 <li class="flex justify-between">
                   <span class="text-gray-600">Sessions Included:</span>
-                  <span class="font-medium">${packageData.sessions_required}</span>
+                  <span class="font-medium">${creditData.sessions_required}</span>
                 </li>
                 <li class="flex justify-between">
                   <span class="text-gray-600">Regular Price:</span>
-                  <span class="font-medium line-through text-gray-500">$${formatMoney(originalPrice)}</span>
+                  <span class="font-medium line-through text-gray-500">${formatMoney(originalPrice)}</span>
                 </li>
                 <li class="flex justify-between">
                   <span class="text-gray-600">Discount:</span>
-                  <span class="font-medium text-green-600">${discount_type_amount === 'percentage' ? `${packageData.percentage_discount}%` : `$${formatMoney(packageData.fixed_discount)}`}</span>
+                  <span class="font-medium text-green-600">${discount_type_amount === 'percentage' ? `${creditData.percentage_discount}%` : `${formatMoney(creditData.fixed_discount)}`}</span>
                 </li>
               </ul>
             </div>
             
             <div>
-              <h4 class="font-semibold text-gray-700 mb-2">Package Benefits</h4>
+              <h4 class="font-semibold text-gray-700 mb-2">Credit Benefits</h4>
               <ul class="space-y-1 text-gray-600">
                 <li class="flex items-start">
                   <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1673,7 +2130,13 @@
                   <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                   </svg>
-                  <span>${packageType === 'academy' ? 'Can be used with any coach in the academy' : 'Exclusive coaching sessions with this coach'}</span>
+                  <span>Direct communication with coach to schedule sessions</span>
+                </li>
+                <li class="flex items-start">
+                  <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  <span>Coach can help book courts for your sessions</span>
                 </li>
               </ul>
             </div>
@@ -1681,19 +2144,19 @@
           
           <div class="mt-6 p-4 bg-blue-50 rounded-lg">
             <div class="flex justify-between items-center">
-              <span class="text-lg font-bold text-gray-800">Total Package Price:</span>
-              <span class="text-xl font-bold text-blue-600">$${formatMoney(discountedPrice)}</span>
+              <span class="text-lg font-bold text-gray-800">Total Credits Price:</span>
+              <span class="text-xl font-bold text-blue-600">${formatMoney(discountedPrice)}</span>
             </div>
           </div>
         `;
         
         // Fill payment details
-        const paymentDetails = document.getElementById('package-payment-details');
-        if (packageType === 'coach' && coachData.payment_info) {
+        const paymentDetails = document.getElementById('credit-payment-details');
+        if (coachData.payment_info) {
           const paymentInfo = coachData.payment_info;
           
           paymentDetails.innerHTML = `
-            <h4 class="font-medium text-gray-800 mb-4">Please transfer the package payment to:</h4>
+            <h4 class="font-medium text-gray-800 mb-4">Please transfer the payment to:</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p class="text-sm text-gray-600 mb-1">Bank Name:</p>
@@ -1709,10 +2172,10 @@
               </div>
               <div>
                 <p class="text-sm text-gray-600 mb-1">Reference:</p>
-                <p class="font-medium">PBC Package: ${packageData.name}</p>
+                <p class="font-medium">PBC Credits: ${creditData.name}</p>
               </div>
             </div>
-            <p class="font-bold text-blue-700 mt-4">Amount to pay: $${formatMoney(discountedPrice)}</p>
+            <p class="font-bold text-blue-700 mt-4">Amount to pay: ${formatMoney(discountedPrice)}</p>
           `;
           
           // Add QR code if available
@@ -1727,217 +2190,172 @@
               </div>
             `;
           }
-        } else if (packageType === 'academy') {
-          // Academy payment details - this would need to be fetched from the academy
-          paymentDetails.innerHTML = `
-            <h4 class="font-medium text-gray-800 mb-4">Academy Package Payment Instructions</h4>
-            <p class="text-gray-600 mb-2">Please contact ${findAcademyName(packageData.academy_id)} for payment details or use the details below if provided.</p>
-            <div class="p-4 bg-yellow-50 rounded-lg">
-              <p class="font-medium text-amber-800">Package Price: $${formatMoney(discountedPrice)}</p>
-              <p class="text-sm text-amber-700 mt-1">Include your name and "${packageData.name} Package" as reference</p>
-            </div>
-          `;
         } else {
           // Fallback payment instructions
           paymentDetails.innerHTML = `
             <h4 class="font-medium text-gray-800 mb-4">Payment Instructions</h4>
-            <p class="text-gray-600 mb-2">Please contact ${packageType === 'coach' ? `${coachData.first_name} ${coachData.last_name}` : findAcademyName(packageData.academy_id)} for payment details.</p>
-            <p class="font-bold text-blue-700 mt-2">Amount to pay: $${formatMoney(discountedPrice)}</p>
+            <p class="text-gray-600 mb-2">Please contact ${coachData.first_name} ${coachData.last_name} for payment details.</p>
+            <p class="font-bold text-blue-700 mt-2">Amount to pay: ${formatMoney(discountedPrice)}</p>
+            <p class="text-sm text-gray-500 mt-4">After your payment is confirmed, you'll receive the coach's contact information to schedule your sessions.</p>
           `;
         }
         
         // Show the modal
-        showModal(packagePurchaseModal);
+        showModal(creditPurchaseModal);
       }
       
-      // Helper function to find academy name by ID
-      function findAcademyName(academyId) {
-        const academyAffiliation = coachData.academy_affiliations.find(a => a.id === parseInt(academyId));
-        return academyAffiliation ? academyAffiliation.name : 'the Academy';
+      // Update coach contact information
+      async function updateCoachContactInfo(inSummary = false, forceLoad = false) {
+        // Only fetch contact info if student has credits or just purchased (forceLoad)
+        const hasActiveCredits = studentPackages && studentPackages.some(pkg => 
+          pkg.status === 'active' && (pkg.total_sessions - pkg.sessions_booked) > 0
+        );
+        
+        if (!hasActiveCredits && !forceLoad) {
+          // Hide contact info if no active credits and not just purchased
+          if (inSummary) {
+            const contactCard = document.getElementById('coach-contact-info');
+            if (contactCard) contactCard.classList.add('hidden');
+          }
+          return;
+        }
+        
+        // We need to fetch coach contact info - it's not included in the initial coach data
+        try {
+          // Only fetch if we don't already have it
+          if (!coachData.phone_number || !coachData.email || forceLoad) {
+            const response = await fetch(`/api/coach/contact/${coachData.id}`);
+            
+            if (response.ok) {
+              const contactData = await response.json();
+              // Update coach data with contact info
+              coachData.phone_number = contactData.phone_number;
+              coachData.email = contactData.email;
+            } else {
+              console.log('Could not load coach contact details. Student may not have active credits.');
+              return;
+            }
+          }
+          
+          // Prepare the contact information
+          const phone = coachData.phone_number;
+          const email = coachData.email;
+          
+          // Create whatsapp link if phone is available
+          const whatsappLink = phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : '#';
+          
+          // Determine which contact elements to update
+          let phoneElement, emailElement, whatsappElement, contactCard;
+          
+          if (inSummary) {
+            // Update in the credits summary section
+            phoneElement = document.getElementById('coach-phone-link');
+            emailElement = document.getElementById('coach-email-link');
+            whatsappElement = document.getElementById('coach-whatsapp-link');
+            contactCard = document.getElementById('coach-contact-info');
+          } else {
+            // Update in the credit success modal
+            phoneElement = document.getElementById('success-coach-phone');
+            emailElement = document.getElementById('success-coach-email');
+            whatsappElement = document.getElementById('success-coach-whatsapp');
+            contactCard = document.getElementById('credit-success-contact');
+          }
+          
+          // Update the elements if they exist
+          if (phoneElement) {
+            if (phone) {
+              phoneElement.textContent = phone;
+              phoneElement.href = `tel:${phone}`;
+            } else {
+              phoneElement.textContent = 'Not available';
+              phoneElement.href = '#';
+            }
+          }
+          
+          if (emailElement) {
+            if (email) {
+              emailElement.textContent = email;
+              emailElement.href = `mailto:${email}`;
+            } else {
+              emailElement.textContent = 'Not available';
+              emailElement.href = '#';
+            }
+          }
+          
+          if (whatsappElement) {
+            whatsappElement.href = whatsappLink;
+          }
+          
+          // Show contact card
+          if (contactCard) {
+            contactCard.classList.remove('hidden');
+          }
+        } catch (error) {
+          console.error('Error fetching coach contact info:', error);
+        }
       }
-    
-      async function fetchStudentPackages() {
-        if (!isUserLoggedIn) return;
+      
+      // Add this function to handle credit purchase submission
+      async function submitCreditPurchase(event) {
+        event.preventDefault();
+        
+        if (!isUserLoggedIn) {
+          alert('Please log in to purchase credits.');
+          return;
+        }
         
         try {
-          // Fetch packages that can be used with this coach
-          const response = await fetch(`/api/student/packages?coach_id=${coachData.id}`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch packages');
+          // Show loading overlay
+          loadingOverlay.classList.remove('hidden');
+          
+          // Get form data
+          const formData = new FormData(creditPurchaseForm);
+          
+          // Verify payment proof is uploaded
+          if (!creditPaymentProof.files[0]) {
+            alert('Please upload payment proof for the credits.');
+            loadingOverlay.classList.add('hidden');
+            return;
           }
           
-          const data = await response.json();
-          studentPackages = data;
-          
-          // Update the packages UI
-          updatePackagesUI();
-        } catch (error) {
-          console.error('Error fetching student packages:', error);
-          document.getElementById('student-packages').innerHTML = `
-            <p class="text-sm text-red-500">Could not load your packages. Please try again later.</p>
-          `;
-        }
-      }
-
-      function updatePackagesUI() {
-        const container = document.getElementById('student-packages');
-        if (!container) return;
-        
-        // Hide container if user is not logged in or no packages
-        if (!isUserLoggedIn) {
-          document.getElementById('packages-container').classList.add('hidden');
-          return;
-        }
-        
-        if (!studentPackages || studentPackages.length === 0) {
-          container.innerHTML = `
-            <p class="text-sm text-gray-500">You don't have any active packages with this coach or their academies.</p>
-          `;
-          return;
-        }
-        
-        // Show available packages
-        container.innerHTML = '';
-        
-        studentPackages.forEach(pkg => {
-          const sessionsRemaining = pkg.total_sessions - pkg.sessions_booked;
-          const expiryDate = pkg.expires_at ? new Date(pkg.expires_at).toLocaleDateString() : 'Never';
-          
-          // Determine package type text
-          let packageTypeText = 'Coach Package';
-          if (pkg.package_type === 'academy') {
-            packageTypeText = 'Academy Package';
-          }
-          
-          const isSelected = selectedPackage && selectedPackage.id === pkg.id;
-          
-          // Check if package is active
-          const isActive = pkg.status === 'active';
-
-          // Create status badge
-          let statusBadge = '';
-          switch(pkg.status) {
-            case 'active':
-              statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Active</span>`;
-              break;
-            case 'pending':
-              statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>`;
-              break;
-            case 'rejected':
-              statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Rejected</span>`;
-              break;
-            case 'expired':
-              statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Expired</span>`;
-              break;
-            default:
-              statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">${pkg.status || 'Unknown'}</span>`;
-          }
-          
-          const packageDiv = document.createElement('div');
-          // Use different styling based on if package is active
-          packageDiv.className = `${isSelected ? 'bg-blue-200' : (isActive ? 'bg-white' : 'bg-gray-100')} p-3 rounded-lg border ${isActive ? 'border-blue-300' : 'border-gray-300'} hover:shadow-md transition-all`;
-          
-          packageDiv.innerHTML = `
-            <div class="flex justify-between mb-1">
-              <div>
-                <span class="font-semibold">${pkg.pricing_plan.name}</span>
-                <div class="mt-1">${statusBadge}</div>
-              </div>
-              <div class="text-right">
-                <span class="text-blue-700">${sessionsRemaining} sessions remaining</span>
-                <p class="text-xs text-gray-500 mt-1">Expires: ${expiryDate}</p>
-              </div>
-            </div>
-            <p class="text-sm text-gray-600">${packageTypeText}</p>
-            <div class="flex justify-end mt-2">
-              ${isActive ? 
-                `<button class="text-sm px-3 py-1 ${isSelected ? 'bg-green-600' : 'bg-blue-600'} text-white rounded-lg hover:bg-blue-700 package-select-btn" 
-                  data-package-id="${pkg.id}">
-                  ${isSelected ? 'Selected' : 'Use Package'}
-                </button>` :
-                `<button class="text-sm px-3 py-1 bg-gray-400 text-white rounded-lg cursor-not-allowed" disabled>
-                  ${pkg.status === 'pending' ? 'Awaiting Approval' : 'Unavailable'}
-                </button>`
-              }
-            </div>
-          `;
-          
-          container.appendChild(packageDiv);
-        });
-        
-        // Add event listeners to package selection buttons
-        document.querySelectorAll('.package-select-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const packageId = parseInt(this.getAttribute('data-package-id'));
-            
-            // Check if this package is already selected
-            if (selectedPackage && selectedPackage.id === packageId) {
-              // Deselect the package
-              selectedPackage = null;
-              updatePackagesUI();
-              
-              // Reset pricing to normal
-              updatePricesWithDiscount();
-              return;
-            }
-            
-            // Get the package data
-            const pkg = studentPackages.find(p => p.id === packageId);
-            if (!pkg) return;
-
-            // Make sure it's active
-            if (pkg.status !== 'active') {
-              alert('This package is not active and cannot be used.');
-              return;
-            }
-
-            // Check if there are enough sessions remaining in the package
-            const sessionsRemaining = pkg.total_sessions - pkg.sessions_booked;
-            if (sessionsRemaining < selectedSlots.length) {
-              alert(`You've selected ${selectedSlots.length} sessions but only have ${sessionsRemaining} sessions remaining in this package.`);
-              return;
-            }
-            
-            // Set as selected package
-            selectedPackage = pkg;
-            
-            // Update UI
-            updatePackagesUI();
-            
-            // Update pricing to show package discount
-            applyPackageDiscount();
+          // Send the credit purchase request
+          const response = await fetch('/api/packages/purchase', {
+            method: 'POST',
+            body: formData
           });
-        });
-      }
-
-      function applyPackageDiscount() {
-        if (!selectedPackage) return;
-        
-        // Check how many sessions we can apply the package to
-        const sessionsRemaining = selectedPackage.total_sessions - selectedPackage.sessions_booked;
-        const sessionsToApply = Math.min(sessionsRemaining, selectedSlots.length);
-        
-        // Sort slots by date and time so we apply the package to the earliest slots first
-        const sortedSlots = [...selectedSlots].sort((a, b) => {
-          const dateA = new Date(a.date + ' ' + a.time);
-          const dateB = new Date(b.date + ' ' + b.time);
-          return dateA - dateB;
-        });
-        
-        // Apply package discount to the first N slots where N is sessionsToApply
-        for (let i = 0; i < sortedSlots.length; i++) {
-          if (i < sessionsToApply) {
-            // Keep court fee, but set coach fee to 0
-            sortedSlots[i].discounted_price = sortedSlots[i].court_fee;
-          } else {
-            // Reset any remaining slots to regular price
-            sortedSlots[i].discounted_price = sortedSlots[i].price;
+          
+          // Hide loading overlay
+          loadingOverlay.classList.add('hidden');
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to purchase credits');
           }
+          
+          const result = await response.json();
+          
+          // Show success message
+          hideAllModals();
+          
+          // Update coach contact information in success modal - force load contact info
+          updateCoachContactInfo(false, true);
+          
+          // Show credit success modal
+          showModal(creditSuccessModal);
+          
+          // Reset form
+          creditPurchaseForm.reset();
+          creditPaymentPreview.innerHTML = '';
+          
+          // Refresh student credits
+          fetchStudentCredits();
+          return result;
+          
+        } catch (error) {
+          console.error('Error purchasing credits:', error);
+          loadingOverlay.classList.add('hidden');
+          alert(`Credits purchase failed: ${error.message}`);
         }
-        
-        // Update UI
-        updateSelectedTimeslotsUI();
-        updateTotalPrice();
       }
 
       function setSelectedDate(dateStr) {
@@ -2025,6 +2443,12 @@
 
               // Populate available time slots
               populateAvailabilityGrid(dateStr);
+              
+              // Enable next button
+              if (nextToTimeBtn) {
+                nextToTimeBtn.disabled = false;
+                nextToTimeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+              }
             });
           }
           // No availability data yet or no court selected
@@ -2064,20 +2488,12 @@
 
             const data = await response.json();
 
-            // Store availability data including court fees and pricing plans
+            // Store availability data (but ignore court fees and pricing plans as per new design)
             allAvailabilities[dateStr] = {
               available: data.available || [],
-              booked: data.booked || [],
-              court_fees: data.court_fees || [],
-              pricing_plans: data.pricing_plans || []
+              booked: data.booked || []
             };
           }
-
-          // Store pricing plans globally for easy access
-          availablePricingPlans = allAvailabilities[Object.keys(allAvailabilities)[0]]?.pricing_plans || [];
-
-          // Update the pricing plan options in the UI
-          updatePricingPlanOptions();
 
           // Regenerate calendar now that we have availability data
           generateCalendar(year, month);
@@ -2085,258 +2501,6 @@
         } catch (error) {
           console.error('Error fetching availability:', error);
         }
-      }
-
-
-      function updatePricingPlanOptions() {
-        const container = document.getElementById('pricing-plans-container');
-        if (!container) return;
-
-        container.innerHTML = '';
-
-        if (!availablePricingPlans || availablePricingPlans.length === 0) {
-          container.innerHTML = `
-      <p class="text-sm text-gray-500">No special pricing plans available</p>
-    `;
-          return;
-        }
-
-        // Check if the user is logged in
-        const isLoggedIn = typeof isUserLoggedIn !== 'undefined' ? isUserLoggedIn : false;
-
-        // For guest users, show a message about available discounts that require login
-        if (!isLoggedIn) {
-          // Check if there are any first-time discount plans
-          const hasFirstTimeDiscounts = availablePricingPlans.some(plan => plan.first_time_only);
-
-          if (hasFirstTimeDiscounts) {
-            // Add login/register prompt for first-time discounts
-            const loginPrompt = document.createElement('div');
-            loginPrompt.className = 'bg-blue-50 p-4 rounded-lg mb-4 border border-blue-300';
-            loginPrompt.innerHTML = `
-        <div class="flex items-start">
-          <div class="flex-shrink-0 mt-0.5">
-            <svg class="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-            </svg>
-          </div>
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-blue-800">Special Discounts Available!</h3>
-            <div class="mt-1 text-sm text-blue-700">
-              <p>First-time student discounts are available. <a href="#" class="font-bold login-btn">Login</a> or <a href="#" class="font-bold register-btn">Register</a> to access these special rates.</p>
-            </div>
-          </div>
-        </div>
-      `;
-            container.appendChild(loginPrompt);
-
-            // Add event listeners to the login/register links
-            loginPrompt.querySelector('.login-btn').addEventListener('click', function (e) {
-              e.preventDefault();
-              // Show login modal
-              showModal(loginModal);
-            });
-
-            loginPrompt.querySelector('.register-btn').addEventListener('click', function (e) {
-              e.preventDefault();
-              // Show registration modal
-              showModal(registerModal);
-            });
-          }
-        }
-
-        // Function to check if user is eligible for first-time discount
-        const checkFirstTimeStatus = async () => {
-          if (!isLoggedIn) {
-            // Guest users are not eligible for first-time discounts
-            return false;
-          }
-
-          try {
-            // Try to fetch previous bookings with this coach
-            const response = await fetch(`/student/api/student/has-previous-bookings/${coachData.id}`);
-            if (!response.ok) {
-              throw new Error('Failed to check booking history');
-            }
-
-            const data = await response.json();
-            return !data.has_previous_bookings;
-          } catch (error) {
-            console.error('Error checking first-time status:', error);
-            // Default to assuming not first time when there's an error
-            return false;
-          }
-        };
-
-        // Update the UI based on the first-time status
-        checkFirstTimeStatus().then(isFirstTime => {
-          // Create HTML for each applicable pricing plan
-          availablePricingPlans.forEach(plan => {
-            // For guest users, only show non-first-time discount plans
-            if (!isLoggedIn && plan.first_time_only) return;
-
-            // For logged-in users, check eligibility for first-time discounts
-            if (isLoggedIn && plan.first_time_only && !isFirstTime) return;
-
-            // Skip seasonal plans outside of valid date range
-            if (plan.valid_from && plan.valid_to) {
-              const today = new Date();
-              if (new Date(plan.valid_from) > today || new Date(plan.valid_to) < today) return;
-            }
-
-            const planDiv = document.createElement('div');
-            planDiv.className = 'bg-blue-50 p-3 rounded-lg mb-2 border border-blue-200';
-
-            let discountText = '';
-            if (plan.discount_type_amount === 'percentage') {
-              discountText = `${plan.discount_amount}% off`;
-            } else {
-              discountText = `$${plan.discount_amount} off`;
-            }
-
-            // Special display for package deals
-            if (plan.discount_type === 'package') {
-              planDiv.innerHTML = `
-          <div class="flex justify-between mb-1">
-            <span class="font-semibold">${plan.name}</span>
-            <span class="text-blue-700">${discountText}</span>
-          </div>
-          <p class="text-sm text-gray-600">${plan.description}</p>
-          <p class="text-xs text-blue-800 mt-1">Book ${plan.sessions_required} sessions to activate (${selectedSlots.length}/${plan.sessions_required} selected)</p>
-          <div class="flex justify-end mt-2">
-            <button class="text-sm px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 select-pricing-plan-btn ${selectedSlots.length >= plan.sessions_required ? '' : 'opacity-50 cursor-not-allowed'}" 
-              data-plan-id="${plan.id}" ${selectedSlots.length >= plan.sessions_required ? '' : 'disabled'}>
-              Select
-            </button>
-          </div>
-        `;
-            } else {
-              planDiv.innerHTML = `
-          <div class="flex justify-between mb-1">
-            <span class="font-semibold">${plan.name}</span>
-            <span class="text-blue-700">${discountText}</span>
-          </div>
-          <p class="text-sm text-gray-600">${plan.description}</p>
-          <div class="flex justify-end mt-2">
-            <button class="text-sm px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 select-pricing-plan-btn" data-plan-id="${plan.id}">
-              Select
-            </button>
-          </div>
-        `;
-            }
-
-            container.appendChild(planDiv);
-          });
-
-          // Add event listeners to the "Select" buttons
-          document.querySelectorAll('.select-pricing-plan-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-              const planId = parseInt(this.getAttribute('data-plan-id'));
-
-              // Find the plan data
-              const plan = availablePricingPlans.find(p => p.id === planId);
-
-              // Check if this plan is already selected
-              const isAlreadySelected = selectedPricingPlan && selectedPricingPlan.id === planId;
-
-              if (isAlreadySelected) {
-                // User is clicking an already selected plan, so unselect it
-                selectedPricingPlan = null;
-
-                // Reset button to unselected state
-                this.classList.remove('bg-green-600');
-                this.classList.add('bg-blue-600');
-                this.textContent = 'Select';
-
-                // Update prices without discount
-                updatePricesWithDiscount();
-                return;
-              }
-
-              // New plan selection
-
-              // Check if meets minimum sessions for package deals
-              if (plan.discount_type === 'package' && selectedSlots.length < plan.sessions_required) {
-                alert(`You need to select at least ${plan.sessions_required} sessions to use this package deal.`);
-                return;
-              }
-
-              // Set selected plan
-              selectedPricingPlan = plan;
-
-              // Update UI to show selected plan
-              document.querySelectorAll('.select-pricing-plan-btn').forEach(b => {
-                b.classList.remove('bg-green-600');
-                b.classList.add('bg-blue-600');
-                b.textContent = 'Select';
-              });
-
-              this.classList.remove('bg-blue-600');
-              this.classList.add('bg-green-600');
-              this.textContent = 'Selected';
-
-              // Update prices with the selected discount
-              updatePricesWithDiscount();
-            });
-          });
-        });
-      }
-      
-      // Add this function to update prices with selected discount
-      function updatePricesWithDiscount() {
-        if (!selectedPricingPlan && !selectedPackage) {
-          // No discount applied, reset to base prices
-          selectedSlots.forEach(slot => {
-            slot.discounted_price = slot.price;
-          });
-        } else if (selectedPackage) {
-          // Apply package discount (coach fee becomes 0)
-          // Check how many sessions we can apply the package to
-          const sessionsRemaining = selectedPackage.total_sessions - selectedPackage.sessions_booked;
-          const sessionsToApply = Math.min(sessionsRemaining, selectedSlots.length);
-          
-          // Sort slots by date and time so we apply the package to the earliest slots first
-          const sortedSlots = [...selectedSlots].sort((a, b) => {
-            const dateA = new Date(a.date + ' ' + a.time);
-            const dateB = new Date(b.date + ' ' + b.time);
-            return dateA - dateB;
-          });
-          
-          // Apply package discount to the first N slots where N is sessionsToApply
-          for (let i = 0; i < sortedSlots.length; i++) {
-            if (i < sessionsToApply) {
-              // Keep court fee, but set coach fee to 0
-              sortedSlots[i].discounted_price = sortedSlots[i].court_fee;
-            } else {
-              // Reset any remaining slots to regular price
-              sortedSlots[i].discounted_price = sortedSlots[i].price;
-            }
-          }
-        } else if (selectedPricingPlan) {
-          // Apply discount based on the selected plan
-          if (selectedPricingPlan.discount_type_amount === 'percentage') {
-            const discount = selectedPricingPlan.discount_amount / 100;
-
-            selectedSlots.forEach(slot => {
-              // Only apply discount to coach fee, not court fee
-              const coachFee = coachData.hourly_rate;
-              const discountAmount = coachFee * discount;
-              slot.discounted_price = slot.price - discountAmount;
-            });
-          } else {
-            // Fixed discount - distribute evenly across all slots
-            const totalSlots = selectedSlots.length;
-            const discountPerSlot = selectedPricingPlan.discount_amount / totalSlots;
-
-            selectedSlots.forEach(slot => {
-              slot.discounted_price = Math.max(0, slot.price - discountPerSlot);
-            });
-          }
-        }
-
-        // Update UI displays
-        updateSelectedTimeslotsUI();
-        updateTotalPrice();
       }
 
       // Populate availability grid for selected date
@@ -2365,7 +2529,7 @@
         
         // Initialize all hours as not available
         hours.forEach(hour => {
-          hourStatus[hour] = { status: 'unavailable', slotId: null, student_books_court: false };
+          hourStatus[hour] = { status: 'unavailable', slotId: null };
         });
         
         // If we have availability data for the selected date, update the status
@@ -2377,12 +2541,8 @@
             if (hours.includes(slot.time)) {
               hourStatus[slot.time] = { 
                 status: 'available', 
-                slotId: slot.id,
-                student_books_court: slot.student_books_court
+                slotId: slot.id
               };
-              
-              // Store booking responsibility
-              bookingResponsibilities[slot.id] = slot.student_books_court;
             }
           });
           
@@ -2391,8 +2551,7 @@
             if (hours.includes(slot.time)) {
               hourStatus[slot.time] = { 
                 status: 'booked', 
-                slotId: null,
-                student_books_court: false
+                slotId: null
               };
             }
           });
@@ -2403,13 +2562,12 @@
           const timeSlot = document.createElement("div");
           timeSlot.className = "p-2 rounded-lg text-center text-sm"; // Default styling
           
-          // Create inner content with time and possibly booking indicator
+          // Create inner content with time
           const timeText = document.createElement("div");
           timeText.textContent = hour;
           
           const status = hourStatus[hour].status;
           const slotId = hourStatus[hour].slotId;
-          const studentBooksCourtFlag = hourStatus[hour].student_books_court;
 
           // Find if this slot is in our selected slots
           const isSelected = selectedSlots.some(slot =>
@@ -2423,14 +2581,6 @@
           else if (status === 'available') {
             timeSlot.className += " bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer";
             timeSlot.addEventListener("click", () => addSelectedSlot(date, hour, slotId, selectedCourtId));
-
-            // Add indicator for booking responsibility
-            if (studentBooksCourtFlag) {
-              const indicator = document.createElement("div");
-              indicator.className = "text-xs mt-1 text-orange-600";
-              indicator.innerHTML = `<i class="fas fa-calendar-check"></i> Book court`;
-              timeSlot.appendChild(indicator);
-            }
           }
           else if (status === 'booked') {
             timeSlot.className += " bg-orange-300 text-white cursor-not-allowed";
@@ -2451,9 +2601,6 @@
           availabilityGrid.innerHTML = "<p class='text-center text-gray-500 py-4'>No time slots available on this date.</p>";
           return;
         }
-        
-        // Update court booking info
-        updateCourtBookingInfo();
       }
       
       // Add a selected time slot
@@ -2465,20 +2612,8 @@
 
         const courtName = courtSelect.options[courtSelect.selectedIndex].text;
 
-        // Get availability data for this date
-        const dateAvailability = allAvailabilities[date];
-
-        // Find the specific availability item
-        const availabilityItem = dateAvailability.available.find(item => item.id === availabilityId);
-
-        // Get court fee for this time
-        const courtFee = availabilityItem ? availabilityItem.court_fee : 0;
-        
-        // Get booking responsibility
-        const studentBooksCourtFlag = availabilityItem ? availabilityItem.student_books_court : false;
-
-        // Calculate total price (coach fee + court fee)
-        const totalPrice = parseFloat(coachData.hourly_rate) + parseFloat(courtFee);
+        // Calculate total price (coach fee only)
+        const totalPrice = parseFloat(coachData.hourly_rate);
 
         selectedSlots.push({
           date,
@@ -2487,14 +2622,9 @@
           courtId,
           courtName,
           coach_fee: parseFloat(coachData.hourly_rate),
-          court_fee: parseFloat(courtFee),
           price: totalPrice,
-          discounted_price: totalPrice, // Will be updated if discount applied
-          student_books_court: studentBooksCourtFlag // Add booking responsibility flag
+          discounted_price: totalPrice // Will be updated if discount applied
         });
-
-        // Store booking responsibility for this availability
-        bookingResponsibilities[availabilityId] = studentBooksCourtFlag;
 
         // Update session count
         const sessionCount = document.getElementById('session-count');
@@ -2502,21 +2632,18 @@
           sessionCount.textContent = selectedSlots.length;
         }
 
-        // Update pricing based on what's selected
-        if (selectedPackage) {
-          applyPackageDiscount();
-        } else if (selectedPricingPlan) {
-          updatePricesWithDiscount();
-        } else {
-          updateSelectedTimeslotsUI();
-          updateTotalPrice();
-        }
-
-        // Update package eligibility statuses
-        updatePricingPlanOptions();
+        // Update UI
+        updateSelectedTimeslotsUI();
+        updateTotalPrice();
 
         // Refresh the availability grid
         populateAvailabilityGrid(date);
+        
+        // Enable continue button if at least one slot is selected
+        if (continueToBookingBtn && selectedSlots.length > 0) {
+          continueToBookingBtn.disabled = false;
+          continueToBookingBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
       }
       
       // Remove a selected time slot
@@ -2531,50 +2658,17 @@
           sessionCount.textContent = selectedSlots.length;
         }
 
-        // If we have a pricing plan selected, check if it's still applicable
-        if (selectedPricingPlan && selectedPricingPlan.discount_type === 'package'
-          && selectedSlots.length < selectedPricingPlan.sessions_required) {
-          // No longer eligible for this package
-          selectedPricingPlan = null;
-          alert('You no longer have enough sessions selected for the package deal.');
-        }
-
         // Update pricing and UI
-        updatePricesWithDiscount();
-
-        // Update package eligibility statuses
-        updatePricingPlanOptions();
+        updateSelectedTimeslotsUI();
+        updateTotalPrice();
 
         // Refresh the availability grid
         populateAvailabilityGrid(date);
-      }
-
-      function updateCourtBookingInfo() {
-        const infoContainer = document.getElementById('court-booking-info');
-        const responsibilityText = document.getElementById('booking-responsibility-text');
         
-        if (!infoContainer || !selectedCourtId) {
-          if (infoContainer) infoContainer.classList.add('hidden');
-          return;
-        }
-        
-        // Get the selected court data
-        const selectedCourt = coachData.courts.find(court => court.id === parseInt(selectedCourtId));
-        if (!selectedCourt) {
-          infoContainer.classList.add('hidden');
-          return;
-        }
-        
-        infoContainer.classList.remove('hidden');
-        
-        // Check if any of the selected slots require student to book the court
-        const studentResponsible = selectedSlots.some(slot => slot.student_books_court);
-        
-        if (studentResponsible) {
-          responsibilityText.textContent = "You are responsible for booking the court for these sessions.";
-          
-        } else {
-          responsibilityText.textContent = "The coach will handle court bookings for these sessions.";
+        // Disable continue button if no slots selected
+        if (continueToBookingBtn && selectedSlots.length === 0) {
+          continueToBookingBtn.disabled = true;
+          continueToBookingBtn.classList.add('opacity-50', 'cursor-not-allowed');
         }
       }
 
@@ -2608,25 +2702,24 @@
           let priceDisplay = '';
           if (slot.discounted_price < slot.price) {
             // Show discount
-            priceDisplay = `<span class="line-through text-gray-500">$${slot.price.toFixed(2)}</span> $${slot.discounted_price.toFixed(2)}`;
+            priceDisplay = `<span class="line-through text-gray-500">${slot.price.toFixed(2)}</span> ${slot.discounted_price.toFixed(2)}`;
           } else {
-            priceDisplay = `$${slot.price.toFixed(2)}`;
+            priceDisplay = `${slot.price.toFixed(2)}`;
           }
 
           slotDiv.innerHTML = `
       <div>
         <div class="font-medium">${formatDate(slot.date)}</div>
         <div>${slot.time} at <span class="font-semibold">${slot.courtName}</span></div>
-        <div class="text-xs text-blue-600 mt-1">
-          Coach: $${slot.coach_fee.toFixed(2)} | Court: $${slot.court_fee.toFixed(2)}
-        </div>
-        <div class="font-medium">${priceDisplay}</div>
       </div>
-      <button class="text-red-500 hover:text-red-700 p-1">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
+      <div class="flex items-center space-x-2">
+        <div class="font-medium">${priceDisplay}</div>
+        <button class="text-red-500 hover:text-red-700 p-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
     `;
 
           // Add remove button functionality
@@ -2641,56 +2734,22 @@
 
       // Update total price display
       function updateTotalPrice() {
-        // Calculate subtotals
-        const coachTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.coach_fee), 0);
-        const courtTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
-
         // Calculate total with any discounts applied
         const grandTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.discounted_price), 0);
 
         // Update display
         currentTotal.textContent = formatMoney(grandTotal);
-        currentTotalCopy.textContent = formatMoney(grandTotal);
-
-        // Update subtotals if elements exist
-        const coachTotalElement = document.getElementById('coach-fee-total');
-        const courtTotalElement = document.getElementById('court-fee-total');
-
-        if (coachTotalElement) coachTotalElement.textContent = formatMoney(coachTotal);
-        if (courtTotalElement) courtTotalElement.textContent = formatMoney(courtTotal);
-
-        // Calculate savings if any
-        const originalTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
-        const savings = originalTotal - grandTotal;
-
-        const savingsElement = document.getElementById('total-savings');
-        const savingsContainer = document.getElementById('savings-container');
-        const discountInfoElement = document.getElementById('discount-info');
-        const discountAmountElement = document.getElementById('discount-amount');
-
-        if (savingsElement && savingsContainer) {
-          if (savings > 0) {
-            savingsElement.textContent = formatMoney(savings);
-            savingsContainer.classList.remove('hidden');
-            
-            // Also update the discount info in fee breakdown
-            if (discountInfoElement && discountAmountElement) {
-              discountInfoElement.classList.remove('hidden');
-              discountAmountElement.textContent = formatMoney(savings);
-            }
-          } else {
-            savingsContainer.classList.add('hidden');
-            
-            if (discountInfoElement) {
-              discountInfoElement.classList.add('hidden');
-            }
-          }
-        }
 
         // Also update the confirmation modal if open
         const totalPriceElement = document.getElementById('total-price');
         if (totalPriceElement) {
           totalPriceElement.textContent = formatMoney(grandTotal);
+        }
+        
+        // Update coach payment amount in confirmation modal
+        const coachPaymentAmount = document.getElementById('coach-payment-amount');
+        if (coachPaymentAmount) {
+          coachPaymentAmount.textContent = `(${formatMoney(grandTotal)})`;
         }
       }
 
@@ -2698,17 +2757,6 @@
       function populateConfirmationModal() {
         const container = document.getElementById('confirmation-timeslots');
         container.innerHTML = "";
-
-        // Instead of a simple boolean, count different booking types
-        const studentBookedSlots = selectedSlots.filter(slot => slot.student_books_court);
-        const coachBookedSlots = selectedSlots.filter(slot => !slot.student_books_court);
-        
-        const hasStudentBookedCourts = studentBookedSlots.length > 0;
-        const hasCoachBookedCourts = coachBookedSlots.length > 0;
-        
-        // Calculate court fees for each type
-        const studentBookedCourtFees = studentBookedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
-        const coachBookedCourtFees = coachBookedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
         
         // Sort slots by date and time
         const sortedSlots = [...selectedSlots].sort((a, b) => {
@@ -2722,520 +2770,144 @@
           const slotDiv = document.createElement("div");
           slotDiv.className = "bg-blue-100 text-blue-800 px-4 py-3 rounded-lg mb-2";
 
-          // Format price display
-          let priceDisplay = '';
-          if (slot.discounted_price < slot.price) {
-            // Show discount
-            priceDisplay = `<span class="line-through text-gray-500">$${slot.price.toFixed(2)}</span> $${slot.discounted_price.toFixed(2)}`;
-          } else {
-            priceDisplay = `$${slot.price.toFixed(2)}`;
-          }
-
           slotDiv.innerHTML = `
             <div class="flex justify-between">
               <div>
                 <span class="font-medium">${formatDate(slot.date)} at ${slot.time}</span>
                 <div class="text-sm">${slot.courtName}</div>
-                <div class="text-xs mt-1">Coach: $${slot.coach_fee.toFixed(2)} | Court: $${slot.court_fee.toFixed(2)}</div>
-                ${slot.student_books_court ? 
-                  '<div class="text-xs text-orange-600 mt-1"><i class="fas fa-info-circle"></i> You need to book this court</div>' : 
-                  '<div class="text-xs text-blue-600 mt-1"><i class="fas fa-info-circle"></i> Coach will book this court</div>'}
               </div>
-              <div class="font-bold">${priceDisplay}</div>
+              <div class="font-bold">${formatMoney(slot.price)}</div>
             </div>
           `;
 
           container.appendChild(slotDiv);
         });
 
-        // Calculate subtotals
-        const coachTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.coach_fee), 0);
-        const courtTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.court_fee), 0);
-        
-        const grandTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.discounted_price), 0);
-        const originalTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
-        const savings = originalTotal - grandTotal;
-        const discountedCoachTotal = grandTotal - courtTotal;
-
-        // Update coach payment step title
-        const coachPaymentStep = document.querySelector('.payment-steps .payment-step:first-child h4');
-        if (coachPaymentStep) {
-          coachPaymentStep.innerHTML = `Coach Payment <span class="text-blue-600">($${formatMoney(discountedCoachTotal)})</span>`;
-        }
-
-        // Add subtotals section
-        const subtotalsDiv = document.createElement('div');
-        subtotalsDiv.className = 'mt-4 p-4 bg-gray-50 rounded-lg';
-
-        subtotalsDiv.innerHTML = `
-          <div class="flex justify-between mb-2">
-            <span class="text-gray-600">Coach Fees:</span>
-            <span>$${formatMoney(coachTotal)}</span>
-          </div>
-          <div class="flex justify-between mb-2">
-            <span class="text-gray-600">Court Fees:</span>
-            <span>$${formatMoney(courtTotal)}</span>
-          </div>
-        `;
-
-        // Add discount info if applicable
-        if (savings > 0) {
-          subtotalsDiv.innerHTML += `
-            <div class="flex justify-between mb-2 text-green-600">
-              <span>Discount ${selectedPricingPlan ? `(${selectedPricingPlan.name})` : ''}:</span>
-              <span>-$${formatMoney(savings)}</span>
-            </div>
-          `;
-        }
-
-        container.appendChild(subtotalsDiv);
-
-        // Update total price
-        document.getElementById('total-price').textContent = formatMoney(grandTotal);
+        // Calculate total
+        const grandTotal = selectedSlots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
 
         // Update session count if available
         const sessionCountElement = document.getElementById('confirmation-session-count');
         if (sessionCountElement) {
           sessionCountElement.textContent = selectedSlots.length;
         }
+        
+        // Update total price
+        document.getElementById('total-price').textContent = formatMoney(grandTotal);
+        
+        // Update coach payment amount
+        const coachPaymentAmount = document.getElementById('coach-payment-amount');
+        if (coachPaymentAmount) {
+          coachPaymentAmount.textContent = `(${formatMoney(grandTotal)})`;
+        }
 
-        // Get all required payment and booking proof elements
-        const coachPaymentSection = document.getElementById('coach-payment-methods');
-        const coachPaymentProofSection = document.getElementById('coach-payment-proof').closest('.mb-4');
-        const courtBookingSection = document.getElementById('court-booking-section');
-        const courtBookingInstructions = document.getElementById('court-booking-instructions');
+        // Update court booking instructions
+        updateCourtBookingInstructions();
+        
+        // Initially hide the coach payment section and confirm button
+        if (coachPaymentSection) {
+          coachPaymentSection.classList.add('hidden');
+        }
+        
+        if (confirmButton) {
+          confirmButton.classList.add('hidden');
+        }
+        
+        // Make court booking proof required
+        if (courtBookingProof) {
+          courtBookingProof.required = true;
+        }
+      }
+
+      // Update court booking instructions in the confirmation modal
+      function updateCourtBookingInstructions() {
         const specificCourtInstructions = document.getElementById('specific-court-instructions');
-        const courtBookingText = document.getElementById('court-booking-text');
         const courtBookingLinkBox = document.getElementById('court-booking-link-box');
         const confirmationCourtLink = document.getElementById('confirmation-court-link');
-        const courtBookingProofSection = document.getElementById('court-booking-proof').closest('.mb-4');
         
-        // 1. Coach Payment Section (for coaching fees) - keeping this part the same...
-        if (discountedCoachTotal <= 0) {
-          // No coach payment needed for coaching (using a package)
-          if (coachPaymentSection) {
-            coachPaymentSection.innerHTML = `
-              <div class="bg-green-100 p-4 rounded-lg mb-3">
-                <div class="flex items-center text-green-800">
-                  <i class="fas fa-check-circle mr-2"></i>
-                  <p class="font-medium">No coaching fee payment required</p>
-                </div>
-                <p class="text-sm text-green-700 mt-1">
-                  This package has pre-paid coaching fees or you are using package sessions.
-                </p>
-              </div>
-            `;
+        if (!specificCourtInstructions || !selectedCourtId) return;
+        
+        // Get the selected court
+        const selectedCourt = coachData.courts.find(court => court.id === parseInt(selectedCourtId));
+        if (!selectedCourt) return;
+        
+        // Group slots by court and date
+        const courtDateMap = new Map();
+        
+        selectedSlots.forEach(slot => {
+          const courtKey = `${slot.courtId}-${slot.date}`;
+          if (!courtDateMap.has(courtKey)) {
+            courtDateMap.set(courtKey, {
+              courtName: slot.courtName,
+              date: slot.date,
+              times: []
+            });
           }
           
-          // Hide coaching payment proof upload if no coaching fee
-          if (coachPaymentProofSection) {
-            coachPaymentProofSection.classList.add('hidden');
-          }
+          const entry = courtDateMap.get(courtKey);
+          entry.times.push(slot.time);
+        });
+        
+        // Clear previous content
+        specificCourtInstructions.innerHTML = '';
+        
+        // Create list items for each court and date
+        courtDateMap.forEach(entry => {
+          const prettyDate = new Date(entry.date).toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+          });
           
-          // Make the coach payment proof not required
-          const coachPaymentProof = document.getElementById('coach-payment-proof');
-          if (coachPaymentProof) {
-            coachPaymentProof.required = false;
-          }
+          // Format each time with start-end (assuming 1 hour sessions)
+          const formattedTimes = entry.times.map(time => {
+            const startTimeParts = time.match(/(\d+):(\d+) ([AP]M)/);
+            
+            if (startTimeParts) {
+              let startHour = parseInt(startTimeParts[1]);
+              const startMinute = parseInt(startTimeParts[2]);
+              const period = startTimeParts[3];
+              
+              // Convert to 24-hour format
+              if (period === 'PM' && startHour < 12) startHour += 12;
+              if (period === 'AM' && startHour === 12) startHour = 0;
+              
+              // Calculate end time (add 1 hour)
+              let endHour = startHour + 1;
+              let endPeriod = period;
+              
+              // Handle period change
+              if (endHour === 12 && period === 'AM') endPeriod = 'PM';
+              else if (endHour === 24) {
+                endHour = 12;
+                endPeriod = 'AM';
+              }
+              // Convert back to 12-hour format
+              if (endHour > 12) endHour -= 12;
+              
+              const endTime = `${endHour}:${startMinute.toString().padStart(2, '0')} ${endPeriod}`;
+              return `${time}-${endTime}`;
+            } else {
+              return time;
+            }
+          });
+          
+          const listItem = document.createElement('div');
+          listItem.className = 'mb-3';
+          listItem.innerHTML = `
+            <p class="font-medium">${prettyDate} at ${entry.courtName}</p>
+            <p class="text-sm">Times: ${formattedTimes.join(', ')}</p>
+          `;
+          
+          specificCourtInstructions.appendChild(listItem);
+        });
+        
+        // Add booking link if available
+        if (selectedCourt.booking_link) {
+          confirmationCourtLink.href = selectedCourt.booking_link;
+          courtBookingLinkBox.classList.remove('hidden');
         } else {
-          // Coach payment required for coaching fee
-          // Update bank account details with amount to pay
-          const coachBankName = document.getElementById('coach-bank-name');
-          const coachAccountName = document.getElementById('coach-account-name');
-          const coachAccountNumber = document.getElementById('coach-account-number');
-          
-          if (coachData && coachData.payment_info) {
-            const paymentInfo = coachData.payment_info;
-            if (paymentInfo.bank_name && paymentInfo.account_name && paymentInfo.account_number) {
-              if (coachBankName) coachBankName.textContent = paymentInfo.bank_name;
-              if (coachAccountName) coachAccountName.textContent = paymentInfo.account_name;
-              if (coachAccountNumber) coachAccountNumber.textContent = paymentInfo.account_number;
-            } else {
-              // Fallback if no payment info
-              if (coachBankName) coachBankName.textContent = "Example Bank";
-              if (coachAccountName) coachAccountName.textContent = `${coachData.first_name} ${coachData.last_name}`;
-              if (coachAccountNumber) coachAccountNumber.textContent = "Please ask coach";
-            }
-            
-            // Add payment amount to the bank transfer details
-            const bankTransferDetails = document.getElementById('bank-transfer-details');
-            if (bankTransferDetails) {
-              // Remove any existing payment note
-              const existingPaymentNote = bankTransferDetails.querySelector('.payment-note');
-              if (existingPaymentNote) {
-                existingPaymentNote.remove();
-              }
-              
-              // Add payment note
-              const paymentNote = document.createElement('p');
-              paymentNote.className = 'font-bold text-blue-700 mt-2 payment-note';
-              paymentNote.innerHTML = `Amount to pay: $${formatMoney(discountedCoachTotal)} (coaching fee only)`;
-              bankTransferDetails.appendChild(paymentNote);
-            }
-          }
-          
-          // Show coaching payment proof upload
-          if (coachPaymentProofSection) {
-            coachPaymentProofSection.classList.remove('hidden');
-            
-            // Update label to clarify this is for coaching fee only
-            const coachPaymentLabel = coachPaymentProofSection.querySelector('label');
-            if (coachPaymentLabel) {
-              coachPaymentLabel.textContent = "Upload Coach Payment Proof (Coaching Fee)";
-            }
-          }
-          
-          // Make the coach payment proof required
-          const coachPaymentProof = document.getElementById('coach-payment-proof');
-          if (coachPaymentProof) {
-            coachPaymentProof.required = true;
-          }
-        }
-
-        // 2. Court Payment/Booking Section - allow for mixed court booking responsibilities
-        if (courtBookingSection) {
-          // Always show the section if there are any court fees
-          if (hasStudentBookedCourts || hasCoachBookedCourts) {
-            courtBookingSection.classList.remove('hidden');
-            
-            // Update section title
-            const courtSectionTitle = courtBookingSection.querySelector('h4');
-            if (courtSectionTitle) {
-              // Show total court fees - this can be mixed
-              courtSectionTitle.innerHTML = `Court Fees <span class="text-blue-600">($${formatMoney(studentBookedCourtFees + coachBookedCourtFees)})</span>`;
-            }
-            
-            // Set the appropriate text for the court booking section
-            if (courtBookingText) {
-              if (hasStudentBookedCourts && hasCoachBookedCourts) {
-                courtBookingText.innerHTML = `<strong>Mixed Court Bookings:</strong> Some courts you need to book directly, and some will be booked by the coach:`;
-              } else if (hasStudentBookedCourts) {
-                courtBookingText.innerHTML = `Please book your court and pay the venue directly:`;
-              } else {
-                courtBookingText.innerHTML = `The coach will book these courts. Please transfer the court fee to the coach:`;
-              }
-            }
-            
-            // Clear and populate specific court instructions
-            if (specificCourtInstructions) {
-              specificCourtInstructions.innerHTML = '';
-              
-              // If there are student-booked courts
-              if (hasStudentBookedCourts) {
-                const studentSection = document.createElement('div');
-                studentSection.className = 'mb-4';
-                
-                if (hasCoachBookedCourts) {
-                  // Add a section title if we have both types
-                  studentSection.innerHTML = `
-                    <h6 class="font-medium text-sm mb-2 text-orange-700">Courts YOU Need to Book ($${formatMoney(studentBookedCourtFees)}):</h6>
-                  `;
-                }
-                
-                // Add the court list
-                const studentCourtList = document.createElement('ul');
-                studentCourtList.className = 'list-disc pl-5 text-sm space-y-1';
-                
-                studentBookedSlots.forEach(slot => {
-                  const listItem = document.createElement('li');
-                  listItem.innerHTML = `${formatDate(slot.date)} at ${slot.time} - ${slot.courtName} ($${formatMoney(slot.court_fee)})`;
-                  studentCourtList.appendChild(listItem);
-                });
-                
-                studentSection.appendChild(studentCourtList);
-                specificCourtInstructions.appendChild(studentSection);
-                
-                // Show the court booking link
-                if (courtBookingLinkBox && confirmationCourtLink) {
-                  const selectedCourt = coachData.courts.find(court => court.id === parseInt(selectedCourtId));
-                  
-                  if (selectedCourt && selectedCourt.booking_link) {
-                    confirmationCourtLink.href = selectedCourt.booking_link;
-                    courtBookingLinkBox.classList.remove('hidden');
-                  } else {
-                    courtBookingLinkBox.classList.add('hidden');
-                  }
-                }
-              }
-              
-              // If there are coach-booked courts
-              if (hasCoachBookedCourts) {
-                const coachSection = document.createElement('div');
-                
-                if (hasStudentBookedCourts) {
-                  // Add a section title if we have both types
-                  coachSection.innerHTML = `
-                    <h6 class="font-medium text-sm mb-2 mt-4 text-blue-700">Courts the COACH Will Book ($${formatMoney(coachBookedCourtFees)}):</h6>
-                  `;
-                }
-                
-                // Add the court list
-                const coachCourtList = document.createElement('ul');
-                coachCourtList.className = 'list-disc pl-5 text-sm space-y-1';
-                
-                coachBookedSlots.forEach(slot => {
-                  const listItem = document.createElement('li');
-                  listItem.innerHTML = `${formatDate(slot.date)} at ${slot.time} (1 Hour) - ${slot.courtName} ($${formatMoney(slot.court_fee)})`;
-                  coachCourtList.appendChild(listItem);
-                });
-                
-                coachSection.appendChild(coachCourtList);
-                
-                // Add coach payment details for court fees
-                if (coachData.payment_info && coachData.payment_info.court_payment_details) {
-                  // If coach has specific court payment details
-                  const courtPayInfo = coachData.payment_info.court_payment_details;
-                  const paymentDetails = document.createElement('div');
-                  paymentDetails.className = 'mt-2 text-sm pl-5';
-                  paymentDetails.innerHTML = `
-                    <p class="font-medium">Payment Details:</p>
-                    <p>${courtPayInfo}</p>
-                    <p class="font-bold text-blue-700 mt-1">Amount to pay: $${formatMoney(coachBookedCourtFees)}</p>
-                  `;
-                  coachSection.appendChild(paymentDetails);
-                } else {
-                  // Default to same payment details as coaching
-                  const paymentDetails = document.createElement('div');
-                  paymentDetails.className = 'mt-2 text-sm pl-5';
-                  paymentDetails.innerHTML = `
-                    <p class="font-medium">Payment Details:</p>
-                    <p>Use the same payment details as above for coaching payment.</p>
-                    <p class="font-bold text-blue-700 mt-1">Amount to pay: $${formatMoney(coachBookedCourtFees)}</p>
-                  `;
-                  coachSection.appendChild(paymentDetails);
-                }
-                
-                specificCourtInstructions.appendChild(coachSection);
-                
-                // Hide court booking link for coach-booked courts section
-                if (hasStudentBookedCourts === false && courtBookingLinkBox) {
-                  courtBookingLinkBox.classList.add('hidden');
-                }
-              }
-            }
-            
-            // Court proof section - always show if there are any court fees
-            if (studentBookedCourtFees + coachBookedCourtFees > 0) {
-              if (courtBookingProofSection) {
-                courtBookingProofSection.classList.remove('hidden');
-                
-                // Update label based on the mix of responsibilities
-                const courtProofLabel = courtBookingProofSection.querySelector('label');
-                if (courtProofLabel) {
-                  if (hasStudentBookedCourts && !hasCoachBookedCourts) {
-                    courtProofLabel.textContent = "Upload Court Booking Proof";
-                  } else if (!hasStudentBookedCourts && hasCoachBookedCourts) {
-                    courtProofLabel.textContent = "Upload Court Fee Payment Proof";
-                  } else {
-                    courtProofLabel.textContent = "Upload Court Booking/Payment Proof";
-                  }
-                }
-              }
-              
-              // Make court proof required
-              const courtBookingProof = document.getElementById('court-booking-proof');
-              if (courtBookingProof) {
-                courtBookingProof.required = true;
-              }
-            } else {
-              // Hide court proof section if no fee
-              if (courtBookingProofSection) {
-                courtBookingProofSection.classList.add('hidden');
-              }
-              
-              // Make court proof not required
-              const courtBookingProof = document.getElementById('court-booking-proof');
-              if (courtBookingProof) {
-                courtBookingProof.required = false;
-              }
-            }
-          } else {
-            // No court fees at all - hide the section
-            courtBookingSection.classList.add('hidden');
-          }
-        }
-
-        // Reset the file upload forms and previews
-        const coachPaymentPreview = document.getElementById('coach-payment-preview');
-        const courtBookingPreview = document.getElementById('court-booking-preview');
-        if (coachPaymentPreview) coachPaymentPreview.innerHTML = '';
-        if (courtBookingPreview) courtBookingPreview.innerHTML = '';
-        
-        // Reset the file inputs
-        const coachPaymentProof = document.getElementById('coach-payment-proof');
-        const courtBookingProof = document.getElementById('court-booking-proof');
-        if (coachPaymentProof) coachPaymentProof.value = '';
-        if (courtBookingProof) courtBookingProof.value = '';
-      }
-
-      // Add a new function to update court booking section with amounts
-      function updateCourtBookingSectionWithAmounts(courtTotal) {
-        const specificCourtInstructions = document.getElementById('specific-court-instructions');
-        if (!specificCourtInstructions) return;
-        
-        // Get court booking instructions from coach data or use defaults
-        let courtBookingInstructions = "Please book the VIP courts for your session. Regular courts may not be suitable for coaching.";
-        
-        if (coachData.court_booking_instructions) {
-          courtBookingInstructions = coachData.court_booking_instructions;
-        }
-        
-        // Add the instructions
-        specificCourtInstructions.innerHTML = `
-          <div class="text-sm text-gray-700 mb-3">
-            <p class="mb-2">${courtBookingInstructions}</p>
-            <p class="font-bold text-blue-700">Total court fee: $${formatMoney(courtTotal)}</p>
-          </div>
-        `;
-        
-        // Add specific court booking details
-        const courtsThatNeedBooking = selectedSlots.filter(slot => slot.student_books_court);
-        if (courtsThatNeedBooking.length > 0) {
-          const bookingList = document.createElement('ul');
-          bookingList.className = 'list-disc list-inside text-sm text-gray-700 space-y-2';
-          
-          // Create a map to group by court and date
-          const courtDateMap = new Map();
-          
-          courtsThatNeedBooking.forEach(slot => {
-            const courtKey = `${slot.courtId}-${slot.date}`;
-            if (!courtDateMap.has(courtKey)) {
-              courtDateMap.set(courtKey, {
-                courtName: slot.courtName,
-                date: slot.date,
-                times: [],
-                fees: 0
-              });
-            }
-            
-            const entry = courtDateMap.get(courtKey);
-            entry.times.push(slot.time);
-            entry.fees += parseFloat(slot.court_fee);
-          });
-          
-          // Create list items for each court and date
-          courtDateMap.forEach(entry => {
-            const prettyDate = new Date(entry.date).toLocaleDateString('en-US', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric'
-            });
-            
-            // Format each time with start-end (assuming 1 hour sessions)
-            const formattedTimes = entry.times.map(time => {
-              const startTimeParts = time.match(/(\d+):(\d+) ([AP]M)/);
-              
-              if (startTimeParts) {
-                let startHour = parseInt(startTimeParts[1]);
-                const startMinute = parseInt(startTimeParts[2]);
-                const period = startTimeParts[3];
-                
-                // Convert to 24-hour format
-                if (period === 'PM' && startHour < 12) startHour += 12;
-                if (period === 'AM' && startHour === 12) startHour = 0;
-                
-                // Calculate end time (add 1 hour)
-                let endHour = startHour + 1;
-                let endPeriod = period;
-                
-                // Handle period change
-                if (endHour === 12 && period === 'AM') endPeriod = 'PM';
-                else if (endHour === 24) {
-                  endHour = 12;
-                  endPeriod = 'AM';
-                }
-                // Convert back to 12-hour format
-                if (endHour > 12) endHour -= 12;
-                
-                const endTime = `${endHour}:${startMinute.toString().padStart(2, '0')} ${endPeriod}`;
-                return `${time}-${endTime}`;
-              } else {
-                return time;
-              }
-            });
-            
-            const listItem = document.createElement('li');
-            listItem.innerHTML = `
-              <span class="font-medium">${prettyDate} at ${entry.courtName}</span><br>
-              <span>Times: ${formattedTimes.join(', ')}</span><br>
-              <span class="text-blue-600">Fee: $${formatMoney(entry.fees)}</span>
-            `;
-            bookingList.appendChild(listItem);
-          });
-          
-          specificCourtInstructions.appendChild(bookingList);
-        }
-      }
-
-      // Add this function to update the court fee information display
-      function updateCourtFeeInfo() {
-        const container = document.getElementById('court-fee-info');
-        if (!container) return;
-
-        if (!selectedCourtId || !allAvailabilities) {
-          container.innerHTML = '<p>Select a court to view fee information.</p>';
-          return;
-        }
-
-        // Get the first date that has court fee information
-        const firstDateWithFees = Object.keys(allAvailabilities).find(date =>
-          allAvailabilities[date]?.court_fees?.length > 0
-        );
-
-        if (!firstDateWithFees) {
-          container.innerHTML = '<p>No fee information available for this court.</p>';
-          return;
-        }
-
-        const fees = allAvailabilities[firstDateWithFees].court_fees;
-
-        if (fees.length === 0) {
-          container.innerHTML = '<p>No fee information available for this court.</p>';
-          return;
-        }
-
-        let html = '<div class="space-y-2">';
-
-        fees.forEach(fee => {
-          html += `
-      <div class="flex justify-between">
-        <span>${fee.start_time} - ${fee.end_time}</span>
-        <span class="font-semibold">$${fee.fee}/hour</span>
-      </div>
-    `;
-        });
-
-        html += '</div>';
-        container.innerHTML = html;
-      }
-
-      if (coachPaymentProof) {
-        coachPaymentProof.addEventListener('change', function(e) {
-          handleFilePreview(this, coachPaymentPreview);
-        });
-      }
-  
-      if (courtBookingProof) {
-        courtBookingProof.addEventListener('change', function(e) {
-          handleFilePreview(this, courtBookingPreview);
-        });
-      }
-  
-      function handleFilePreview(input, previewContainer) {
-        previewContainer.innerHTML = '';
-        
-        if (input.files && input.files[0]) {
-          const file = input.files[0];
-          const reader = new FileReader();
-          
-          reader.onload = function(e) {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.className = 'max-h-32 rounded-lg shadow-sm';
-            previewContainer.appendChild(img);
-          }
-          
-          reader.readAsDataURL(file);
+          courtBookingLinkBox.classList.add('hidden');
         }
       }
 
@@ -3298,6 +2970,7 @@
           
           if (!reservationToken) {
               alert('Your session has expired. Please go back and select time slots again.');
+              loadingOverlay.classList.add('hidden');
               return;
           }
 
@@ -3316,13 +2989,10 @@
             throw new Error('Coach payment proof is required');
           }
           
-          // Check if court booking proof is required and provided
-          const courtBookingSection = document.getElementById('court-booking-section');
-          const courtBookingRequired = !courtBookingSection.classList.contains('hidden');
-          
-          if (courtBookingRequired && !courtBookingProofFile) {
+          // Check if court booking proof is provided
+          if (!courtBookingProofFile) {
             throw new Error('Court booking proof is required');
-          } else if (courtBookingRequired && courtBookingProofFile) {
+          } else {
             formData.append('court_booking_proof', courtBookingProofFile);
           }
           
@@ -3341,7 +3011,6 @@
             coach_id: coachData.id,
             court_id: parseInt(courtId),
             availability_ids: courtAvailabilities[courtId],
-            pricing_plan_id: selectedPricingPlan ? selectedPricingPlan.id : null,
             package_id: selectedPackage ? selectedPackage.id : null
           }));
           
@@ -3358,6 +3027,8 @@
             method: 'POST',
             body: formData
           });
+          
+          const result = await response.json();
           
           // Hide loading overlay
           loadingOverlay.classList.add('hidden');
@@ -3386,8 +3057,6 @@
               return;
           }
           
-          const result = await response.json();
-          
           // Store the booking ID for reference
           successfulBookingId = result.bookings && result.bookings.length > 0 
             ? result.bookings[0].id 
@@ -3409,14 +3078,10 @@
           
           // Reset state
           selectedSlots = [];
-          selectedPricingPlan = null;
           selectedPackage = null;
           selectedCourtId = null;
-          bookingResponsibilities = {};
           reservationToken = null;
           reservationExpiry = null;
-          updateSelectedTimeslotsUI();
-          updateTotalPrice();
           
           return result;
           
@@ -3427,67 +3092,184 @@
           throw error;
         }
       }
-      
-      // Add function to handle package purchase submission
-      async function submitPackagePurchase(event) {
-        event.preventDefault();
+
+      // Event Listeners
+
+      // Booking path selection
+      document.getElementById('schedule-btn-main').addEventListener('click', () => {
+        showModal(scheduleModal);
+        showStep(1);
         
-        if (!isUserLoggedIn) {
-          alert('Please log in to purchase packages.');
+        // Initialize calendar for the current month
+        generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+      });
+      
+      document.getElementById('view-credits-btn-main').addEventListener('click', () => {
+        if (isUserLoggedIn) {
+          document.getElementById('coach-credits-container').classList.remove('hidden');
+          document.getElementById('coach-credits-container').scrollIntoView({ behavior: 'smooth' });
+        } else {
+          pendingAction = {
+            type: 'view-credits'
+          };
+          showModal(authModal);
+        }
+      });
+      
+      // Day and time selection in availability selector
+      document.querySelectorAll('.day-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          this.classList.toggle('bg-green-600');
+          this.classList.toggle('text-white');
+        });
+      });
+      
+      document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          this.classList.toggle('bg-green-600');
+          this.classList.toggle('text-white');
+        });
+      });
+      
+      // Add event listeners for day and time selection in My Credits section
+      document.querySelectorAll('.my-day-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          this.classList.toggle('bg-blue-600');
+          this.classList.toggle('text-white');
+        });
+      });
+      
+      document.querySelectorAll('.my-time-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          this.classList.toggle('bg-blue-600');
+          this.classList.toggle('text-white');
+        });
+      });
+      
+      // Send availability from My Credits section
+      document.getElementById('my-send-availability-btn')?.addEventListener('click', async function() {
+        // Get selected days
+        const selectedDays = [];
+        document.querySelectorAll('.my-day-btn.bg-blue-600').forEach(btn => {
+          selectedDays.push(btn.dataset.day);
+        });
+        
+        // Get selected times
+        const selectedTimes = [];
+        document.querySelectorAll('.my-time-btn.bg-blue-600').forEach(btn => {
+          selectedTimes.push(btn.dataset.time);
+        });
+        
+        // Get notes
+        const notes = document.getElementById('my-availability-notes').value.trim();
+        
+        // Check if anything is selected
+        if (selectedDays.length === 0 && selectedTimes.length === 0 && !notes) {
+          alert('Please select at least one day, time preference, or add notes.');
           return;
         }
         
+        // Show loading state on button
+        const originalButtonText = this.innerHTML;
+        this.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Sending...`;
+        this.disabled = true;
+        
         try {
-          // Show loading overlay
-          loadingOverlay.classList.remove('hidden');
-          
-          // Get form data
-          const formData = new FormData(packagePurchaseForm);
-          
-          // Verify payment proof is uploaded
-          if (!packagePaymentProof.files[0]) {
-            alert('Please upload payment proof for the package.');
-            loadingOverlay.classList.add('hidden');
-            return;
-          }
-          
-          // Send the package purchase request
-          const response = await fetch('/api/packages/purchase', {
+          // Send API request
+          const response = await fetch('/api/student/send-availability', {
             method: 'POST',
-            body: formData
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              coach_id: coachData.id,
+              days: selectedDays,
+              times: selectedTimes,
+              notes: notes
+            })
           });
           
-          // Hide loading overlay
-          loadingOverlay.classList.add('hidden');
+          // Reset button
+          this.innerHTML = originalButtonText;
+          this.disabled = false;
           
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to purchase package');
+            throw new Error(errorData.error || 'Failed to send availability');
           }
           
-          const result = await response.json();
-          
           // Show success message
-          hideAllModals();
+          const successBox = document.createElement('div');
+          successBox.className = 'bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded';
+          successBox.innerHTML = `
+            <div class="flex items-center">
+              <i class="fas fa-check-circle text-green-500 mr-2"></i>
+              <p>Your availability preferences have been saved!</p>
+            </div>
+          `;
           
-          // Show package success modal
-          showModal(packageSuccessModal);
+          // Insert success message before the button's parent element
+          const buttonContainer = this.parentElement;
+          buttonContainer.parentElement.insertBefore(successBox, buttonContainer);
           
-          // Reset form
-          packagePurchaseForm.reset();
-          packagePaymentPreview.innerHTML = '';
-          
-          fetchStudentPackages();
-          return result;
+          // Remove success message after 5 seconds
+          setTimeout(() => {
+            successBox.remove();
+          }, 5000);
           
         } catch (error) {
-          console.error('Error purchasing package:', error);
-          loadingOverlay.classList.add('hidden');
-          alert(`Package purchase failed: ${error.message}`);
+          console.error('Error sending availability:', error);
+          
+          // Show error message
+          const errorBox = document.createElement('div');
+          errorBox.className = 'bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded';
+          errorBox.innerHTML = `
+            <div class="flex items-center">
+              <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+              <p>${error.message || 'An error occurred. Please try again.'}</p>
+            </div>
+          `;
+          
+          // Insert error message before the button's parent element
+          const buttonContainer = this.parentElement;
+          buttonContainer.parentElement.insertBefore(errorBox, buttonContainer);
+          
+          // Remove error message after 5 seconds
+          setTimeout(() => {
+            errorBox.remove();
+          }, 5000);
+          
+          // Reset button
+          this.innerHTML = originalButtonText;
+          this.disabled = false;
         }
-      }
+      });
 
-      // Event Listeners
+      // Close modal buttons
+      document.getElementById('close-schedule-modal').addEventListener('click', () => {
+        hideAllModals();
+      });
+      
+      document.getElementById('close-auth-modal').addEventListener('click', () => {
+        hideAllModals();
+      });
+
+      // Step navigation
+      nextToDateBtn.addEventListener('click', () => {
+        showStep(2);
+      });
+      
+      backToCourtBtn.addEventListener('click', () => {
+        showStep(1);
+      });
+      
+      nextToTimeBtn.addEventListener('click', () => {
+        showStep(3);
+      });
+      
+      backToDateBtn.addEventListener('click', () => {
+        showStep(2);
+      });
 
       // Court selection change
       courtSelect.addEventListener('change', async function () {
@@ -3497,9 +3279,7 @@
           if (window.confirm("You can only book sessions at one court at a time. Your previous selected bookings will be removed. Continue?")) {
             // Reset state
             selectedSlots = [];
-            selectedPricingPlan = null;
             selectedPackage = null;
-            bookingResponsibilities = {};
             updateSelectedTimeslotsUI();
             updateTotalPrice();
             
@@ -3519,13 +3299,20 @@
           previousCourtId = newCourtId;
         }
 
-        if (selectedCourtId) {
-          // Update court booking link if available
-          const selectedCourt = coachData.courts.find(court => court.id === selectedCourtId);
+        // Enable/disable next button based on selection
+        if (nextToDateBtn) {
+          if (selectedCourtId) {
+            nextToDateBtn.disabled = false;
+            nextToDateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          } else {
+            nextToDateBtn.disabled = true;
+            nextToDateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          }
+        }
 
-          // Show loading animations for each section that will update
+        if (selectedCourtId) {
+          // Show loading animations for calendar
           animateElementUpdate(document.getElementById('calendar-container'), true);
-          animateElementUpdate(document.getElementById('court-fee-info'), true);
           animateElementUpdate(document.getElementById('availability-grid'), true);
 
           // Wait for availability data to be fetched
@@ -3538,11 +3325,9 @@
 
           // Update the UI components
           generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
-          updateCourtFeeInfo();
 
           // Remove loading animations
           animateElementUpdate(document.getElementById('calendar-container'), false);
-          animateElementUpdate(document.getElementById('court-fee-info'), false);
           animateElementUpdate(document.getElementById('availability-grid'), false);
           
           // Add completion animation
@@ -3553,7 +3338,6 @@
 
           // Show loading animations
           animateElementUpdate(document.getElementById('calendar-container'), true);
-          animateElementUpdate(document.getElementById('court-fee-info'), true);
           animateElementUpdate(document.getElementById('availability-grid'), true);
 
           // Update UI
@@ -3562,11 +3346,9 @@
           // Clear availability grid
           availabilityGrid.innerHTML = "";
           selectedDate.textContent = "";
-          updateCourtFeeInfo();
 
           // Remove loading animations
           animateElementUpdate(document.getElementById('calendar-container'), false);
-          animateElementUpdate(document.getElementById('court-fee-info'), false);
           animateElementUpdate(document.getElementById('availability-grid'), false);
         }
       });
@@ -3646,14 +3428,41 @@
       // Schedule button
       scheduleBtn.addEventListener('click', () => {
         showModal(scheduleModal);
+        showStep(1);
+        
         // Initialize calendar for the current month
         generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
       });
+      
+      // View credits button
+      if (viewCreditsBtn) {
+        viewCreditsBtn.addEventListener('click', function() {
+          if (isUserLoggedIn) {
+            document.getElementById('my-credits-container').classList.remove('hidden');
+            document.getElementById('my-credits-container').scrollIntoView({ behavior: 'smooth' });
+          } else {
+            showModal(authModal);
+          }
+        });
+      }
 
       // Continue to booking button
-      scheduleButton.addEventListener('click', async function() {
+      continueToBookingBtn.addEventListener('click', async function() {
         if (selectedSlots.length === 0) {
           alert('Please select at least one time slot to continue.');
+          return;
+        }
+        
+        // Check if user is logged in
+        if (!isUserLoggedIn) {
+          // Store the pending action
+          pendingAction = {
+            type: 'booking',
+            slots: selectedSlots
+          };
+          
+          // Show login modal
+          showModal(authModal);
           return;
         }
 
@@ -3664,16 +3473,36 @@
       document.getElementById('cancel-button').addEventListener('click', () => {
         hideAllModals();
       });
+      
+      // Proceed to coach payment button
+      proceedToCoachPaymentBtn.addEventListener('click', function() {
+        // Check if court booking proof is uploaded
+        const courtBookingProofFile = courtBookingProof.files[0];
+        
+        if (!courtBookingProofFile) {
+          alert('Please upload your court booking proof before proceeding to coach payment.');
+          return;
+        }
+        
+        // Show coach payment section
+        coachPaymentSection.classList.remove('hidden');
+        
+        // Show confirm button
+        confirmButton.classList.remove('hidden');
+        
+        // Hide the proceed button
+        this.classList.add('hidden');
+      });
 
       // Confirm button
-      document.getElementById('confirm-button').addEventListener('click', () => {
-        if (isUserLoggedIn) {
-          // User is logged in, proceed with booking
-          submitBooking();
-        } else {
-          // User is not logged in, show guest info modal
-          showModal(guestInfoModal);
-        }
+      confirmButton.addEventListener('click', () => {
+        // Form submission will be handled by the form's submit event
+      });
+
+      // Booking form submission
+      bookingPaymentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitBooking();
       });
 
       // Success modal done button
@@ -3681,95 +3510,81 @@
         hideAllModals();
       });
       
-      // Package purchase form submission
-      if (packagePurchaseForm) {
-        packagePurchaseForm.addEventListener('submit', submitPackagePurchase);
+      // Credit purchase form submission
+      if (creditPurchaseForm) {
+        creditPurchaseForm.addEventListener('submit', submitCreditPurchase);
       }
       
-      // Close package modal buttons
-      if (closePackageModal) {
-        closePackageModal.addEventListener('click', () => {
+      // Credit modal buttons
+      if (closeCreditModal) {
+        closeCreditModal.addEventListener('click', () => {
           hideAllModals();
         });
       }
       
-      if (packageCancelButton) {
-        packageCancelButton.addEventListener('click', () => {
+      if (creditCancelButton) {
+        creditCancelButton.addEventListener('click', () => {
           hideAllModals();
         });
       }
       
-      // Package success done button
-      if (packageSuccessDoneBtn) {
-        packageSuccessDoneBtn.addEventListener('click', () => {
+      // Credit success done button
+      if (creditSuccessDoneBtn) {
+        creditSuccessDoneBtn.addEventListener('click', () => {
           hideAllModals();
+          
+          // Refresh student credits
+          fetchStudentCredits();
+          
+          // Show contact information
+          document.getElementById('credits-summary-container').scrollIntoView({ behavior: 'smooth' });
         });
       }
 
-      // Scroll animations
-      const scrollSections = document.querySelectorAll('.scroll-section');
-
-      const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('active');
+      async function loadAvailabilityPreferences() {
+        if (!isUserLoggedIn) return;
+        
+        try {
+          const response = await fetch('/api/student/get-availability');
+          
+          if (!response.ok) {
+            console.error('Failed to load availability preferences');
+            return;
           }
-        });
-      }, { threshold: 0.1 });
-
-      scrollSections.forEach(section => {
-        observer.observe(section);
-      });
-
-      // Add this function to periodically refresh availability data
-      function setupAvailabilityRefresh() {
-          // Refresh availability data every 30 seconds
-          setInterval(async function() {
-              if (selectedCourtId && selectedDate.dataset.date) {
-                  // Only refresh if court and date are selected
-                  const currentDateObj = new Date(selectedDate.dataset.date);
-                  
-                  // Store previously available slots for comparison
-                  const previouslyAvailable = allAvailabilities[selectedDate.dataset.date]?.available || [];
-                  
-                  // Fetch updated availability data
-                  await fetchAvailability(selectedCourtId, currentDateObj.getFullYear(), currentDateObj.getMonth());
-                  
-                  // Update grid without clearing selection
-                  populateAvailabilityGrid(selectedDate.dataset.date);
-                  
-                  // Check if any selected slots are no longer available
-                  const newlyAvailable = allAvailabilities[selectedDate.dataset.date]?.available || [];
-                  const newAvailIds = newlyAvailable.map(a => a.id);
-                  
-                  // Filter out any selected slots that are no longer available
-                  selectedSlots = selectedSlots.filter(slot => {
-                      // Skip slots from other dates or courts
-                      if (slot.date !== selectedDate.dataset.date || slot.courtId !== selectedCourtId) {
-                          return true;
-                      }
-                      
-                      // Check if the availability ID is still present in the updated data
-                      if (!newAvailIds.includes(slot.availabilityId)) {
-                          // No longer available - remove it
-                          return false;
-                      }
-                      
-                      return true;
-                  });
-                  
-                  // Update UI to reflect any changes
-                  updateSelectedTimeslotsUI();
-                  updateTotalPrice();
-              }
-          }, 30000); // Every 30 seconds
+          
+          const preferences = await response.json();
+          
+          // Set days
+          if (preferences.days && preferences.days.length > 0) {
+            preferences.days.forEach(day => {
+              const dayBtn = document.querySelector(`.my-day-btn[data-day="${day}"]`);
+              if (dayBtn) dayBtn.classList.add('bg-blue-600', 'text-white');
+            });
+          }
+          
+          // Set times
+          if (preferences.times && preferences.times.length > 0) {
+            preferences.times.forEach(time => {
+              const timeBtn = document.querySelector(`.my-time-btn[data-time="${time}"]`);
+              if (timeBtn) timeBtn.classList.add('bg-blue-600', 'text-white');
+            });
+          }
+          
+          // Set notes
+          if (preferences.notes) {
+            document.getElementById('my-availability-notes').value = preferences.notes;
+          }
+          
+        } catch (error) {
+          console.error('Error loading availability preferences:', error);
+        }
       }
 
       // Initialize
       // Extract coach id from URL
       const coachId =  {{ coach.id }}  || 1; // Default to 1 if no ID is provided
       fetchCoachData(coachId);
-      setupAvailabilityRefresh();
-//   });
+      loadAvailabilityPreferences();
+    });
   </script>
 {% endblock %}

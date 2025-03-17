@@ -23,6 +23,7 @@ class User(UserMixin, db.Model):
     is_temporary = db.Column(db.Boolean, default=False)  # Flag for temporary users
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_academy_manager = db.Column(db.Boolean, default=False)
+    availability_preferences = db.Column(db.JSON, nullable=True)
     
     # Bookings as a student
     bookings = db.relationship('Booking', 

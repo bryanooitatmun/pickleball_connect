@@ -27,6 +27,28 @@ from sqlalchemy import func, or_, extract
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
+@bp.route('/coach/contact/<int:coach_id>')
+@login_required
+def get_coach_contact(coach_id):
+    """API endpoint to get coach contact information"""
+
+    # Verify the user has active packages with this coach
+    has_packages = BookingPackage.query.filter(
+        BookingPackage.student_id == current_user.id,
+        BookingPackage.coach_id == coach_id
+    ).first() is not None
+    
+    if not has_packages:
+        return jsonify({'error': 'You must have active credits to access coach contact info'}), 403
+    
+    coach = Coach.query.get_or_404(coach_id)
+    user = User.query.get_or_404(coach.user_id)
+    
+    return jsonify({
+        'phone_number': user.phone,
+        'email': user.email
+    })
+
 @bp.route('/coach/profile')
 @login_required
 def get_coach_profile():
@@ -4584,3 +4606,59 @@ def get_all_courts():
     return jsonify(result)
 
 
+@bp.route('/student/send-availability', methods=['POST'])
+@login_required
+def send_coach_availability():
+    """API endpoint for student to send availability preferences"""
+    data = request.get_json()
+    coach_id = data.get('coach_id')
+    availability = {
+        'days': data.get('days', []),
+        'times': data.get('times', []),
+        'notes': data.get('notes', ''),
+        'updated_at': datetime.utcnow().isoformat()
+    }
+    
+    if not coach_id:
+        return jsonify({'error': 'Coach ID is required'}), 400
+        
+    # Store availability in the user model
+    current_user.availability_preferences = availability
+    
+    # Create a notification for the coach
+    coach = Coach.query.get_or_404(coach_id)
+    notification = Notification(
+        user_id=coach.user_id,
+        title="New Availability Preferences",
+        message=f"{current_user.first_name} {current_user.last_name} has shared their availability preferences",
+        notification_type="availability",
+        related_id=current_user.id
+    )
+    db.session.add(notification)
+    
+    try:
+        db.session.commit()
+        
+        # Optionally send email notification to coach
+        # send_availability_notification(coach, current_user, availability)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Availability preferences sent to coach'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/student/get-availability', methods=['GET'])
+@login_required
+def get_student_availability():
+    """API endpoint to get student's saved availability preferences"""
+    if not current_user.availability_preferences:
+        return jsonify({
+            'days': [],
+            'times': [],
+            'notes': ''
+        })
+    
+    return jsonify(current_user.availability_preferences)

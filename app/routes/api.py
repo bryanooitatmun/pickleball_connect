@@ -43,7 +43,7 @@ def get_coach_profile():
     # Get coach courts
     courts = Court.query.join(CoachCourt).filter(CoachCourt.coach_id == coach.id).all()
     court_data = [{'id': court.id, 'name': court.name} for court in courts]
-    
+
     # Format response data
     response = {
         'id': coach.id,
@@ -63,7 +63,8 @@ def get_coach_profile():
         'courts': court_data,
         'biography': coach.biography,
         'years_experience': coach.years_experience,
-        'specialties': coach.specialties
+        'specialties': coach.specialties,
+        'payment_details': coach.payment_info
     }
     
     return jsonify(response)
@@ -1723,36 +1724,36 @@ def defer_booking():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/coach/payment-info', methods=['PUT'])
-@login_required
-def update_payment_info():
-    """API endpoint to update coach payment information"""
-    if not current_user.is_coach:
-        return jsonify({'error': 'Not a coach account'}), 403
+# @bp.route('/coach/payment-info', methods=['PUT'])
+# @login_required
+# def update_payment_info():
+#     """API endpoint to update coach payment information"""
+#     if not current_user.is_coach:
+#         return jsonify({'error': 'Not a coach account'}), 403
     
-    data = request.get_json()
-    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+#     data = request.get_json()
+#     coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
     
-    # Update payment info
-    payment_info = {
-        'bank_name': data.get('bank_name'),
-        'account_name': data.get('account_name'),
-        'account_number': data.get('account_number'),
-        'qr_code_url': data.get('qr_code_url')
-    }
+#     # Update payment info
+#     payment_info = {
+#         'bank_name': data.get('bank_name'),
+#         'account_name': data.get('account_name'),
+#         'account_number': data.get('account_number'),
+#         'qr_code_url': data.get('qr_code_url')
+#     }
     
-    coach.payment_info = payment_info
+#     coach.payment_info = payment_info
     
-    # Update court booking instructions if provided
-    if 'court_booking_instructions' in data:
-        coach.court_booking_instructions = data.get('court_booking_instructions')
+#     # Update court booking instructions if provided
+#     if 'court_booking_instructions' in data:
+#         payment_info['court_booking_instructions'] = data.get('court_booking_instructions')
     
-    try:
-        db.session.commit()
-        return jsonify({'success': True})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+#     try:
+#         db.session.commit()
+#         return jsonify({'success': True})
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({'error': str(e)}), 500
 
 @bp.route('/coach/upload-qr-code', methods=['POST'])
 @login_required
@@ -2687,12 +2688,12 @@ def update_payment_details():
         'payment_reference': data.get('payment_reference')
     }
     
-    coach.payment_info = payment_info
-    
     # Update court payment details if provided
     if 'court_payment_details' in data:
-        coach.court_payment_details = data.get('court_payment_details')
+        payment_info['court_payment_details'] = data.get('court_payment_details')
     
+    coach.payment_info = payment_info
+
     try:
         db.session.commit()
         return jsonify({'success': True})

@@ -387,7 +387,8 @@ def get_coach_profile(coach_id):
         'showcase_images': showcase_images,
         'location': user.location,
         'specialties': coach.specialties,
-        'academy_affiliations': academy_affiliations  # Add academy affiliations
+        'academy_affiliations': academy_affiliations,
+        'payment_info': coach.payment_info
     }
     
     return jsonify(coach_data)

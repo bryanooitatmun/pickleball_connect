@@ -25,7 +25,7 @@ async function loadProfileData() {
     const profileData = await getCoachProfile();
     const user = profileData.user;
     const coach = profileData;
-    
+
     // Populate personal information
     populatePersonalInfo(user);
     

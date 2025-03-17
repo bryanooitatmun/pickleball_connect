@@ -31,7 +31,7 @@ def dashboard():
     ).order_by(Booking.date.desc()).limit(5).all()
     
     return render_template(
-        'dashboard/students/dashboard.html', 
+        'dashboard/student/dashboard.html', 
         upcoming_bookings=upcoming_bookings,
         completed_bookings=completed_bookings
     )

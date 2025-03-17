@@ -70,7 +70,7 @@
     <div class="container mx-auto px-6 py-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4">
-          <a href="{{ url_for('coaches.index') }}" class="flex items-center space-x-2">
+          <a href="{{ url_for('public.index') }}" class="flex items-center space-x-2">
             <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
               <span class="text-white font-bold text-xl">P</span>
             </div>
@@ -1610,7 +1610,7 @@
                 <span class="text-sm font-medium">Specialties:</span>
                 <span class="text-sm text-gray-600">${coach.specialties}</span>
               </div>
-              <a href="/coach/coaches/${coach.id}" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transform hover:scale-105 transition-all">
+              <a href="/public/coaches/${coach.id}" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transform hover:scale-105 transition-all">
                 Book Session
               </a>
             </div>

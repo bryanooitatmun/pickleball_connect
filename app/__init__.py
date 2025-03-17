@@ -39,6 +39,7 @@ def create_app(config_class=Config):
     from app.routes.admin_connect_points import bp as admin_connect_points_bp
     from app.routes.connect_points import bp as connect_points_bp
     from app.routes.academy import bp as academy_bp
+    from app.routes.public import bp as public_bp
     
     app.register_blueprint(api_bp)
     app.register_blueprint(main_bp)
@@ -47,6 +48,7 @@ def create_app(config_class=Config):
     app.register_blueprint(students_bp, url_prefix='/student')
     app.register_blueprint(bookings_bp, url_prefix='/booking')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(public_bp, url_prefix='/public')
     app.register_blueprint(admin_connect_points_bp, url_prefix='/admin/connect-points')
     app.register_blueprint(connect_points_bp, url_prefix='/api/connect-points')
     app.register_blueprint(academy_bp)

@@ -706,7 +706,7 @@
     // Fetch available courts
     async function fetchCourts() {
       try {
-        const response = await fetch('/coach/api/courts');
+        const response = await fetch('/public/api/courts');
         
         if (!response.ok) {
           throw new Error('Failed to fetch courts');

@@ -769,7 +769,7 @@
                 const coachItem = document.createElement('div');
                 coachItem.className = 'flex items-center bg-gray-100 rounded-full pr-3 mr-2 mb-2 hover:bg-gray-200 transition-colors cursor-pointer';
                 coachItem.addEventListener('click', () => {
-                  window.location.href = `/coach/coaches/${coach.id}`;
+                  window.location.href = `/public/coaches/${coach.id}`;
                 });
                 
                 // Coach image
@@ -935,7 +935,7 @@
           clone.querySelector('.coach-rating').textContent = `${coach.avg_rating.toFixed(1)}/5`;
           
           // Set profile link
-          clone.querySelector('.coach-profile-link').href = `/coach/coaches/${coach.id}`;
+          clone.querySelector('.coach-profile-link').href = `/public/coaches/${coach.id}`;
           
           // Add academy affiliations
           const affiliationsContainer = clone.querySelector('.academy-affiliations-container');
@@ -1024,7 +1024,7 @@
           }
           
           // Use different endpoint depending on page mode
-          let url = '/coach/api/coaches';
+          let url = '/public/api/coaches';
           
           // If in academy mode, use the academy parameter
           if (PAGE_MODE === 'academy_page' && ACADEMY_ID) {

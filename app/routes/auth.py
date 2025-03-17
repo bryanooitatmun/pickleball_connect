@@ -74,12 +74,12 @@ def login():
 @bp.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('coaches.index'))
+    return redirect(url_for('public.index'))
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('coaches.index'))
+        return redirect(url_for('public.index'))
     
     # Handle AJAX POST requests for registration
     if request.method == 'POST' and request.is_json:

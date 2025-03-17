@@ -1037,7 +1037,7 @@
       async function fetchCoachData(coachId) {
         try {
           console.log("Fetching coach data for ID:", coachId);
-          const response = await fetch(`/coach/api/coach/${coachId}`);
+          const response = await fetch(`/public/api/coach/${coachId}`);
           if (!response.ok) {
             throw new Error('Failed to fetch coach data');
           }

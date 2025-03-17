@@ -16,7 +16,7 @@ from app.models.academy import Academy, AcademyCoach, AcademyManager
 from app.models.academy_pricing import AcademyPricingPlan
 from app.models.user import User
 from app.utils.file_utils import save_uploaded_file, delete_file
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from app.models.payment import PaymentProof
 from app.models.notification import Notification
 from app.models.tag import Tag, CoachTag
@@ -483,6 +483,9 @@ def delete_availability():
     data = request.get_json()
     availability_id = data.get('availability_id')
     
+    print( Availability.query.filter_by(
+        id=availability_id
+    ).first())
     availability = Availability.query.filter_by(
         id=availability_id, 
         coach_id=Coach.query.filter_by(user_id=current_user.id).first().id

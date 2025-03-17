@@ -37,6 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize availability management
   function initAvailabilityManagement() {
+    loadAndDisplayTemplates();
+
     // Add availability form submission
     const availabilityForm = document.getElementById('availability-form');
     if (availabilityForm) {
@@ -223,6 +225,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     });
+
+    document.getElementById('confirm-delete-availability-btn').addEventListener('click', async function() {
+      const availabilityId = document.getElementById('delete-availability-id').value;
+      
+      try {
+        document.getElementById('delete-availability-modal').classList.add('hidden');
+        await deleteAvailability(availabilityId);
+        showToast('Success', 'Availability deleted successfully.', 'success');
+
+        // Reload calendar if visible
+        if (document.getElementById('availability-calendar').innerHTML !== '') {
+          const calendar = document.getElementById('calendar-month-year').textContent;
+          const [month, year] = calendar.split(' ');
+          const monthIndex = getMonthIndex(month);
+          
+          if (monthIndex !== -1) {
+            const availabilityData = await getAvailability();
+            generateAvailabilityCalendarView(monthIndex, parseInt(year), availabilityData);
+          }
+        }
+
+      } catch (error) {
+        showToast('Error', 'Failed to delete availability. Please try again.', 'error');
+      }
+    });
   }
   
   // Calculate availability slots based on bulk form inputs
@@ -232,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedDays = Array.from(document.querySelectorAll('input[name="days[]"]:checked')).map(cb => parseInt(cb.value));
     const startTime = document.getElementById('bulk-start-time').value;
     const endTime = document.getElementById('bulk-end-time').value;
-    const studentBooksCourt = document.querySelector('input[name="bulk_student_books_court"]:checked').value === 'true';
+    const studentBooksCourt = document.getElementById('bulk-booking-responsibility').value === 'student';
     
     // Get time slot increment selection
     const incrementSelect = document.getElementById('bulk-increment');

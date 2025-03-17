@@ -51,87 +51,87 @@ async function saveAvailabilityTemplate(templateData) {
   }
   
   // Function to calculate availability slots based on form inputs
-  function calculateAvailabilitySlots() {
-    const startDate = new Date(document.getElementById('bulk-start-date').value);
-    const endDate = new Date(document.getElementById('bulk-end-date').value);
-    const selectedDays = Array.from(document.querySelectorAll('input[name="days[]"]:checked')).map(cb => parseInt(cb.value));
-    const startTime = document.getElementById('bulk-start-time').value;
-    const endTime = document.getElementById('bulk-end-time').value;
+  // function calculateAvailabilitySlots() {
+  //   const startDate = new Date(document.getElementById('bulk-start-date').value);
+  //   const endDate = new Date(document.getElementById('bulk-end-date').value);
+  //   const selectedDays = Array.from(document.querySelectorAll('input[name="days[]"]:checked')).map(cb => parseInt(cb.value));
+  //   const startTime = document.getElementById('bulk-start-time').value;
+  //   const endTime = document.getElementById('bulk-end-time').value;
     
-    // Get time slot increment selection
-    const incrementSelect = document.getElementById('bulk-increment');
-    let increment = parseInt(incrementSelect.value);
+  //   // Get time slot increment selection
+  //   const incrementSelect = document.getElementById('bulk-increment');
+  //   let increment = parseInt(incrementSelect.value);
     
-    // If "Based on session duration" is selected, get the duration value
-    if (incrementSelect.value === 'duration') {
-      const durationSelect = document.getElementById('bulk-duration');
-      if (durationSelect.value === 'custom') {
-        increment = parseInt(document.getElementById('custom-duration').value);
-      } else {
-        increment = parseInt(durationSelect.value);
-      }
-    }
+  //   // If "Based on session duration" is selected, get the duration value
+  //   if (incrementSelect.value === 'duration') {
+  //     const durationSelect = document.getElementById('bulk-duration');
+  //     if (durationSelect.value === 'custom') {
+  //       increment = parseInt(document.getElementById('custom-duration').value);
+  //     } else {
+  //       increment = parseInt(durationSelect.value);
+  //     }
+  //   }
     
-    // Get session duration
-    const durationSelect = document.getElementById('bulk-duration');
-    const duration = durationSelect.value === 'custom' 
-      ? parseInt(document.getElementById('custom-duration').value) 
-      : parseInt(durationSelect.value);
+  //   // Get session duration
+  //   const durationSelect = document.getElementById('bulk-duration');
+  //   const duration = durationSelect.value === 'custom' 
+  //     ? parseInt(document.getElementById('custom-duration').value) 
+  //     : parseInt(durationSelect.value);
     
-    // Selected courts
-    const courts = Array.from(document.getElementById('bulk-courts').selectedOptions).map(option => ({
-      id: option.value,
-      name: option.textContent
-    }));
+  //   // Selected courts
+  //   const courts = Array.from(document.getElementById('bulk-courts').selectedOptions).map(option => ({
+  //     id: option.value,
+  //     name: option.textContent
+  //   }));
     
-    const slots = [];
+  //   const slots = [];
     
-    // Convert start/end times to minutes since midnight for easier calculation
-    const startMinutes = timeStringToMinutes(startTime);
-    const endMinutes = timeStringToMinutes(endTime);
+  //   // Convert start/end times to minutes since midnight for easier calculation
+  //   const startMinutes = timeStringToMinutes(startTime);
+  //   const endMinutes = timeStringToMinutes(endTime);
     
-    // Check if inputs are valid
-    if (!startDate || !endDate || selectedDays.length === 0 || !startTime || !endTime || courts.length === 0) {
-      return slots; // Return empty array if inputs are invalid
-    }
+  //   // Check if inputs are valid
+  //   if (!startDate || !endDate || selectedDays.length === 0 || !startTime || !endTime || courts.length === 0) {
+  //     return slots; // Return empty array if inputs are invalid
+  //   }
     
-    if (startDate > endDate) {
-      showToast('Error', 'Start date must be before or equal to end date', 'error');
-      return slots;
-    }
+  //   if (startDate > endDate) {
+  //     showToast('Error', 'Start date must be before or equal to end date', 'error');
+  //     return slots;
+  //   }
     
-    if (startMinutes >= endMinutes) {
-      showToast('Error', 'Start time must be before end time', 'error');
-      return slots;
-    }
+  //   if (startMinutes >= endMinutes) {
+  //     showToast('Error', 'Start time must be before end time', 'error');
+  //     return slots;
+  //   }
     
-    // Generate slots
-    for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-      const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  //   // Generate slots
+  //   for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+  //     const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
       
-      // Skip if this day of week is not selected
-      if (!selectedDays.includes(dayOfWeek)) continue;
+  //     // Skip if this day of week is not selected
+  //     if (!selectedDays.includes(dayOfWeek)) continue;
       
-      // For each court
-      for (const court of courts) {
-        // Generate time slots based on increment
-        for (let timeMinutes = startMinutes; timeMinutes + duration <= endMinutes; timeMinutes += increment) {
-          const slotStartTime = minutesToTimeString(timeMinutes);
-          const slotEndTime = minutesToTimeString(timeMinutes + duration);
+  //     // For each court
+  //     for (const court of courts) {
+  //       // Generate time slots based on increment
+  //       for (let timeMinutes = startMinutes; timeMinutes + duration <= endMinutes; timeMinutes += increment) {
+  //         const slotStartTime = minutesToTimeString(timeMinutes);
+  //         const slotEndTime = minutesToTimeString(timeMinutes + duration);
           
-          slots.push({
-            date: date.toISOString().split('T')[0],
-            court_id: court.id,
-            court_name: court.name,
-            start_time: slotStartTime,
-            end_time: slotEndTime
-          });
-        }
-      }
-    }
+  //         slots.push({
+  //           date: date.toISOString().split('T')[0],
+  //           court_id: court.id,
+  //           court_name: court.name,
+  //           start_time: slotStartTime,
+  //           end_time: slotEndTime
+  //         });
+  //       }
+  //     }
+  //   }
     
-    return slots;
-  }
+  //   return slots;
+  // }
   
   // Function to generate calendar view
   function generateAvailabilityCalendarView(month, year, availabilityData) {
@@ -440,42 +440,42 @@ function initBulkAvailability() {
     });
     
     // Bulk availability form submission
-    document.getElementById('bulk-availability-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
+    // document.getElementById('bulk-availability-form').addEventListener('submit', async function(e) {
+    //   e.preventDefault();
       
-      const slots = calculateAvailabilitySlots();
-      if (slots.length === 0) {
-        showToast('Error', 'No availability slots to create. Please check your settings.', 'error');
-        return;
-      }
+    //   const slots = calculateAvailabilitySlots();
+    //   if (slots.length === 0) {
+    //     showToast('Error', 'No availability slots to create. Please check your settings.', 'error');
+    //     return;
+    //   }
       
-      try {
-        showLoading(this);
-        const response = await addBulkAvailability({ slots });
-        hideLoading(this);
+    //   try {
+    //     showLoading(this);
+    //     const response = await addBulkAvailability({ slots });
+    //     hideLoading(this);
         
-        showToast('Success', `Created ${slots.length} availability slots successfully.`, 'success');
+    //     showToast('Success', `Created ${slots.length} availability slots successfully.`, 'success');
         
-        // Hide preview
-        document.getElementById('preview-container').classList.add('hidden');
-        document.getElementById('preview-count').classList.add('hidden');
+    //     // Hide preview
+    //     document.getElementById('preview-container').classList.add('hidden');
+    //     document.getElementById('preview-count').classList.add('hidden');
         
-        // Reload availability view
-        loadAvailability();
+    //     // Reload availability view
+    //     loadAvailability();
         
-        // Update calendar view if it's visible
-        const calendarContainer = document.getElementById('availability-calendar');
+    //     // Update calendar view if it's visible
+    //     const calendarContainer = document.getElementById('availability-calendar');
 
-        if (calendarContainer.innerHTML !== '') {
-          const currentDate = new Date();
-          generateAvailabilityCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
-        }
+    //     if (calendarContainer.innerHTML !== '') {
+    //       const currentDate = new Date();
+    //       generateAvailabilityCalendarView(currentDate.getMonth(), currentDate.getFullYear(), await getAvailability());
+    //     }
         
-      } catch (error) {
-        hideLoading(this);
-        showToast('Error', `Failed to create availability slots: ${error.message}`, 'error');
-      }
-    });
+    //   } catch (error) {
+    //     hideLoading(this);
+    //     showToast('Error', `Failed to create availability slots: ${error.message}`, 'error');
+    //   }
+    // });
     
     // Create template button click handler
     document.getElementById('create-template-btn').addEventListener('click', function() {
@@ -1060,7 +1060,7 @@ function initBulkAvailability() {
     });
     
     // Add form submit handler
-    document.getElementById('apply-template-form').addEventListener('submit', async function(e) {
+    form.addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const templateId = document.getElementById('template-id').value;
@@ -1076,9 +1076,18 @@ function initBulkAvailability() {
         
         showToast('Success', `Template applied successfully. Created ${response.created_count} availability slots.`, 'success');
         
-        // Reload availability view
-        loadAvailability();
-        
+        // Reload calendar if visible
+        if (document.getElementById('availability-calendar').innerHTML !== '') {
+          const calendar = document.getElementById('calendar-month-year').textContent;
+          const [month, year] = calendar.split(' ');
+          const monthIndex = getMonthIndex(month);
+          
+          if (monthIndex !== -1) {
+            const availabilityData = await getAvailability();
+            generateAvailabilityCalendarView(monthIndex, parseInt(year), availabilityData);
+          }
+        }
+
       } catch (error) {
         hideLoading(this);
         showToast('Error', `Failed to apply template: ${error.message}`, 'error');

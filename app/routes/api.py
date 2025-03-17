@@ -31,18 +31,39 @@ bp = Blueprint('api', __name__, url_prefix='/api')
 @login_required
 def get_coach_contact(coach_id):
     """API endpoint to get coach contact information"""
-
-    # Verify the user has active packages with this coach
-    has_packages = BookingPackage.query.filter(
-        BookingPackage.student_id == current_user.id,
-        BookingPackage.coach_id == coach_id
-    ).first() is not None
-    
-    if not has_packages:
-        return jsonify({'error': 'You must have active credits to access coach contact info'}), 403
-    
     coach = Coach.query.get_or_404(coach_id)
     user = User.query.get_or_404(coach.user_id)
+    
+    # First check for direct packages with this coach
+    has_direct_packages = BookingPackage.query.filter(
+        BookingPackage.student_id == current_user.id,
+        BookingPackage.coach_id == coach_id,
+        BookingPackage.status == 'active'
+    ).first() is not None
+    
+    # If no direct packages, check for academy packages
+    has_academy_packages = False
+    if not has_direct_packages:
+        # Get all academies this coach belongs to
+        coach_academies = AcademyCoach.query.filter_by(
+            coach_id=coach_id,
+            is_active=True
+        ).all()
+        
+        academy_ids = [ac.academy_id for ac in coach_academies]
+        
+        # If coach belongs to any academies, check if student has active packages with those academies
+        if academy_ids:
+            has_academy_packages = BookingPackage.query.filter(
+                BookingPackage.student_id == current_user.id,
+                BookingPackage.academy_id.in_(academy_ids),
+                BookingPackage.package_type == 'academy',
+                BookingPackage.status == 'active'
+            ).first() is not None
+    
+    # Only allow access if student has either direct or academy packages
+    if not (has_direct_packages or has_academy_packages):
+        return jsonify({'error': 'You must have active credits to access coach contact info'}), 403
     
     return jsonify({
         'phone_number': user.phone,

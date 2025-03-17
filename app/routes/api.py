@@ -304,21 +304,20 @@ def get_pricing_plans_by_coachid(coach_id):
     
     result = []
     for plan in plans:
-        if plan.discount_type != 'package':
-            plan_data = {
-                'id': plan.id,
-                'name': plan.name,
-                'description': plan.description,
-                'discount_type': plan.discount_type,
-                'is_active': plan.is_active,
-                'sessions_required': plan.sessions_required,
-                'percentage_discount': plan.percentage_discount,
-                'fixed_discount': plan.fixed_discount,
-                'first_time_only': plan.first_time_only,
-                'valid_from': plan.valid_from.isoformat() if plan.valid_from else None,
-                'valid_to': plan.valid_to.isoformat() if plan.valid_to else None
-            }
-            result.append(plan_data)
+        plan_data = {
+            'id': plan.id,
+            'name': plan.name,
+            'description': plan.description,
+            'discount_type': plan.discount_type,
+            'is_active': plan.is_active,
+            'sessions_required': plan.sessions_required,
+            'percentage_discount': plan.percentage_discount,
+            'fixed_discount': plan.fixed_discount,
+            'first_time_only': plan.first_time_only,
+            'valid_from': plan.valid_from.isoformat() if plan.valid_from else None,
+            'valid_to': plan.valid_to.isoformat() if plan.valid_to else None
+        }
+        result.append(plan_data)
     
     return jsonify(result)
 

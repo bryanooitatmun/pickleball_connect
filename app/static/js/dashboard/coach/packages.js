@@ -144,6 +144,9 @@ let originalPackagesData = {
         case 'expired':
           statusClass = 'bg-red-100 text-red-800';
           break;
+        case 'rejected':
+          statusClass = 'bg-red-100 text-red-800';
+          break;
       }
       
       // Format dates
@@ -254,6 +257,9 @@ let originalPackagesData = {
           statusClass = 'bg-blue-100 text-blue-800';
           break;
         case 'expired':
+          statusClass = 'bg-red-100 text-red-800';
+          break;
+        case 'rejected':
           statusClass = 'bg-red-100 text-red-800';
           break;
       }

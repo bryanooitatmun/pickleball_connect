@@ -1548,29 +1548,64 @@ def get_session_log_details(log_id):
 @bp.route('/coach/session-logs/update', methods=['POST'])
 @login_required
 def update_session_log():
-    """API endpoint to update a session log"""
+    """API endpoint to create or update a session log"""
     if not current_user.is_coach:
         return jsonify({'error': 'Not a coach account'}), 403
     
     data = request.get_json()
     log_id = data.get('log_id')
-    
+    booking_id = data.get('booking_id')
+
+    if log_id:
+        log_id = int(log_id)
+    if booking_id:
+        booking_id = int(booking_id)
+
+    print(booking_id)
     coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
     
-    log = SessionLog.query.filter_by(
-        id=log_id,
-        coach_id=coach.id
-    ).first_or_404()
+    log = None
+    if log_id or booking_id:
+        # Try to get existing log
+        log = SessionLog.query.filter_by(
+            booking_id=booking_id
+        ).first()
     
-    # Update log fields
-    log.title = data.get('title', log.title)
-    log.notes = data.get('notes', log.notes)
-    log.coach_notes = data.get('coach_notes', log.coach_notes)
-    log.updated_at = datetime.utcnow()
+    if log:
+        # Update existing log
+        log.title = data.get('title', log.title)
+        log.notes = data.get('notes', log.notes)
+        log.coach_notes = data.get('coach_notes', log.coach_notes)
+        log.updated_at = datetime.utcnow()
+    else:
+        # Create new log
+        if not booking_id:
+            return jsonify({'error': 'Booking ID is required for new session logs'}), 400
+        
+        # Get booking to verify it belongs to this coach and get student ID
+        booking = Booking.query.filter_by(
+            id=booking_id,
+            coach_id=coach.id
+        ).first_or_404()
+        
+        log = SessionLog(
+            booking_id=booking_id,
+            coach_id=coach.id,
+            student_id=booking.student_id,
+            title=data.get('title', 'Pickleball Session'),
+            notes=data.get('notes', ''),
+            coach_notes=data.get('coach_notes', ''),
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.session.add(log)
     
     try:
         db.session.commit()
-        return jsonify({'success': True})
+        return jsonify({
+            'success': True,
+            'log_id': log.id
+        })
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500

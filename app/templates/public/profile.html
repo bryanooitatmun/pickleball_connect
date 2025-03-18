@@ -490,41 +490,6 @@
             {% endif %}
           </div>
         </div>
-        
-        <!-- Credits Summary (for logged in users) -->
-        {% if current_user.is_authenticated %}
-        <div id="credits-summary-container" class="bg-white rounded-xl shadow-sm p-6 mt-4 hidden">
-          <h3 class="font-semibold mb-4">Your Credits Summary</h3>
-          <div id="credits-summary" class="credits-summary">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-gray-600">Available Credits:</span>
-              <span class="credits-count" id="total-available-credits">0</span>
-            </div>
-            <div class="text-sm text-gray-500" id="credits-expiry-info">
-              <!-- Credits expiry info will be displayed here -->
-            </div>
-          </div>
-          
-          <div id="coach-contact-info" class="contact-card hidden">
-            <h4 class="font-medium text-gray-800 mb-2">Contact Coach Directly</h4>
-            <p class="text-sm text-gray-600 mb-3">Use your credits by contacting the coach to schedule sessions:</p>
-            <div class="space-y-2">
-              <div class="flex items-center">
-                <i class="fas fa-phone-alt text-blue-500 w-6"></i>
-                <a href="#" id="coach-phone-link" class="text-blue-600 hover:underline ml-2">Not available</a>
-              </div>
-              <div class="flex items-center">
-                <i class="fas fa-envelope text-blue-500 w-6"></i>
-                <a href="#" id="coach-email-link" class="text-blue-600 hover:underline ml-2">Not available</a>
-              </div>
-              <div class="flex items-center">
-                <i class="fab fa-whatsapp text-green-500 w-6"></i>
-                <a href="#" id="coach-whatsapp-link" class="text-green-600 hover:underline ml-2">WhatsApp</a>
-              </div>
-            </div>
-          </div>
-        </div>
-        {% endif %}
       </div>
       
       <!-- Biography and Showcase Section -->
@@ -581,6 +546,41 @@
           </div>
         </div>
         
+        <!-- Credits Summary (for logged in users) -->
+        {% if current_user.is_authenticated %}
+        <div id="credits-summary-container" class="bg-white rounded-xl shadow-sm p-6 mt-4 mb-8 hidden">
+          <h3 class="font-semibold mb-4">Your Credits Summary</h3>
+          <div id="credits-summary" class="credits-summary">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-gray-600">Available Credits:</span>
+              <span class="credits-count" id="total-available-credits">0</span>
+            </div>
+            <div class="text-sm text-gray-500" id="credits-expiry-info">
+              <!-- Credits expiry info will be displayed here -->
+            </div>
+          </div>
+          
+          <div id="coach-contact-info" class="contact-card hidden">
+            <h4 class="font-medium text-gray-800 mb-2">Contact Coach Directly</h4>
+            <p class="text-sm text-gray-600 mb-3">Use your credits by contacting the coach to schedule sessions:</p>
+            <div class="space-y-2">
+              <div class="flex items-center">
+                <i class="fas fa-phone-alt text-blue-500 w-6"></i>
+                <a href="#" id="coach-phone-link" class="text-blue-600 hover:underline ml-2">Not available</a>
+              </div>
+              <div class="flex items-center">
+                <i class="fas fa-envelope text-blue-500 w-6"></i>
+                <a href="#" id="coach-email-link" class="text-blue-600 hover:underline ml-2">Not available</a>
+              </div>
+              <div class="flex items-center">
+                <i class="fab fa-whatsapp text-green-500 w-6"></i>
+                <a href="#" id="coach-whatsapp-link" class="text-green-600 hover:underline ml-2">WhatsApp</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
         <!-- My Credits Section (For logged in users) -->
         {% if current_user.is_authenticated %}
         <div id="my-credits-container" class="bg-white rounded-xl shadow-sm p-6 mb-8 hidden">

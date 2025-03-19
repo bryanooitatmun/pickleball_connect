@@ -1,0 +1,191 @@
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">My Students</h1>
+  <p class="text-gray-600">View and manage all your students</p>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <div class="mb-4 flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0">
+    <div class="flex flex-col md:flex-row items-start md:items-center space-y-3 md:space-y-0 md:space-x-3 w-full md:w-auto">
+      <input type="text" id="students-search" placeholder="Search by name or email" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto">
+      
+      <div class="flex items-center space-x-3 w-full md:w-auto">
+        <select id="students-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto">
+          <option value="name-asc">Name: A-Z</option>
+          <option value="name-desc">Name: Z-A</option>
+          <option value="dupr-desc">DUPR: Highest First</option>
+          <option value="dupr-asc">DUPR: Lowest First</option>
+          <option value="sessions-desc">Most Sessions</option>
+          <option value="sessions-asc">Fewest Sessions</option>
+          <option value="upcoming-asc">Soonest Booking</option>
+        </select>
+        
+        <button id="reset-students-filters" type="button" class="text-blue-600 hover:text-blue-800 whitespace-nowrap">
+          <i class="fas fa-times-circle mr-1"></i> Reset
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="students-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Student cards will be dynamically inserted here -->
+    <div class="text-center py-12 text-gray-500 col-span-3">
+      <p>Loading students...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Student Detail Modal -->
+<div id="student-detail-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden overflow-y-auto">
+  <div class="bg-white rounded-xl shadow-xl p-6 max-w-4xl w-full mx-4 my-8">
+    <div class="flex justify-between items-center mb-4">
+      <h3 id="student-detail-name" class="text-lg font-semibold">Student Details</h3>
+      <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-student-detail-modal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <!-- Student Info Section -->
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="col-span-1">
+        <div class="flex flex-col items-center">
+          <div id="student-detail-image" class="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-2xl mb-2">
+            <!-- Initial or image will be inserted here -->
+          </div>
+          <h4 id="student-detail-full-name" class="font-medium text-center"></h4>
+        </div>
+      </div>
+      
+      <div class="col-span-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 class="text-sm font-medium text-gray-700">Email</h4>
+            <p id="student-detail-email" class="text-gray-900"></p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium text-gray-700">Phone</h4>
+            <p id="student-detail-phone" class="text-gray-900"></p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium text-gray-700">DUPR Rating</h4>
+            <p id="student-detail-dupr" class="text-gray-900"></p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium text-gray-700">Total Sessions</h4>
+            <p id="student-detail-sessions" class="text-gray-900"></p>
+          </div>
+        </div>
+        
+        <div class="mt-4">
+          <h4 class="text-sm font-medium text-gray-700">Availability Preferences</h4>
+          <div id="student-detail-availability" class="mt-1 text-sm">
+            <!-- Availability preferences will be inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tabs for different sections -->
+    <div class="border-b border-gray-200 mb-4">
+      <ul class="flex flex-wrap -mb-px">
+        <li class="mr-2">
+          <button id="packages-tab-btn" class="inline-block py-2 px-4 text-blue-600 font-medium border-b-2 border-blue-600">Packages</button>
+        </li>
+        <li class="mr-2">
+          <button id="bookings-tab-btn" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium border-b-2 border-transparent hover:border-gray-300">Bookings</button>
+        </li>
+        <li class="mr-2">
+          <button id="logs-tab-btn" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium border-b-2 border-transparent hover:border-gray-300">Session Logs</button>
+        </li>
+        <li class="mr-2">
+          <button id="new-booking-tab-btn" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium border-b-2 border-transparent hover:border-gray-300">New Booking</button>
+        </li>
+      </ul>
+    </div>
+    
+    <!-- Packages Tab Content -->
+    <div id="packages-tab-content" class="tab-content active">
+      <div id="student-packages-container" class="space-y-4">
+        <!-- Student packages will be inserted here -->
+        <div class="text-center py-6 text-gray-500">
+          <p>No packages found</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Bookings Tab Content -->
+    <div id="bookings-tab-content" class="tab-content hidden">
+      <div id="student-bookings-container" class="space-y-4">
+        <!-- Student bookings will be inserted here -->
+        <div class="text-center py-6 text-gray-500">
+          <p>No bookings found</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Session Logs Tab Content -->
+    <div id="logs-tab-content" class="tab-content hidden">
+      <div id="student-logs-container" class="space-y-4">
+        <!-- Student session logs will be inserted here -->
+        <div class="text-center py-6 text-gray-500">
+          <p>No session logs found</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- New Booking Tab Content -->
+    <div id="new-booking-tab-content" class="tab-content hidden">
+      <form id="new-booking-form">
+        <input type="hidden" id="new-booking-student-id" name="student_id">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label for="new-booking-package" class="block text-gray-700 font-medium mb-2">Use Package*</label>
+            <select id="new-booking-package" name="package_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              <option value="">Select a package</option>
+              <!-- Package options will be dynamically inserted here -->
+            </select>
+          </div>
+          <div>
+            <label for="new-booking-court" class="block text-gray-700 font-medium mb-2">Court*</label>
+            <select id="new-booking-court" name="court_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              <option value="">Select a court</option>
+              <!-- Court options will be dynamically inserted here -->
+            </select>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label for="new-booking-date" class="block text-gray-700 font-medium mb-2">Date*</label>
+            <input type="date" id="new-booking-date" name="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          </div>
+          <div>
+            <label for="new-booking-start-time" class="block text-gray-700 font-medium mb-2">Start Time*</label>
+            <input type="time" id="new-booking-start-time" name="start_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          </div>
+          <div>
+            <label for="new-booking-end-time" class="block text-gray-700 font-medium mb-2">End Time*</label>
+            <input type="time" id="new-booking-end-time" name="end_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label for="new-booking-responsibility" class="block text-gray-700 font-medium mb-2">Court Booking Responsibility*</label>
+          <select id="new-booking-responsibility" name="court_booking_responsibility" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            <option value="coach">Coach books the court</option>
+            <option value="student">Student books the court</option>
+          </select>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+          <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-student-detail-modal">
+            Cancel
+          </button>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+            Create Booking
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

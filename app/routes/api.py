@@ -2406,6 +2406,245 @@ def remove_coach_tag():
     
     return jsonify({'success': True})
 
+
+@bp.route('/coach/students')
+@login_required
+def get_coach_students():
+    """API endpoint to get all students who have bookings with this coach"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Get all students who have bookings with this coach
+    # We'll use a subquery to get unique student IDs from bookings
+    student_ids = db.session.query(Booking.student_id).filter(
+        Booking.coach_id == coach.id
+    ).distinct().all()
+    
+    student_ids = [sid[0] for sid in student_ids]
+    
+    if not student_ids:
+        return jsonify([])
+    
+    # Get detailed student information
+    students = User.query.filter(User.id.in_(student_ids)).all()
+    
+    # Format student data, including additional metrics
+    result = []
+    for student in students:
+        # Count completed sessions
+        completed_sessions = Booking.query.filter(
+            Booking.student_id == student.id,
+            Booking.coach_id == coach.id,
+            Booking.status == 'completed'
+        ).count()
+        
+        # Get next booking date if any
+        next_booking = Booking.query.filter(
+            Booking.student_id == student.id,
+            Booking.coach_id == coach.id,
+            Booking.status == 'upcoming',
+            Booking.date >= datetime.utcnow().date()
+        ).order_by(Booking.date, Booking.start_time).first()
+        
+        next_booking_date = next_booking.date.isoformat() if next_booking else None
+        
+        # Count active packages
+        active_packages = BookingPackage.query.filter(
+            BookingPackage.student_id == student.id,
+            BookingPackage.status == 'active',
+            db.or_(
+                BookingPackage.coach_id == coach.id,
+                BookingPackage.academy_id.in_(
+                    db.session.query(AcademyCoach.academy_id).filter(
+                        AcademyCoach.coach_id == coach.id,
+                        AcademyCoach.is_active == True
+                    )
+                )
+            )
+        ).count()
+        
+        # Format student data
+        student_data = {
+            'id': student.id,
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'email': student.email,
+            'phone': student.phone,
+            'dupr_rating': student.dupr_rating,
+            'profile_picture': student.profile_picture,
+            'completed_sessions': completed_sessions,
+            'next_booking_date': next_booking_date,
+            'active_packages': active_packages,
+            'availability_preferences': student.availability_preferences
+        }
+        
+        result.append(student_data)
+    
+    return jsonify(result)
+
+@bp.route('/coach/create-booking-for-student', methods=['POST'])
+@login_required
+def create_booking_for_student():
+    """API endpoint for coach to create a booking for a student using an existing package"""
+    if not current_user.is_coach:
+        return jsonify({'error': 'Not a coach account'}), 403
+    
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    data = request.get_json()
+    
+    # Validate required fields
+    required_fields = ['student_id', 'package_id', 'court_id', 'date', 'start_time', 'end_time']
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    try:
+        # Get student
+        student = User.query.get_or_404(data['student_id'])
+        
+        # Get package
+        package = BookingPackage.query.get_or_404(data['package_id'])
+        
+        # Verify package belongs to student and can be used with this coach
+        if package.student_id != student.id:
+            return jsonify({'error': 'Package does not belong to this student'}), 403
+        
+        if not package.can_use_for_coach(coach.id):
+            return jsonify({'error': 'Package cannot be used with this coach'}), 403
+        
+        if package.sessions_booked >= package.total_sessions:
+            return jsonify({'error': 'No sessions remaining in this package'}), 400
+        
+        if package.status != 'active':
+            return jsonify({'error': 'Package is not active'}), 400
+        
+        # Parse date and times
+        date_obj = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        start_time = datetime.strptime(data['start_time'], '%H:%M').time()
+        end_time = datetime.strptime(data['end_time'], '%H:%M').time()
+        
+        # Check if date is in the future
+        if date_obj < datetime.utcnow().date():
+            return jsonify({'error': 'Cannot create booking for past dates'}), 400
+        
+        # Check if end time is after start time
+        if start_time >= end_time:
+            return jsonify({'error': 'End time must be after start time'}), 400
+        
+        # Check coach availability
+        availability = Availability.query.filter(
+            Availability.coach_id == coach.id,
+            Availability.date == date_obj,
+            Availability.start_time <= start_time,
+            Availability.end_time >= end_time,
+            Availability.is_booked == False
+        ).first()
+        
+        # If no exact availability match, check if there's any availability that includes this time
+        if not availability:
+            return jsonify({'error': 'Coach is not available at this time'}), 400
+        
+        # Create booking
+        # Calculate price (use hourly rate and any package discounts)
+        hourly_rate = coach.hourly_rate
+        
+        # Calculate duration in hours
+        start_datetime = datetime.combine(date_obj, start_time)
+        end_datetime = datetime.combine(date_obj, end_time)
+        duration_hours = (end_datetime - start_datetime).total_seconds() / 3600
+        
+        base_price = hourly_rate * duration_hours
+        
+        # If package has discount, apply it
+        discount_amount = 0
+        discount_percentage = 0
+        
+        if package.pricing_plan_id:
+            pricing_plan = PricingPlan.query.get(package.pricing_plan_id)
+            if pricing_plan:
+                if pricing_plan.percentage_discount:
+                    discount_percentage = pricing_plan.percentage_discount
+                    discount_amount = base_price * (discount_percentage / 100)
+                elif pricing_plan.fixed_discount:
+                    # Calculate proportional discount for this session
+                    total_discount = pricing_plan.fixed_discount
+                    per_session_discount = total_discount / pricing_plan.sessions_required
+                    discount_amount = per_session_discount
+                    discount_percentage = (discount_amount / base_price) * 100
+        
+        final_price = base_price - discount_amount
+        
+        # Determine court fee and coach fee components
+        court_fee = 0  # Can be updated with actual court fee logic
+        coach_fee = final_price - court_fee
+        
+        # Court booking responsibility
+        court_booking_responsibility = data.get('court_booking_responsibility', 'student')
+        
+        # Create booking record
+        booking = Booking(
+            student_id=student.id,
+            coach_id=coach.id,
+            court_id=data['court_id'],
+            availability_id=availability.id,
+            date=date_obj,
+            start_time=start_time,
+            end_time=end_time,
+            base_price=base_price,
+            price=final_price,
+            court_fee=court_fee,
+            coach_fee=coach_fee,
+            status='upcoming',
+            venue_confirmed=False,
+            coaching_payment_required=False,  # Package covers payment
+            coaching_payment_status='approved',
+            court_payment_required=(court_booking_responsibility == 'student'),
+            court_payment_status='not_required' if court_booking_responsibility == 'coach' else 'pending',
+            court_booking_responsibility=court_booking_responsibility,
+            pricing_plan_id=package.pricing_plan_id,
+            discount_amount=discount_amount,
+            discount_percentage=discount_percentage
+        )
+        
+        db.session.add(booking)
+        
+        # Mark availability as booked
+        availability.is_booked = True
+        
+        # Update package sessions count
+        package.sessions_booked += 1
+        
+        # Associate booking with package
+        booking_assoc = booking_package_association.insert().values(
+            package_id=package.id,
+            booking_id=booking.id
+        )
+        db.session.execute(booking_assoc)
+        
+        # Create notification for student
+        notification = Notification(
+            user_id=student.id,
+            title="New Booking Created",
+            message=f"A new session has been scheduled for {date_obj.strftime('%Y-%m-%d')} at {start_time.strftime('%I:%M %p')}",
+            notification_type="booking",
+            related_id=booking.id
+        )
+        db.session.add(notification)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'booking_id': booking.id
+        })
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @bp.route('/api/tags')
 def get_all_tags():
     """API endpoint to get all available tags"""
@@ -4225,11 +4464,14 @@ def get_student_coaches():
 @login_required
 def get_student_bookings(status):
     """API endpoint to get student bookings by status"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts cannot access student bookings'}), 403
     
+    if not current_user.is_coach:
+        student_id = current_user.id
+    else:
+        student_id = request.args.get('student_id', type=int)
+
     # Define query based on status
-    query = Booking.query.filter(Booking.student_id == current_user.id)
+    query = Booking.query.filter(Booking.student_id == student_id)
     
     if status == 'upcoming':
         query = query.filter(
@@ -4353,11 +4595,17 @@ def cancel_student_booking():
 @login_required
 def get_student_packages():
     """API endpoint to get student packages that can be used with a specific coach"""
-    coach_id = request.args.get('coach_id', type=int)
     
+    if not current_user.is_coach:
+        student_id = current_user.id
+        coach_id = request.args.get('coach_id', type=int)
+    else:
+        student_id = request.args.get('student_id', type=int)
+        coach_id = current_user.id
+
     if not coach_id:
         # Get all student packages (both coach and academy packages)
-        all_packages = BookingPackage.query.filter_by(student_id=current_user.id).all()
+        all_packages = BookingPackage.query.filter_by(student_id=student_id).all()
     
         result = []
         for package in all_packages:
@@ -4495,10 +4743,13 @@ def get_student_packages():
 @login_required
 def get_student_session_logs():
     """API endpoint to get student session logs"""
-    if current_user.is_coach:
-        return jsonify({'error': 'Coach accounts cannot access student session logs'}), 403
     
-    session_logs = SessionLog.query.filter_by(student_id=current_user.id).order_by(SessionLog.created_at.desc()).all()
+    if not current_user.is_coach:
+        student_id = current_user.id
+    else:
+        student_id = request.args.get('student_id', type=int)
+
+    session_logs = SessionLog.query.filter_by(student_id=student_id).order_by(SessionLog.created_at.desc()).all()
     
     result = []
     for log in session_logs:
@@ -4685,3 +4936,214 @@ def get_student_availability():
         })
     
     return jsonify(current_user.availability_preferences)
+
+
+# @bp.route('/student/packages')
+# @login_required
+# def get_student_packages_for_coach():
+#     """API endpoint to get packages for a specific student that can be used with the current coach"""
+#     if not current_user.is_coach:
+#         return jsonify({'error': 'Not a coach account'}), 403
+    
+#     coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+#     student_id = request.args.get('student_id', type=int)
+    
+#     if not student_id:
+#         return jsonify({'error': 'Student ID is required'}), 400
+    
+#     # Get coach-specific packages
+#     coach_packages = BookingPackage.query.filter(
+#         BookingPackage.student_id == student_id,
+#         BookingPackage.coach_id == coach.id,
+#         BookingPackage.status == 'active',
+#         BookingPackage.sessions_booked < BookingPackage.total_sessions,
+#         (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.utcnow()))
+#     ).all()
+    
+#     # Get academy packages that can be used with this coach
+#     coach_academies = AcademyCoach.query.filter_by(
+#         coach_id=coach.id,
+#         is_active=True
+#     ).all()
+    
+#     academy_ids = [ca.academy_id for ca in coach_academies]
+    
+#     academy_packages = []
+#     if academy_ids:
+#         academy_packages = BookingPackage.query.filter(
+#             BookingPackage.student_id == student_id,
+#             BookingPackage.academy_id.in_(academy_ids),
+#             BookingPackage.package_type == 'academy',
+#             BookingPackage.status == 'active',
+#             BookingPackage.sessions_booked < BookingPackage.total_sessions,
+#             (BookingPackage.expires_at.is_(None) | (BookingPackage.expires_at >= datetime.utcnow()))
+#         ).all()
+    
+#     # Combine and format packages
+#     result = []
+#     for package in coach_packages + academy_packages:
+#         package_data = {
+#             'id': package.id,
+#             'package_type': package.package_type,
+#             'total_sessions': package.total_sessions,
+#             'sessions_booked': package.sessions_booked,
+#             'sessions_completed': package.sessions_completed,
+#             'total_price': float(package.total_price),
+#             'original_price': float(package.original_price),
+#             'discount_amount': float(package.discount_amount) if package.discount_amount else None,
+#             'purchase_date': package.purchase_date.isoformat(),
+#             'expires_at': package.expires_at.isoformat() if package.expires_at else None,
+#             'status': package.status
+#         }
+        
+#         # Add pricing plan info
+#         if package.package_type == 'coach' and package.pricing_plan:
+#             package_data['pricing_plan'] = {
+#                 'id': package.pricing_plan_id,
+#                 'name': package.pricing_plan.name,
+#                 'description': package.pricing_plan.description
+#             }
+#         elif package.package_type == 'academy' and package.academy_pricing_plan:
+#             package_data['pricing_plan'] = {
+#                 'id': package.academy_pricing_plan_id,
+#                 'name': package.academy_pricing_plan.name,
+#                 'description': package.academy_pricing_plan.description
+#             }
+#         else:
+#             package_data['pricing_plan'] = {
+#                 'id': None,
+#                 'name': 'Standard Package',
+#                 'description': 'Basic coaching package'
+#             }
+        
+#         result.append(package_data)
+    
+#     return jsonify(result)
+
+# @bp.route('/student/bookings/<status>')
+# @login_required
+# def get_student_bookings_for_coach(status):
+#     """API endpoint to get bookings for a specific student with the current coach"""
+#     if not current_user.is_coach:
+#         return jsonify({'error': 'Not a coach account'}), 403
+    
+#     coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+#     student_id = request.args.get('student_id', type=int)
+    
+#     if not student_id:
+#         return jsonify({'error': 'Student ID is required'}), 400
+    
+#     # Define query based on status
+#     query = Booking.query.filter(
+#         Booking.student_id == student_id,
+#         Booking.coach_id == coach.id
+#     )
+    
+#     if status == 'upcoming':
+#         query = query.filter(
+#             Booking.status == 'upcoming',
+#             Booking.date >= datetime.utcnow().date()
+#         ).order_by(Booking.date, Booking.start_time)
+#     elif status == 'completed':
+#         query = query.filter(
+#             Booking.status == 'completed'
+#         ).order_by(Booking.date.desc())
+#     elif status == 'cancelled':
+#         query = query.filter(
+#             Booking.status == 'cancelled'
+#         ).order_by(Booking.date.desc())
+#     else:
+#         return jsonify({'error': 'Invalid status provided'}), 400
+    
+#     bookings = query.all()
+    
+#     # Format bookings data
+#     result = []
+#     for booking in bookings:
+#         booking_data = {
+#             'id': booking.id,
+#             'date': booking.date.isoformat(),
+#             'start_time': booking.start_time.strftime('%H:%M:%S'),
+#             'end_time': booking.end_time.strftime('%H:%M:%S'),
+#             'price': float(booking.price),
+#             'base_price': float(booking.base_price),
+#             'status': booking.status,
+#             'venue_confirmed': booking.venue_confirmed,
+#             'court_booking_responsibility': booking.court_booking_responsibility,
+#             'court': {
+#                 'id': booking.court.id,
+#                 'name': booking.court.name
+#             }
+#         }
+        
+#         # Add pricing plan if available
+#         if booking.pricing_plan_id:
+#             pricing_plan = PricingPlan.query.get(booking.pricing_plan_id)
+#             if pricing_plan:
+#                 booking_data['pricing_plan'] = {
+#                     'id': pricing_plan.id,
+#                     'name': pricing_plan.name
+#                 }
+        
+#         # Add session log if it exists
+#         session_log = SessionLog.query.filter_by(booking_id=booking.id).first()
+#         if session_log:
+#             booking_data['session_log'] = {
+#                 'id': session_log.id,
+#                 'title': session_log.title,
+#                 'notes': session_log.notes
+#             }
+        
+#         result.append(booking_data)
+    
+#     return jsonify(result)
+
+# @bp.route('/student/session-logs')
+# @login_required
+# def get_student_session_logs_for_coach():
+#     """API endpoint to get session logs for a specific student with the current coach"""
+#     if not current_user.is_coach:
+#         return jsonify({'error': 'Not a coach account'}), 403
+    
+#     coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+#     student_id = request.args.get('student_id', type=int)
+    
+#     if not student_id:
+#         return jsonify({'error': 'Student ID is required'}), 400
+    
+#     # Get session logs
+#     logs = SessionLog.query.filter_by(
+#         coach_id=coach.id,
+#         student_id=student_id
+#     ).order_by(SessionLog.created_at.desc()).all()
+    
+#     # Format session logs data
+#     result = []
+#     for log in logs:
+#         log_data = {
+#             'id': log.id,
+#             'title': log.title,
+#             'notes': log.notes,
+#             'coach_notes': log.coach_notes,
+#             'created_at': log.created_at.isoformat(),
+#             'updated_at': log.updated_at.isoformat() if log.updated_at else None
+#         }
+        
+#         # Add booking data if available
+#         booking = Booking.query.get(log.booking_id) if log.booking_id else None
+#         if booking:
+#             log_data['booking'] = {
+#                 'id': booking.id,
+#                 'date': booking.date.isoformat(),
+#                 'start_time': booking.start_time.strftime('%H:%M:%S'),
+#                 'end_time': booking.end_time.strftime('%H:%M:%S'),
+#                 'court': {
+#                     'id': booking.court_id,
+#                     'name': booking.court.name
+#                 }
+#             }
+        
+#         result.append(log_data)
+    
+#     return jsonify(result)
+

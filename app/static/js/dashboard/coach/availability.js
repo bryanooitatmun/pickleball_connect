@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const date = formData.get('date');
         const startTime = formData.get('start_time');
         const endTime = formData.get('end_time');
-        const studentBooksCourt = formData.get('student_books_court') === 'true';
+        const studentBooksCourt = true;
         
         if (!courtId || !date || !startTime || !endTime) {
           showToast('Error', 'Please fill in all required fields', 'error');
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedDays = Array.from(document.querySelectorAll('input[name="days[]"]:checked')).map(cb => parseInt(cb.value));
     const startTime = document.getElementById('bulk-start-time').value;
     const endTime = document.getElementById('bulk-end-time').value;
-    const studentBooksCourt = document.getElementById('bulk-booking-responsibility').value === 'student';
+    const studentBooksCourt = true;
     
     // Get time slot increment selection
     const incrementSelect = document.getElementById('bulk-increment');

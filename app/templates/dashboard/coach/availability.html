@@ -4,7 +4,7 @@
 </div>
 
 <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-  <div class="flex items-center justify-between mb-6">
+  {# <div class="flex items-center justify-between mb-6">
     <h3 class="font-semibold">Add Single Availability</h3>
   </div>
   
@@ -33,14 +33,14 @@
     <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none">
       Add Availability
     </button>
-  </form>
+  </form> #}
   
   <div class="bg-white rounded-xl shadow-sm py-6 mb-6">
     <h3 class="font-semibold mb-4">Bulk Add Availability</h3>
     
     <form id="bulk-availability-form">
       <!-- Date Range Selection -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
         <div>
           <label class="block text-gray-700 font-medium mb-2">Date Range*</label>
           <div class="flex space-x-2">
@@ -52,13 +52,12 @@
         
         <div>
           <label class="block text-gray-700 font-medium mb-2">Courts*</label>
-          <select id="bulk-courts" name="courts" multiple class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
+          <select id="bulk-courts" name="courts" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
             <!-- Courts will be populated dynamically -->
           </select>
-          <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
         </div>
         
-        <div>
+        {# <div>
           <label class="block text-gray-700 font-medium mb-2">Session Duration</label>
           <select id="bulk-duration" name="duration" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
             <option value="60">1 hour</option>
@@ -66,12 +65,12 @@
             <option value="120">2 hours</option>
             <option value="custom">Custom</option>
           </select>
-        </div>
+        </div> #}
       </div>
       
       <!-- Custom Duration (shown when custom is selected) -->
       <div id="custom-duration-container" class="hidden mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div>
             <label class="block text-gray-700 font-medium mb-2">Duration (minutes)*</label>
             <input type="number" id="custom-duration" name="custom_duration" min="30" step="15" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="60" />
@@ -117,7 +116,7 @@
           </div>
         </div>
         
-        <div>
+        {# <div>
           <label class="block text-gray-700 font-medium mb-2">Time Slot Increment</label>
           <select id="bulk-increment" name="increment" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
             <option value="60">Every hour</option>
@@ -125,7 +124,7 @@
             <option value="15">Every 15 minutes</option>
             <option value="duration">Based on session duration</option>
           </select>
-        </div>
+        </div> #}
       </div>
       
       <!-- Preview Button and Result Area -->

@@ -447,7 +447,7 @@ function showDateBookings(date, bookings) {
             <button class="text-blue-600 hover:text-blue-800 complete-booking-btn" data-booking-id="${booking.id}" title="Complete">
               <i class="fas fa-check-circle"></i> Complete
             </button>
-            <button class="text-yellow-600 hover:text-yellow-800 defer-booking-btn" data-booking-id="${booking.id}" title="Reschedule">
+            <button class="text-yellow-600 hover:text-yellow-800 reschedule-booking-btn" data-booking-id="${booking.id}" title="Reschedule">
               <i class="fas fa-clock"></i> Reschedule
             </button>
             <button class="text-red-600 hover:text-red-800 cancel-booking-btn" data-booking-id="${booking.id}" title="Cancel">
@@ -629,7 +629,7 @@ function addBookingModalEventListeners(modal) {
   
   // For coach actions
   if (IS_COACH) {
-    // Complete booking button
+    //Complete booking button
     modal.querySelectorAll('.complete-booking-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
@@ -638,7 +638,7 @@ function addBookingModalEventListeners(modal) {
       });
     });
     
-    // Confirm venue button
+    //Confirm venue button
     modal.querySelectorAll('.confirm-venue-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
@@ -647,22 +647,21 @@ function addBookingModalEventListeners(modal) {
       });
     });
     
-    // Defer booking button
-    modal.querySelectorAll('.defer-booking-btn').forEach(btn => {
+    //Defer booking button
+    document.querySelectorAll('.reschedule-booking-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
         document.body.removeChild(modal);
-        showDeferBookingModal(bookingId);
+        showRescheduleBookingModal(bookingId);
       });
     });
     
-    // Cancel booking button
+    //Cancel booking button
     modal.querySelectorAll('.cancel-booking-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
         document.body.removeChild(modal);
-        document.getElementById('cancel-booking-id').value = bookingId;
-        document.getElementById('cancel-session-modal').classList.remove('hidden');
+        showCancelBookingModal(bookingId);
       });
     });
   } else {

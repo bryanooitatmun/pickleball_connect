@@ -44,7 +44,12 @@ let originalBookingsData = {
       upcomingBookings.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
-        return dateB - dateA;
+        
+        if (document.getElementById(`upcoming-sort`).value === 'date-asc') {
+          return dateA - dateB;
+        } else {
+          return dateB - dateA;
+        }
       });
       
       displayBookings(upcomingBookings, 'upcoming');
@@ -379,7 +384,7 @@ let originalBookingsData = {
   // Show booking proof viewer
   async function showBookingProofs(bookingId) {
     try {
-      const booking = await fetchAPI(`/bookings/${bookingId}`);
+      const booking = await fetchAPI(`/coach/bookings/${bookingId}`);
       
       const proofViewer = document.getElementById('proof-viewer');
       const bookingDetails = document.getElementById('booking-details');
@@ -662,7 +667,8 @@ let originalBookingsData = {
           
           // Reload bookings and open session log modal
           await loadBookings();
-          
+          await loadCalendarView();
+
           // Open session log modal after a short delay
           setTimeout(() => {
             openSessionLogModal(bookingId, null);
@@ -822,6 +828,7 @@ let originalBookingsData = {
           
           // Reload bookings
           loadBookings();
+          await loadCalendarView();
           
         } catch (error) {
           console.error('Error confirming venue booking:', error);
@@ -918,7 +925,8 @@ let originalBookingsData = {
           
           // Reload bookings
           loadBookings();
-          
+          await loadCalendarView();
+
         } catch (error) {
           hideLoading(this);
           console.error('Error rescheduling session:', error);
@@ -961,7 +969,7 @@ let originalBookingsData = {
     // Add event listener to confirm button if not already added
     const confirmBtn = document.getElementById('confirm-cancel-session-btn');
     const existingHandler = confirmBtn.getAttribute('data-handler-added');
-    
+
     if (!existingHandler) {
       confirmBtn.addEventListener('click', async function() {
         const bookingId = document.getElementById('cancel-booking-id').value;
@@ -977,6 +985,7 @@ let originalBookingsData = {
           
           // Reload bookings
           loadBookings();
+          await loadCalendarView();
           
         } catch (error) {
           console.error('Error cancelling session:', error);

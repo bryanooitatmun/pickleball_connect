@@ -430,14 +430,14 @@ function initBulkAvailability() {
     });
     
     // Show/hide custom duration field
-    document.getElementById('bulk-duration').addEventListener('change', function() {
-      const customDurationContainer = document.getElementById('custom-duration-container');
-      if (this.value === 'custom') {
-        customDurationContainer.classList.remove('hidden');
-      } else {
-        customDurationContainer.classList.add('hidden');
-      }
-    });
+    // document.getElementById('bulk-duration').addEventListener('change', function() {
+    //   const customDurationContainer = document.getElementById('custom-duration-container');
+    //   if (this.value === 'custom') {
+    //     customDurationContainer.classList.remove('hidden');
+    //   } else {
+    //     customDurationContainer.classList.add('hidden');
+    //   }
+    // });
     
     // Bulk availability form submission
     // document.getElementById('bulk-availability-form').addEventListener('submit', async function(e) {

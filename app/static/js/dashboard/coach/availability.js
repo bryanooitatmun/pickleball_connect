@@ -11,14 +11,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   
     // Show/hide custom duration field
-    document.getElementById('bulk-duration')?.addEventListener('change', function() {
-      const customDurationContainer = document.getElementById('custom-duration-container');
-      if (this.value === 'custom') {
-        customDurationContainer.classList.remove('hidden');
-      } else {
-        customDurationContainer.classList.add('hidden');
-      }
-    });
+    // document.getElementById('bulk-duration')?.addEventListener('change', function() {
+    //   const customDurationContainer = document.getElementById('custom-duration-container');
+    //   if (this.value === 'custom') {
+    //     customDurationContainer.classList.remove('hidden');
+    //   } else {
+    //     customDurationContainer.classList.add('hidden');
+    //   }
+    // });
   
     // Academy coach selection for academy managers
     document.getElementById('apply-coach-filter')?.addEventListener('click', function() {
@@ -262,24 +262,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const studentBooksCourt = true;
     
     // Get time slot increment selection
-    const incrementSelect = document.getElementById('bulk-increment');
-    let increment = parseInt(incrementSelect.value);
+    //const incrementSelect = document.getElementById('bulk-increment');
+    let increment = 60;
     
     // If "Based on session duration" is selected, get the duration value
-    if (incrementSelect.value === 'duration') {
-      const durationSelect = document.getElementById('bulk-duration');
-      if (durationSelect.value === 'custom') {
-        increment = parseInt(document.getElementById('custom-duration').value);
-      } else {
-        increment = parseInt(durationSelect.value);
-      }
-    }
+    // if (incrementSelect.value === 'duration') {
+    //   const durationSelect = document.getElementById('bulk-duration');
+    //   if (durationSelect.value === 'custom') {
+    //     increment = parseInt(document.getElementById('custom-duration').value);
+    //   } else {
+    //     increment = parseInt(durationSelect.value);
+    //   }
+    // }
     
     // Get session duration
-    const durationSelect = document.getElementById('bulk-duration');
-    const duration = durationSelect.value === 'custom' 
-      ? parseInt(document.getElementById('custom-duration').value) 
-      : parseInt(durationSelect.value);
+    //const durationSelect = document.getElementById('bulk-duration');
+    const duration = 60;
     
     // Selected courts
     const courts = Array.from(document.getElementById('bulk-courts').selectedOptions).map(option => ({

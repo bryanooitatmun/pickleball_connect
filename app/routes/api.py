@@ -1931,7 +1931,7 @@ def defer_booking():
         )
         db.session.add(notification)
 
-        send_booking_rescheduled_notification(booking, original_date, original_start_time, original_court_id)
+        #send_booking_rescheduled_notification(booking, original_date, original_start_time, original_court_id)
         
         db.session.commit()
         
@@ -4338,7 +4338,7 @@ def cancel_student_booking():
     )
     db.session.add(notification)
 
-    send_booking_cancelled_notification(booking, cancelled_by, reason)
+    #send_booking_cancelled_notification(booking, cancelled_by, reason)
 
     try:
         db.session.commit()

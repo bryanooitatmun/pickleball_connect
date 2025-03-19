@@ -499,7 +499,7 @@ def add_availability():
             start_time=start_time,
             end_time=end_time,
             is_booked=False,
-            student_books_court=data.get('student_books_court', False)  # New field
+            student_books_court=data.get('student_books_court', True)  # New field
         )
         
         db.session.add(availability)
@@ -580,7 +580,7 @@ def add_bulk_availability():
                     start_time=start_time,
                     end_time=end_time,
                     is_booked=False,
-                    student_books_court=slot_data.get('student_books_court', False)  # New field
+                    student_books_court=slot_data.get('student_books_court', True)  # New field
                 )
                 
                 db.session.add(availability)
@@ -2932,7 +2932,7 @@ def get_default_booking_responsibility():
     coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
     
     return jsonify({
-        'default_responsibility': coach.default_court_booking_responsibility or 'coach'
+        'default_responsibility': coach.default_court_booking_responsibility or 'student'
     })
 
 @bp.route('/coach/update-default-booking-responsibility', methods=['POST'])

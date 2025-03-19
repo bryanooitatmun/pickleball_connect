@@ -449,7 +449,7 @@ def create_booking_with_proofs():
                     court_payment_status=court_payment_status,
                     coaching_payment_required=coaching_payment_required,
                     coaching_payment_status=coaching_payment_status,
-                    court_booking_responsibility = 'student' if availability.student_books_court else 'coach',
+                    court_booking_responsibility = 'student' if availability.student_books_court else 'student',
                 )
                 
                 db.session.add(booking)

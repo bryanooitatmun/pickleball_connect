@@ -14,7 +14,7 @@ class Coach(db.Model):
     phone = db.Column(db.String(20))
     payment_info = db.Column(db.JSON, nullable=True)  # Store bank details, QR code path, etc.
     court_booking_instructions = db.Column(db.Text, nullable=True)  # Store specific court booking instructions
-    default_court_booking_responsibility = db.Column(db.String(20), default='coach')  # 'coach' or 'student'
+    default_court_booking_responsibility = db.Column(db.String(20), default='student')  # 'coach' or 'student'
     
     # Relationships
     user = db.relationship('User', backref='coach_profile')

@@ -222,7 +222,7 @@ def seed_database():
             biography="John is a passionate pickleball coach with over 5 years of experience. He specializes in helping beginners develop their skills and advanced players refine their strategies.",
             years_experience=5,
             specialties="Beginner Training, Strategy Development, Footwork",
-            default_court_booking_responsibility=random.choice(['student', 'coach'])
+            default_court_booking_responsibility=random.choice(['student'])
         )
         db.session.add(john_coach)
         
@@ -233,7 +233,7 @@ def seed_database():
             biography="Jane is a tournament champion and experienced coach. She focuses on competitive play and advanced techniques.",
             years_experience=7,
             specialties="Tournament Preparation, Advanced Techniques, Mental Game",
-            default_court_booking_responsibility=random.choice(['student', 'coach'])
+            default_court_booking_responsibility=random.choice(['student'])
         )
         db.session.add(jane_coach)
         
@@ -244,7 +244,7 @@ def seed_database():
             biography="Michael is a professional pickleball player who has competed nationally. He specializes in doubles strategy and advanced shot placement.",
             years_experience=10,
             specialties="Doubles Strategy, Competition Preparation, Shot Placement",
-            default_court_booking_responsibility=random.choice(['student', 'coach'])
+            default_court_booking_responsibility=random.choice(['student'])
         )
         db.session.add(michael_coach)
 
@@ -570,9 +570,9 @@ def seed_database():
             
             # John's availability
             john_slots = [
-                (time(9), time(10), courts[0].id, False),   # Morning at City Park - coach books court
+                (time(9), time(10), courts[0].id, True),   # Morning at City Park - coach books court
                 (time(13), time(14), courts[1].id, True),   # Afternoon at Downtown Club - student books court
-                (time(17), time(18), courts[2].id, False)   # Evening at Riverside - coach books court
+                (time(17), time(18), courts[2].id, True)   # Evening at Riverside - coach books court
             ]
             
             for start, end, court_id, student_books in john_slots:
@@ -591,7 +591,7 @@ def seed_database():
             # Jane's availability
             jane_slots = [
                 (time(10), time(11), courts[0].id, True),   # Morning at City Park - student books court
-                (time(14), time(15), courts[1].id, False),  # Afternoon at Downtown Club - coach books court
+                (time(14), time(15), courts[1].id, True),  # Afternoon at Downtown Club - coach books court
                 (time(18), time(19), courts[2].id, True)    # Evening at Riverside - student books court
             ]
             
@@ -610,7 +610,7 @@ def seed_database():
                 
             # Michael's availability
             michael_slots = [
-                (time(8), time(9), courts[0].id, False),   # Early morning at City Park - coach books court
+                (time(8), time(9), courts[0].id, True),   # Early morning at City Park - coach books court
                 (time(12), time(13), courts[1].id, True),  # Noon at Downtown Club - student books court
                 (time(16), time(17), courts[2].id, True)   # Afternoon at Riverside - student books court
             ]
@@ -712,7 +712,7 @@ def seed_database():
                         pricing_plan_id=pricing_plan.id if pricing_plan else None,
                         discount_amount=discount_amount,
                         discount_percentage=discount_percentage,
-                        court_booking_responsibility="coach"
+                        court_booking_responsibility="student"
                     )
                     
                     db.session.add(booking)

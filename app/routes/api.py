@@ -4116,6 +4116,7 @@ def get_student_profile():
         'gender': current_user.gender,
         'location': current_user.location,
         'dupr_rating': current_user.dupr_rating,
+        'phone': current_user.phone,
         'bio': current_user.bio,
         'profile_picture': current_user.profile_picture
     }
@@ -4135,6 +4136,7 @@ def update_student_profile():
     current_user.first_name = data.get('first_name', current_user.first_name)
     current_user.last_name = data.get('last_name', current_user.last_name)
     current_user.email = data.get('email', current_user.email)
+    current_user.phone = data.get('phone', current_user.phone)
     
     # Handle optional fields
     if 'birth_date' in data and data['birth_date']:

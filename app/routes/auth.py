@@ -53,7 +53,7 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Invalid email or password')
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('public.index'))
         
         login_user(user, remember=form.remember_me.data)
         
@@ -69,7 +69,7 @@ def login():
         
         return redirect(next_page)
     
-    return render_template('auth/login.html', form=form)
+    return render_template('public/index.html', form=form)
 
 @bp.route('/logout')
 def logout():
@@ -108,6 +108,7 @@ def register():
             location=data.get('location'),
             dupr_rating=data.get('dupr_rating'),
             bio=data.get('bio'),
+            phone=data.get('phone'),
             is_coach=False
         )
         user.set_password(data['password'])
@@ -143,7 +144,7 @@ def register():
         db.session.commit()
         
         flash('Congratulations, you are now a registered user!')
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('public.index'))
     
     return render_template('auth/register.html', form=form)
 

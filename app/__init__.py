@@ -15,7 +15,7 @@ mail = Mail()
 db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
-login.login_view = 'auth.login'
+login.login_view = 'public.index'
 scheduler = APScheduler()
 
 def create_app(config_class=Config):

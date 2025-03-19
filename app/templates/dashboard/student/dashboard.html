@@ -407,6 +407,13 @@
                   <input type="text" id="location" name="location" placeholder="City, State" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
               </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label for="phone" class="block text-gray-700 font-medium mb-2">Phone*</label>
+                  <input type="tel" id="phone" name="phone" placeholder="0123456789" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+              </div>
             </div>
 
             <div class="mb-6">
@@ -1634,6 +1641,7 @@
             birth_date: formData.get('birth_date'),
             gender: formData.get('gender'),
             location: formData.get('location'),
+            phone: formData.get('phone'),
             dupr_rating: formData.get('dupr_rating') ? parseFloat(formData.get('dupr_rating')) : null,
             experience_level: formData.get('experience_level'),
             bio: formData.get('bio')
@@ -1888,6 +1896,7 @@
       document.getElementById('birth_date').value = studentData.birth_date || '';
       document.getElementById('gender').value = studentData.gender || '';
       document.getElementById('location').value = studentData.location || '';
+      document.getElementById('phone').value = studentData.phone || '';
       document.getElementById('dupr_rating').value = studentData.dupr_rating || '';
       document.getElementById('experience_level').value = studentData.experience_level || '';
       document.getElementById('bio').value = studentData.bio || '';

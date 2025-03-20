@@ -278,20 +278,20 @@ async function completeSession(bookingId) {
 }
 
 // Cancel session
-async function cancelSession(bookingId) {
-  return fetchAPI('/coach/cancel-session', {
-    method: 'POST',
-    body: JSON.stringify({ booking_id: bookingId })
-  });
-}
+// async function cancelSession(bookingId) {
+//   return fetchAPI('/coach/cancel-session', {
+//     method: 'POST',
+//     body: JSON.stringify({ booking_id: bookingId })
+//   });
+// }
 
 // Confirm venue booking
-async function confirmVenueBooking(bookingId) {
-  return fetchAPI('/coach/confirm-venue', {
-    method: 'POST',
-    body: JSON.stringify({ booking_id: bookingId })
-  });
-}
+// async function confirmVenueBooking(bookingId) {
+//   return fetchAPI('/coach/confirm-venue', {
+//     method: 'POST',
+//     body: JSON.stringify({ booking_id: bookingId })
+//   });
+// }
 
 // Upload court booking proof
 async function uploadCourtBookingProof(bookingId, proofFile) {

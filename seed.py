@@ -1085,7 +1085,7 @@ def seed_database():
                         discount_amount=discount_amount,
                         purchase_date=datetime.utcnow() - timedelta(days=random.randint(5, 30)),
                         expires_at=datetime.utcnow() + timedelta(days=random.randint(30, 90)),
-                        status='active'
+                        status='pending'
                     )
                     
                     db.session.add(package)

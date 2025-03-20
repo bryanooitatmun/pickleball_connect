@@ -1,5 +1,5 @@
 # app/routes/api.py
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, flash, redirect, url_for
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
@@ -7,7 +7,7 @@ from app.models.coach import Coach, CoachImage
 from app.models.user import User
 from app.models.court import Court, CoachCourt
 from app.models.booking import Availability, Booking, AvailabilityTemplate
-from app.models.package import BookingPackage
+from app.models.package import BookingPackage, booking_package_association
 from app.models.session_log import SessionLog
 from app.models.rating import CoachRating
 from app.models.pricing import PricingPlan  # Add missing import for PricingPlan
@@ -20,12 +20,23 @@ from datetime import datetime, timedelta, time
 from app.models.payment import PaymentProof
 from app.models.notification import Notification
 from app.models.tag import Tag, CoachTag
+from functools import wraps
 import os
 import json
 import uuid 
 from sqlalchemy import func, or_, extract 
 
 bp = Blueprint('api', __name__, url_prefix='/api')
+
+# Academy manager access decorator
+def coach_or_academy_manager_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_academy_manager and not current_user.is_coach:
+            flash('Access denied.')
+            return redirect(url_for('main.index'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @bp.route('/coach/contact/<int:coach_id>')
 @login_required
@@ -366,6 +377,7 @@ def get_pricing_plans_by_coachid(coach_id):
 
 @bp.route('/coach/pricing-plans/add', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def add_pricing_plan():
     """API endpoint to add a pricing plan"""
     if not current_user.is_coach:
@@ -413,6 +425,7 @@ def add_pricing_plan():
 
 @bp.route('/coach/pricing-plans/delete', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def delete_pricing_plan():
     """API endpoint to delete a pricing plan"""
     if not current_user.is_coach:
@@ -465,6 +478,7 @@ def get_availability():
 
 @bp.route('/coach/availability/add', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def add_availability():
     """API endpoint to add availability"""
     if not current_user.is_coach:
@@ -518,6 +532,7 @@ def add_availability():
 
 @bp.route('/coach/availability/delete', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def delete_availability():
     """API endpoint to delete availability"""
     if not current_user.is_coach:
@@ -548,6 +563,7 @@ def delete_availability():
 
 @bp.route('/coach/availability/add-bulk', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def add_bulk_availability():
     """API endpoint to add multiple availability slots at once"""
     if not current_user.is_coach:
@@ -634,6 +650,7 @@ def get_availability_templates():
 
 @bp.route('/coach/availability/templates/save', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def save_availability_template():
     """API endpoint to save an availability template"""
     if not current_user.is_coach:
@@ -675,6 +692,7 @@ def save_availability_template():
 
 @bp.route('/coach/availability/templates/apply', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def apply_availability_template():
     """API endpoint to apply a template to create availability slots"""
     if not current_user.is_coach:
@@ -810,6 +828,7 @@ def apply_availability_template():
 
 @bp.route('/coach/availability/templates/delete', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def delete_availability_template():
     """API endpoint to delete an availability template"""
     if not current_user.is_coach:
@@ -838,6 +857,7 @@ def delete_availability_template():
 
 @bp.route('/coach/earnings/<period>')
 @login_required
+@coach_or_academy_manager_required
 def get_earnings(period):
     """API endpoint to get coach earnings for specified period"""
     if not current_user.is_coach:
@@ -1028,6 +1048,12 @@ def get_coach_bookings(status):
             Booking.status == 'upcoming',
             Booking.date >= datetime.utcnow().date()
         ).order_by(Booking.date, Booking.start_time)
+    elif status == 'pending-venue':
+        query = query.filter(
+            Booking.status == 'upcoming',
+            Booking.date >= datetime.utcnow().date(),
+            Booking.venue_confirmed == False,
+        ).order_by(Booking.date.asc())
     elif status == 'completed':
         query = query.filter(
             Booking.status == 'completed'
@@ -1357,6 +1383,7 @@ def get_coach_session_logs():
 
 @bp.route('/coach/complete-session', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def api_complete_session():
     """API endpoint to mark a session as completed"""
     if not current_user.is_coach:
@@ -1403,40 +1430,98 @@ def api_complete_session():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+# @bp.route('/coach/cancel-session', methods=['POST'])
+# @login_required
+# def api_cancel_session():
+#     """API endpoint to cancel a session"""
+#     if not current_user.is_coach:
+#         return jsonify({'error': 'Not a coach account'}), 403
+    
+#     data = request.get_json()
+#     booking_id = data.get('booking_id')
+    
+#     coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+#     booking = Booking.query.filter_by(
+#         id=booking_id,
+#         coach_id=coach.id,
+#         status='upcoming'
+#     ).first_or_404()
+    
+#     # Mark as cancelled
+#     booking.status = 'cancelled'
+    
+#     # Make availability available again
+#     if booking.availability:
+#         booking.availability.is_booked = False
+    
+#     try:
+#         db.session.commit()
+#         return jsonify({'success': True})
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({'error': str(e)}), 500
+
 @bp.route('/coach/cancel-session', methods=['POST'])
 @login_required
-def api_cancel_session():
-    """API endpoint to cancel a session"""
-    if not current_user.is_coach:
-        return jsonify({'error': 'Not a coach account'}), 403
-    
+@coach_or_academy_manager_required
+def cancel_session_with_reason():
+    """Cancel a booking with reason"""
     data = request.get_json()
+    
+    if not data or 'booking_id' not in data:
+        return jsonify({'error': 'Missing booking ID'}), 400
+    
     booking_id = data.get('booking_id')
-    
-    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
-    
-    booking = Booking.query.filter_by(
-        id=booking_id,
-        coach_id=coach.id,
-        status='upcoming'
-    ).first_or_404()
-    
-    # Mark as cancelled
-    booking.status = 'cancelled'
-    
-    # Make availability available again
-    if booking.availability:
-        booking.availability.is_booked = False
+    reason = data.get('reason', 'Cancelled by coach')
     
     try:
+        booking = Booking.query.get_or_404(booking_id)
+        
+        # Check if coach is authorized
+        coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+        if booking.coach_id != coach.id:
+            return jsonify({'error': 'Unauthorized to cancel this booking'}), 403
+        
+        # Check if booking can be cancelled
+        if booking.status != 'upcoming':
+            return jsonify({'error': 'Cannot cancel a booking that is not upcoming'}), 400
+        
+        # Cancel the booking
+        booking.status = 'cancelled'
+        booking.cancellation_reason = reason
+        booking.cancelled_by_id = current_user.id
+        booking.cancelled_at = datetime.utcnow()
+        
+        # Update availability
+        if booking.availability_id:
+            availability = Availability.query.get(booking.availability_id)
+            if availability:
+                availability.is_booked = False
+        
+        # Create notification for student
+        from app.models.notification import Notification
+        notification = Notification(
+            user_id=booking.student_id,
+            title='Booking Cancelled',
+            message=f'Your booking on {booking.date.strftime("%b %d, %Y")} at {booking.start_time.strftime("%I:%M %p")} has been cancelled. Reason: {reason}',
+            notification_type='cancellation',
+            related_id=booking.id
+        )
+        
+        db.session.add(notification)
         db.session.commit()
-        return jsonify({'success': True})
+        
+        return jsonify({'success': True, 'message': 'Booking cancelled successfully'})
+    
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error cancelling booking: {str(e)}")
+        return jsonify({'error': 'Failed to cancel booking'}), 500
 
 @bp.route('/coach/complete-session/<int:booking_id>', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def complete_session(booking_id):
     if not current_user.is_coach:
         flash('Access denied. You are not registered as a coach.')
@@ -1476,6 +1561,7 @@ def get_courts():
 
 @bp.route('/coach/update-profile-picture', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def update_profile_picture():
     """Update the coach's profile picture"""
     try:
@@ -1516,6 +1602,7 @@ def update_profile_picture():
 
 @bp.route('/coach/remove-profile-picture', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def remove_profile_picture():
     """Remove the coach's profile picture"""
     if current_user.profile_picture:
@@ -1590,6 +1677,7 @@ def get_session_log_details(log_id):
 
 @bp.route('/coach/session-logs/update', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def update_session_log():
     """API endpoint to create or update a session log"""
     if not current_user.is_coach:
@@ -1684,6 +1772,7 @@ def get_coach_courts():
 
 @bp.route('/coach/courts/add', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def api_add_court():
     """API endpoint to add a court to a coach's profile"""
     if not current_user.is_coach:
@@ -1712,6 +1801,7 @@ def api_add_court():
 
 @bp.route('/coach/courts/remove', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def api_remove_court():
     """API endpoint to remove a court from a coach's profile"""
     if not current_user.is_coach:
@@ -1788,6 +1878,7 @@ def handle_api_error(error):
 
 @bp.route('/coach/update-showcase-images', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def update_showcase_images():
     """Update a coach's showcase images"""
     # Get coach record
@@ -1839,6 +1930,7 @@ def update_showcase_images():
 
 @bp.route('/coach/confirm-venue', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def confirm_venue():
     """API endpoint for a coach to confirm venue booking"""
     if not current_user.is_coach:
@@ -1871,6 +1963,7 @@ def confirm_venue():
 
 @bp.route('/coach/defer-booking', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def defer_booking():
     """API endpoint for a coach to reschedule a booking"""
     if not current_user.is_coach:
@@ -1978,6 +2071,7 @@ def defer_booking():
 
 @bp.route('/coach/upload-qr-code', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def upload_qr_code():
     """API endpoint to upload QR code payment image"""
     if not current_user.is_coach:
@@ -2021,62 +2115,81 @@ def upload_qr_code():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
-@bp.route('/coach/packages/pending')
+@bp.route('/coach/packages/pending', methods=['GET'])
 @login_required
+@coach_or_academy_manager_required
 def get_pending_packages():
-    """API endpoint for coaches to get pending packages"""
-    if not current_user.is_coach:
-        return jsonify({'error': 'Not a coach account'}), 403
-    
-    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
-    
-    # Get pending packages for this coach
-    pending_packages = BookingPackage.query.filter_by(
-        coach_id=coach.id,
-        status='pending'
-    ).all()
-    
-    result = []
-    for package in pending_packages:
-        student = User.query.get(package.student_id)
-        pricing_plan = PricingPlan.query.get(package.pricing_plan_id)
-        
-        # Get payment proof
-        from app.models.payment import PaymentProof
-        proof = PaymentProof.query.filter_by(
-            package_id=package.id,
-            proof_type='package'
-        ).first()
-        
-        package_data = {
-            'id': package.id,
-            'student': {
-                'id': student.id,
-                'name': f"{student.first_name} {student.last_name}",
-                'email': student.email
-            },
-            'pricing_plan': {
-                'id': pricing_plan.id,
-                'name': pricing_plan.name
-            },
-            'total_sessions': package.total_sessions,
-            'total_price': float(package.total_price),
-            'purchase_date': package.purchase_date.isoformat(),
-            'status': package.status
-        }
-        
-        if proof:
-            package_data['payment_proof'] = {
-                'id': proof.id,
-                'image_url': f"/static/{proof.image_path}"
-            }
+    """Get pending package approvals for the coach"""
+    try:
+        # For coach, get pending packages
+        if current_user.is_coach:
+            coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+            # Get all pending packages for this coach
+            pending_packages = BookingPackage.query.filter(
+                BookingPackage.coach_id == coach.id,
+                BookingPackage.status == 'pending'
+            ).order_by(BookingPackage.purchase_date).all()
             
-        result.append(package_data)
+        # For academy manager, get pending packages for the academy
+        else:
+            academies = AcademyManager.query.filter_by(user_id=current_user.id).all()
+            academy_ids = [am.academy_id for am in academies]
+            
+            # Get all pending packages for these academies
+            pending_packages = BookingPackage.query.filter(
+                BookingPackage.academy_id.in_(academy_ids),
+                BookingPackage.status == 'pending'
+            ).order_by(BookingPackage.purchase_date).all()
+        
+        # Format the response
+        result = []
+        for pkg in pending_packages:
+            pricing_plan = None
+            if pkg.pricing_plan_id:
+                pricing_plan = PricingPlan.query.get(pkg.pricing_plan_id)
+            elif pkg.academy_pricing_plan_id:
+                pricing_plan = AcademyPricingPlan.query.get(pkg.academy_pricing_plan_id)
+            
+            student = User.query.get(pkg.student_id)
+            
+            # Check for payment proof
+            payment_proof = PaymentProof.query.filter_by(
+                package_id=pkg.id,
+                proof_type='package'
+            ).first()
+            
+            payment_proof_url = None
+            if payment_proof:
+                payment_proof_url = payment_proof.image_path
+                if not payment_proof_url.startswith('/'):
+                    payment_proof_url = '/' + payment_proof_url
+            
+            result.append({
+                'id': pkg.id,
+                'purchase_date': pkg.purchase_date.isoformat(),
+                'total_sessions': pkg.total_sessions,
+                'total_price': pkg.total_price,
+                'status': pkg.status,
+                'payment_proof_url': payment_proof_url,
+                'student': {
+                    'id': student.id,
+                    'name': f"{student.first_name} {student.last_name}"
+                },
+                'pricing_plan': {
+                    'id': pricing_plan.id if pricing_plan else None,
+                    'name': pricing_plan.name if pricing_plan else 'Custom Package'
+                }
+            })
+        
+        return jsonify(result)
     
-    return jsonify(result)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching pending packages: {str(e)}")
+        return jsonify({'error': 'Failed to fetch pending packages'}), 500
 
 @bp.route('/coach/packages/update-status', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def update_package_status():
     """API endpoint for coaches to approve/reject packages"""
     if not current_user.is_coach:
@@ -2251,6 +2364,7 @@ def get_payment_proofs(booking_id):
 
 @bp.route('/coach/update-payment-status', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def update_payment_status():
     """API endpoint for coach to approve/reject payment proof"""
     if not current_user.is_coach:
@@ -2336,6 +2450,7 @@ def get_coach_tags():
 
 @bp.route('/coach/tags/add', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def add_coach_tag():
     """API endpoint to add a tag to a coach's profile"""
     if not current_user.is_coach:
@@ -2382,6 +2497,7 @@ def add_coach_tag():
 
 @bp.route('/coach/tags/remove', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def remove_coach_tag():
     """API endpoint to remove a tag from a coach's profile"""
     if not current_user.is_coach:
@@ -2486,6 +2602,7 @@ def get_coach_students():
 
 @bp.route('/coach/create-booking-for-student', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def create_booking_for_student():
     """API endpoint for coach to create a booking for a student using an existing package"""
     if not current_user.is_coach:
@@ -2580,7 +2697,7 @@ def create_booking_for_student():
         coach_fee = final_price - court_fee
         
         # Court booking responsibility
-        court_booking_responsibility = data.get('court_booking_responsibility', 'student')
+        court_booking_responsibility = 'coach'
         
         # Create booking record
         booking = Booking(
@@ -2599,8 +2716,8 @@ def create_booking_for_student():
             venue_confirmed=False,
             coaching_payment_required=False,  # Package covers payment
             coaching_payment_status='approved',
-            court_payment_required=(court_booking_responsibility == 'student'),
-            court_payment_status='not_required' if court_booking_responsibility == 'coach' else 'pending',
+            court_payment_required=True,
+            court_payment_status='pending',
             court_booking_responsibility=court_booking_responsibility,
             pricing_plan_id=package.pricing_plan_id,
             discount_amount=discount_amount,
@@ -2840,6 +2957,7 @@ def get_academy_analytics():
 
 @bp.route('/academy/upload-logo', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def upload_academy_logo():
     """Upload academy logo"""
     if not current_user.is_academy_manager:
@@ -2886,6 +3004,7 @@ def upload_academy_logo():
 
 @bp.route('/academy/remove-logo', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def remove_academy_logo():
     """Remove academy logo"""
     if not current_user.is_academy_manager:
@@ -2907,6 +3026,7 @@ def remove_academy_logo():
 
 @bp.route('/academy/earnings', methods=['GET'])
 @login_required
+@coach_or_academy_manager_required
 def get_academy_earnings():
     """Get academy earnings"""
     if not current_user.is_academy_manager:
@@ -3044,6 +3164,7 @@ def get_academy_earnings():
 
 @bp.route('/academy/earnings/breakdown/<period>', methods=['GET'])
 @login_required
+@coach_or_academy_manager_required
 def get_academy_earnings_breakdown(period):
     """Get academy earnings breakdown by period"""
     if not current_user.is_academy_manager:
@@ -3132,6 +3253,7 @@ def get_academy_earnings_breakdown(period):
 
 @bp.route('/coach/update-payment-details', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def update_payment_details():
     """Update coach payment details"""
     if not current_user.is_coach:
@@ -3242,6 +3364,7 @@ def get_coach_packages():
 
 @bp.route('/coach/packages/create', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def create_coach_package():
     """Create a new coach package"""
     if not current_user.is_coach:
@@ -3301,6 +3424,7 @@ def create_coach_package():
 
 @bp.route('/coach/packages/delete', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def delete_coach_package():
     """Delete a coach package"""
     if not current_user.is_coach:
@@ -3469,7 +3593,7 @@ def get_purchased_packages_payment_proof(package_id):
     if payment_proof:
         result = {
             'id': payment_proof.id,
-            'image_url': f"/static/{payment_proof.image_path}"
+            'image_url': f"/static/uploads/{payment_proof.image_path}"
         }
         
     
@@ -3477,6 +3601,7 @@ def get_purchased_packages_payment_proof(package_id):
 
 @bp.route('/coach/packages/purchased/approve', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def approve_package_purchase():
     """Approve a package purchase"""
     if not current_user.is_coach:
@@ -3519,53 +3644,111 @@ def approve_package_purchase():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+# @bp.route('/coach/packages/purchased/reject', methods=['POST'])
+# @login_required
+# def reject_package_purchase():
+#     """Reject a package purchase"""
+#     if not current_user.is_coach:
+#         return jsonify({'error': 'Not a coach account'}), 403
+    
+#     data = request.get_json()
+#     purchase_id = data.get('purchase_id')
+#     reason = data.get('reason', 'No reason provided')
+    
+#     coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    
+#     # Get the package
+#     package = BookingPackage.query.filter_by(
+#         id=purchase_id,
+#         coach_id=coach.id,
+#         status='pending'
+#     ).first_or_404()
+    
+#     # Update status to rejected
+#     package.status = 'rejected'
+#     package.rejection_reason = reason
+    
+#     # Create notification for student
+#     notification = Notification(
+#         user_id=package.student_id,
+#         title="Package Rejected",
+#         message=f"Your package purchase was rejected. Reason: {reason}",
+#         notification_type="package_status",
+#         related_id=package.id
+#     )
+    
+#     db.session.add(notification)
+    
+#     try:
+#         db.session.commit()
+#         return jsonify({
+#             'success': True,
+#             'package_id': package.id
+#         })
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({'error': str(e)}), 500
+
 @bp.route('/coach/packages/purchased/reject', methods=['POST'])
 @login_required
-def reject_package_purchase():
-    """Reject a package purchase"""
-    if not current_user.is_coach:
-        return jsonify({'error': 'Not a coach account'}), 403
-    
+@coach_or_academy_manager_required
+def reject_package_with_reason():
+    """Reject a package purchase with reason"""
     data = request.get_json()
+    
+    if not data or 'purchase_id' not in data:
+        return jsonify({'error': 'Missing purchase ID'}), 400
+    
     purchase_id = data.get('purchase_id')
-    reason = data.get('reason', 'No reason provided')
-    
-    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
-    
-    # Get the package
-    package = BookingPackage.query.filter_by(
-        id=purchase_id,
-        coach_id=coach.id,
-        status='pending'
-    ).first_or_404()
-    
-    # Update status to rejected
-    package.status = 'rejected'
-    package.rejection_reason = reason
-    
-    # Create notification for student
-    notification = Notification(
-        user_id=package.student_id,
-        title="Package Rejected",
-        message=f"Your package purchase was rejected. Reason: {reason}",
-        notification_type="package_status",
-        related_id=package.id
-    )
-    
-    db.session.add(notification)
+    reason = data.get('reason', 'Rejected by coach')
     
     try:
+        package = BookingPackage.query.get_or_404(purchase_id)
+        
+        # Check authorization
+        if current_user.is_coach:
+            coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+            if package.coach_id != coach.id:
+                return jsonify({'error': 'Unauthorized to reject this package'}), 403
+        else:  # Academy manager
+            academies = AcademyManager.query.filter_by(user_id=current_user.id).all()
+            academy_ids = [am.academy_id for am in academies]
+            
+            if package.academy_id not in academy_ids:
+                return jsonify({'error': 'Unauthorized to reject this package'}), 403
+        
+        # Check if package can be rejected
+        if package.status != 'pending':
+            return jsonify({'error': 'Cannot reject a package that is not pending'}), 400
+        
+        # Reject the package
+        package.status = 'rejected'
+        package.rejection_reason = reason
+        package.rejected_by_id = current_user.id
+        package.rejected_at = datetime.utcnow()
+        
+        # Create notification for student
+        notification = Notification(
+            user_id=package.student_id,
+            title='Package Purchase Rejected',
+            message=f'Your package purchase "{package.pricing_plan.name if package.pricing_plan else "Custom Package"}" has been rejected. Reason: {reason}',
+            notification_type='package_rejection',
+            related_id=package.id
+        )
+        
+        db.session.add(notification)
         db.session.commit()
-        return jsonify({
-            'success': True,
-            'package_id': package.id
-        })
+        
+        return jsonify({'success': True, 'message': 'Package rejected successfully'})
+    
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error rejecting package: {str(e)}")
+        return jsonify({'error': 'Failed to reject package'}), 500
 
 @bp.route('/coach/upload-court-proof', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def upload_court_proof():
     """Upload court booking proof"""
     if not current_user.is_coach:
@@ -3652,6 +3835,7 @@ def upload_court_proof():
 
 @bp.route('/support/request', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def submit_support_request():
     """Submit a support request"""
     data = request.get_json()
@@ -3678,6 +3862,7 @@ def submit_support_request():
 
 @bp.route('/coach/courts/update-instructions', methods=['POST'])
 @login_required
+@coach_or_academy_manager_required
 def update_court_instructions():
     """Update court booking instructions"""
     if not current_user.is_coach:
@@ -3814,6 +3999,7 @@ def mark_all_notifications_read():
 
 @bp.route('/academy/<int:academy_id>/pricing-plans')
 @login_required
+@coach_or_academy_manager_required
 def get_academy_pricing_plans(academy_id):
     """API endpoint to get academy pricing plans"""
     plans = AcademyPricingPlan.query.filter_by(

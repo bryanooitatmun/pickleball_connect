@@ -42,6 +42,10 @@ class Booking(db.Model):
     court_payment_required = db.Column(db.Boolean, default=False)  # Set to True if student books court
     court_payment_status = db.Column(db.String(20), default='not_required')  # 'not_required', 'pending', 'uploaded', 'approved', 'rejected'
     court_booking_responsibility = db.Column(db.String(20), default='student')  # 'coach' or 'student'
+    cancellation_reason = db.Column(db.Text, nullable=True)
+    cancelled_by_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_booking_cancelled_by'), nullable=True)
+    cancelled_at = db.Column(db.DateTime, nullable=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Track applied discount if any
@@ -51,7 +55,7 @@ class Booking(db.Model):
     
     # Unique constraint to prevent double bookings
     __table_args__ = (
-        db.UniqueConstraint('coach_id', 'date', 'start_time', name='unique_booking_timeslot'),
+        db.UniqueConstraint('coach_id', 'date', 'start_time', 'status', name='unique_booking_timeslot'),
     )
     
     # Relationships

@@ -351,7 +351,8 @@ let originalBookingsData = {
     document.querySelectorAll('.cancel-booking-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
-        showCancelBookingModal(bookingId);
+        //showCancelBookingModal(bookingId);
+        showCancelReasonModal('booking', bookingId);
       });
     });
     
@@ -767,7 +768,7 @@ let originalBookingsData = {
         const studentProofContainer = document.getElementById('student-court-booking-proof-container');
         
         if (booking.court_booking_proof) {
-          studentProofLink.href = booking.court_booking_proof;
+          studentProofLink.href = '/static/' + booking.court_booking_proof;
           studentProofContainer.classList.remove('hidden');
         } else {
           studentProofContainer.classList.add('hidden');
@@ -780,7 +781,7 @@ let originalBookingsData = {
         const paymentProofContainer = document.getElementById('coach-payment-proof-container');
         
         if (booking.payment_proof) {
-          paymentProofLink.href = booking.payment_proof;
+          paymentProofLink.href = '/static/' + booking.payment_proof;
           paymentProofContainer.classList.remove('hidden');
         } else {
           paymentProofContainer.classList.add('hidden');
@@ -846,6 +847,11 @@ let originalBookingsData = {
       method: 'POST',
       body: JSON.stringify({ booking_id: bookingId })
     });
+    
+    // Trigger refresh of pending approvals
+    if (typeof triggerApprovalCompleted === 'function') {
+      triggerApprovalCompleted();
+    }
     
     return response;
   }
@@ -998,11 +1004,23 @@ let originalBookingsData = {
   }
   
   // Function to cancel session
-  async function cancelSession(bookingId) {
+  async function cancelSession(bookingId, reason) {
+    const requestBody = { booking_id: bookingId };
+    
+    // Add reason if provided
+    if (reason) {
+      requestBody.reason = reason;
+    }
+    
     const response = await fetchAPI('/coach/cancel-session', {
       method: 'POST',
-      body: JSON.stringify({ booking_id: bookingId })
+      body: JSON.stringify(requestBody)
     });
+    
+    // Trigger refresh of pending approvals
+    if (typeof triggerApprovalCompleted === 'function') {
+      triggerApprovalCompleted();
+    }
     
     return response;
   }

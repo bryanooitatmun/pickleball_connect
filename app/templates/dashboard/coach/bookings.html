@@ -4,6 +4,54 @@
   <p class="text-gray-600">Manage your upcoming and past coaching sessions</p>
 </div>
 
+<!-- Payment & Booking Proof Viewer -->
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6 hidden" id="proof-viewer">
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="font-semibold">Booking Proof</h3>
+    <button id="close-proof-viewer" class="text-gray-500 hover:text-gray-700">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  
+  <div class="border-b border-gray-200 pb-4 mb-4">
+    <div id="booking-details" class="mb-4">
+      <!-- Booking details will be dynamically inserted here -->
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+      <h4 class="font-medium mb-3">Payment Proof</h4>
+      <div id="payment-proof-container" class="bg-gray-100 rounded-lg p-4 min-h-[200px] flex items-center justify-center">
+        <p class="text-gray-500">No payment proof available</p>
+      </div>
+    </div>
+    
+    <div>
+      <h4 class="font-medium mb-3">Court Booking Proof</h4>
+      <div id="court-proof-container" class="bg-gray-100 rounded-lg p-4 min-h-[200px] flex items-center justify-center">
+        <p class="text-gray-500">No court booking proof available</p>
+      </div>
+    </div>
+  </div>
+  
+  <div id="upload-court-proof-section" class="mt-6 pt-6 border-t border-gray-200 hidden">
+    <h4 class="font-medium mb-3">Upload Court Booking Proof</h4>
+    <form id="court-proof-form">
+      <input type="hidden" id="court-proof-booking-id" name="booking_id">
+      <div class="mb-4">
+        <label for="court-proof-file" class="block text-gray-700 font-medium mb-2">Court Booking Proof*</label>
+        <input type="file" id="court-proof-file" name="court_proof" accept="image/*,application/pdf" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <p class="text-sm text-gray-500 mt-1">Upload screenshot or PDF of court booking confirmation</p>
+      </div>
+      
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none">
+        Upload Proof
+      </button>
+    </form>
+  </div>
+</div>
+
 <!-- Bookings Tabs -->
 <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
   <div class="border-b border-gray-200 mb-6">
@@ -124,50 +172,3 @@
   </div>
 </div>
 
-<!-- Payment & Booking Proof Viewer -->
-<div class="bg-white rounded-xl shadow-sm p-6 mb-6 hidden" id="proof-viewer">
-  <div class="flex justify-between items-center mb-4">
-    <h3 class="font-semibold">Booking Proof</h3>
-    <button id="close-proof-viewer" class="text-gray-500 hover:text-gray-700">
-      <i class="fas fa-times"></i>
-    </button>
-  </div>
-  
-  <div class="border-b border-gray-200 pb-4 mb-4">
-    <div id="booking-details" class="mb-4">
-      <!-- Booking details will be dynamically inserted here -->
-    </div>
-  </div>
-  
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div>
-      <h4 class="font-medium mb-3">Payment Proof</h4>
-      <div id="payment-proof-container" class="bg-gray-100 rounded-lg p-4 min-h-[200px] flex items-center justify-center">
-        <p class="text-gray-500">No payment proof available</p>
-      </div>
-    </div>
-    
-    <div>
-      <h4 class="font-medium mb-3">Court Booking Proof</h4>
-      <div id="court-proof-container" class="bg-gray-100 rounded-lg p-4 min-h-[200px] flex items-center justify-center">
-        <p class="text-gray-500">No court booking proof available</p>
-      </div>
-    </div>
-  </div>
-  
-  <div id="upload-court-proof-section" class="mt-6 pt-6 border-t border-gray-200 hidden">
-    <h4 class="font-medium mb-3">Upload Court Booking Proof</h4>
-    <form id="court-proof-form">
-      <input type="hidden" id="court-proof-booking-id" name="booking_id">
-      <div class="mb-4">
-        <label for="court-proof-file" class="block text-gray-700 font-medium mb-2">Court Booking Proof*</label>
-        <input type="file" id="court-proof-file" name="court_proof" accept="image/*,application/pdf" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-        <p class="text-sm text-gray-500 mt-1">Upload screenshot or PDF of court booking confirmation</p>
-      </div>
-      
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none">
-        Upload Proof
-      </button>
-    </form>
-  </div>
-</div>

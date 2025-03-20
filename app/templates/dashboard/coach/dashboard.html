@@ -56,6 +56,68 @@
   </div>
 </div>
 
+<!-- Pending Packages Section -->
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-semibold">Pending Package Approvals</h3>
+    <div class="text-sm text-gray-500">
+      <span id="pending-packages-count">0</span> packages require approval
+    </div>
+  </div>
+  
+  <!-- Error message will be shown if unable to load pending items -->
+  <div id="pending-packages-error" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4">
+    <i class="fas fa-exclamation-circle mr-2"></i>
+    <span>Unable to load pending packages. Please try refreshing the page.</span>
+  </div>
+
+  <!-- Loading indicator -->
+  <div id="pending-packages-loading" class="text-center py-8">
+    <i class="fas fa-circle-notch fa-spin text-blue-600 text-2xl"></i>
+    <p class="mt-2 text-gray-500">Loading pending packages...</p>
+  </div>
+  
+  <div id="pending-packages-list" class="space-y-4 hidden">
+    <!-- Pending packages will be dynamically inserted here -->
+  </div>
+  
+  <div id="no-pending-packages" class="text-center py-6 text-gray-500 hidden">
+    <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
+    <p>No pending packages require your approval</p>
+  </div>
+</div>
+
+<!-- Pending Venue Confirmations Section -->
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-semibold">Pending Venue Confirmations</h3>
+    <div class="text-sm text-gray-500">
+      <span id="pending-venues-count">0</span> venues require confirmation
+    </div>
+  </div>
+  
+  <!-- Error message will be shown if unable to load pending items -->
+  <div id="pending-venues-error" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4">
+    <i class="fas fa-exclamation-circle mr-2"></i>
+    <span>Unable to load pending venue confirmations. Please try refreshing the page.</span>
+  </div>
+
+  <!-- Loading indicator -->
+  <div id="pending-venues-loading" class="text-center py-8">
+    <i class="fas fa-circle-notch fa-spin text-blue-600 text-2xl"></i>
+    <p class="mt-2 text-gray-500">Loading pending venue confirmations...</p>
+  </div>
+  
+  <div id="pending-venues-list" class="space-y-4 hidden">
+    <!-- Pending venue confirmations will be dynamically inserted here -->
+  </div>
+  
+  <div id="no-pending-venues" class="text-center py-6 text-gray-500 hidden">
+    <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
+    <p>No pending venues require confirmation</p>
+  </div>
+</div>
+
 <!-- Upcoming Bookings and Recent Activity -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
   <!-- Upcoming Bookings -->

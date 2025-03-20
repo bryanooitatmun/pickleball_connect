@@ -502,6 +502,10 @@ let originalPackagesData = {
       }
     });
     
+    setupApprovalModalEventListeners();
+  }
+  
+  function setupApprovalModalEventListeners(){
     // Close purchase approval modal
     document.querySelectorAll('.close-approve-purchase-modal')?.forEach(btn => {
       btn.addEventListener('click', function() {
@@ -528,6 +532,11 @@ let originalPackagesData = {
         
         showToast('Success', 'Package purchase approved successfully.', 'success');
         loadPackagesData();
+        
+        // Trigger refresh of pending approvals
+        if (typeof triggerApprovalCompleted === 'function') {
+          triggerApprovalCompleted();
+        }
       } catch (error) {
         showToast('Error', 'Failed to approve package purchase. Please try again.', 'error');
       }
@@ -537,6 +546,8 @@ let originalPackagesData = {
     document.getElementById('reject-purchase-btn')?.addEventListener('click', async function() {
       const purchaseId = this.getAttribute('data-purchase-id');
       const isAcademy = this.getAttribute('data-is-academy') === 'true';
+      const reasonInput = document.getElementById('package-rejection-reason');
+      const reason = reasonInput ? reasonInput.value : '';
       
       try {
         document.getElementById('approve-purchase-modal').classList.add('hidden');
@@ -545,19 +556,31 @@ let originalPackagesData = {
           ? '/academy/packages/purchased/reject' 
           : '/coach/packages/purchased/reject';
         
+        const requestBody = { purchase_id: purchaseId };
+        
+        // Add reason if available
+        if (reason) {
+          requestBody.reason = reason;
+        }
+        
         await fetchAPI(endpoint, {
           method: 'POST',
-          body: JSON.stringify({ purchase_id: purchaseId })
+          body: JSON.stringify(requestBody)
         });
         
         showToast('Success', 'Package purchase rejected.', 'success');
         loadPackagesData();
+        
+        // Trigger refresh of pending approvals
+        if (typeof triggerApprovalCompleted === 'function') {
+          triggerApprovalCompleted();
+        }
       } catch (error) {
         showToast('Error', 'Failed to reject package purchase. Please try again.', 'error');
       }
     });
   }
-  
+
   // View package details
   async function viewPackageDetails(packageId) {
     try {
@@ -608,12 +631,45 @@ let originalPackagesData = {
         document.getElementById('payment-proof-container').classList.add('hidden');
       }
       
+      // Add rejection reason field if it doesn't exist
+      const reasonContainer = document.getElementById('rejection-reason-container');
+      if (!reasonContainer) {
+        const actionsContainer = document.querySelector('#approve-purchase-modal .modal-actions');
+        if (actionsContainer) {
+          // Insert rejection reason field before the action buttons
+          const reasonHTML = `
+            <div id="rejection-reason-container" class="mb-4 hidden">
+              <label for="package-rejection-reason" class="block text-gray-700 font-medium mb-2">Reason for Rejection*</label>
+              <textarea id="package-rejection-reason" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+              <p class="text-sm text-gray-500 mt-1">Please provide a reason for rejecting this package.</p>
+            </div>
+          `;
+          actionsContainer.insertAdjacentHTML('beforebegin', reasonHTML);
+        }
+      } else {
+        // Reset and hide reason field
+        const reasonField = document.getElementById('package-rejection-reason');
+        if (reasonField) {
+          reasonField.value = '';
+        }
+        reasonContainer.classList.add('hidden');
+      }
+      
       // Set data attributes for approve/reject buttons
       document.getElementById('approve-purchase-btn').setAttribute('data-purchase-id', purchaseId);
       document.getElementById('approve-purchase-btn').setAttribute('data-is-academy', isAcademy.toString());
       
       document.getElementById('reject-purchase-btn').setAttribute('data-purchase-id', purchaseId);
       document.getElementById('reject-purchase-btn').setAttribute('data-is-academy', isAcademy.toString());
+      
+      // Add toggle to show rejection reason when switching to reject
+      document.getElementById('reject-purchase-btn').addEventListener('mousedown', function() {
+        document.getElementById('rejection-reason-container').classList.remove('hidden');
+      });
+      
+      document.getElementById('approve-purchase-btn').addEventListener('mousedown', function() {
+        document.getElementById('rejection-reason-container').classList.add('hidden');
+      });
       
       // Show modal
       document.getElementById('approve-purchase-modal').classList.remove('hidden');

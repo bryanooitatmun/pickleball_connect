@@ -136,10 +136,53 @@ def get_court_fee_for_time(court_fees, slot_time):
     return 0.0
 
 @bp.route('/api/bookings/create-with-proofs', methods=['POST'])
+@login_required
 def create_booking_with_proofs():
     """API endpoint to create bookings with payment and booking proofs"""
     # Get form data and files
+
     try:
+
+        # Check if user is authenticated or we need to create a guest user
+        if current_user.is_authenticated:
+            user_id = current_user.id
+        else:
+            # Create or get temporary user
+            email = user_data.get('email')
+            if not email:
+                return jsonify({'error': 'Email is required for guest bookings'}), 400
+                
+            # Check if user with this email already exists
+            existing_user = User.query.filter_by(email=email).first()
+            
+            if existing_user:
+                user_id = existing_user.id
+                return jsonify({'error': 'Please login'}), 400
+            # else:
+            #     # Create temporary user
+            #     temp_user = User(
+            #         first_name=user_data.get('first_name', ''),
+            #         last_name=user_data.get('last_name', ''),
+            #         email=email,
+            #         phone=user_data.get('phone', ''),
+            #         is_temporary=True,
+            #         dupr_rating=user_data.get('dupr_rating'),
+            #         location=user_data.get('location', ''),
+            #         bio=user_data.get('bio', '')
+            #     )
+                
+            #     # Set password if creating account
+            #     if user_data.get('create_account'):
+            #         temp_user.is_temporary = False
+            #         temp_user.set_password(user_data.get('password'))
+                
+            #     try:
+            #         db.session.add(temp_user)
+            #         db.session.flush()  # Get ID without committing
+            #         user_id = temp_user.id
+            #     except IntegrityError:
+            #         return jsonify({'error': 'Failed to create temporary user'}), 400
+
         reservation_token = request.form.get('reservation_token')
         if not reservation_token:
             return jsonify({'error': 'Missing reservation token'}), 400
@@ -174,6 +217,7 @@ def create_booking_with_proofs():
             total_availability_slots += len(booking_item.get('availability_ids', []))
 
         # Start a transaction
+        db.session.rollback()
         db.session.begin()
 
         # Verify all slots are reserved by this user with valid reservations
@@ -271,46 +315,6 @@ def create_booking_with_proofs():
         court_payment_required = has_coach_booked_courts
         if court_payment_required and not court_booking_proof:
             return jsonify({'error': 'Court payment proof is required for court fees paid to coach'}), 400
-            
-        # Check if user is authenticated or we need to create a guest user
-        if current_user.is_authenticated:
-            user_id = current_user.id
-        else:
-            # Create or get temporary user
-            email = user_data.get('email')
-            if not email:
-                return jsonify({'error': 'Email is required for guest bookings'}), 400
-                
-            # Check if user with this email already exists
-            existing_user = User.query.filter_by(email=email).first()
-            
-            if existing_user:
-                user_id = existing_user.id
-            else:
-                # Create temporary user
-                temp_user = User(
-                    first_name=user_data.get('first_name', ''),
-                    last_name=user_data.get('last_name', ''),
-                    email=email,
-                    phone=user_data.get('phone', ''),
-                    is_temporary=True,
-                    dupr_rating=user_data.get('dupr_rating'),
-                    location=user_data.get('location', ''),
-                    bio=user_data.get('bio', '')
-                )
-                
-                # Set password if creating account
-                if user_data.get('create_account'):
-                    temp_user.is_temporary = False
-                    temp_user.set_password(user_data.get('password'))
-                
-                try:
-                    db.session.add(temp_user)
-                    db.session.flush()  # Get ID without committing
-                    user_id = temp_user.id
-                except IntegrityError:
-                    db.session.rollback()
-                    return jsonify({'error': 'Failed to create temporary user'}), 400
         
         # Save uploaded files
         unique_id = uuid.uuid4().hex
@@ -463,7 +467,7 @@ def create_booking_with_proofs():
                 if coach_payment_proof and coach_proof_path and coaching_payment_required:
                     coach_proof = PaymentProof(
                         booking_id=booking.id,
-                        image_path=coach_proof_path.replace(current_app.config['UPLOAD_FOLDER'] + '/', ''),
+                        image_path=coach_proof_path.replace(current_app.config['UPLOAD_FOLDER'] + '\\', 'uploads\\'),
                         proof_type='coaching',
                         status='pending'
                     )
@@ -471,10 +475,10 @@ def create_booking_with_proofs():
                 
                 # Add court proof - this covers both direct booking proof and court fee payment to coach
                 if court_booking_proof and court_proof_path:
-                    proof_type = 'court_booking' if student_books_court else 'court_payment'
+                    proof_type = 'court'
                     court_proof = PaymentProof(
                         booking_id=booking.id,
-                        image_path=court_proof_path.replace(current_app.config['UPLOAD_FOLDER'] + '/', ''),
+                        image_path=court_proof_path.replace(current_app.config['UPLOAD_FOLDER'] + '\\', 'uploads\\'),
                         proof_type=proof_type,
                         status='pending'
                     )

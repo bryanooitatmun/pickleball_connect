@@ -321,11 +321,7 @@ async function openStudentDetailModal(student) {
       const prefs = student.availability_preferences;
       
       if (prefs.days && prefs.days.length > 0) {
-        const dayNames = {
-          0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday'
-        };
-        
-        const daysList = prefs.days.map(day => dayNames[day]).join(', ');
+        const daysList = prefs.days;
         
         let timesList = '';
         if (prefs.times && prefs.times.length > 0) {
@@ -821,6 +817,9 @@ async function handleNewBookingSubmit(e) {
     
     // Reload students to update data
     await loadStudents();
+    loadBookings();
+    await loadCalendarView();
+    
   } catch (error) {
     hideLoading(form);
     showToast('Error', 'Failed to create booking: ' + error.message, 'error');

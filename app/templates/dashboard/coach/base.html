@@ -339,7 +339,6 @@
 <script src="{{ url_for('static', filename='js/dashboard/coach/common.js') }}"></script>
 
 <!-- Tab-specific scripts -->
-<script src="{{ url_for('static', filename='js/dashboard/coach/dashboard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/dashboard/coach/profile.js') }}"></script>
 <script src="{{ url_for('static', filename='js/dashboard/coach/courts.js') }}"></script>
 <script src="{{ url_for('static', filename='js/dashboard/coach/bookings.js') }}"></script>
@@ -353,7 +352,7 @@
 {% if current_user.is_academy_manager %}
 <script src="{{ url_for('static', filename='js/dashboard/coach/academy.js') }}"></script>
 {% endif %}
-
+<script src="{{ url_for('static', filename='js/dashboard/coach/dashboard.js') }}"></script>
 
 
 

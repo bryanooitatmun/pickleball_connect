@@ -177,3 +177,35 @@
     </div>
   </div>
 </div>
+
+<!-- Cancel Modal -->
+<div id="cancel-reason-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden">
+  <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Cancellation Reason</h3>
+      <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-cancel-reason-modal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <form id="cancel-reason-form">
+      <input type="hidden" id="cancel-item-id" name="item_id">
+      <input type="hidden" id="cancel-item-type" name="item_type">
+      
+      <div class="mb-4">
+        <label for="cancel-reason" class="block text-gray-700 font-medium mb-2">Reason for Cancellation*</label>
+        <textarea id="cancel-reason" name="reason" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+        <p class="text-sm text-gray-500 mt-1">Please provide a reason for cancellation. This will be shared with the student.</p>
+      </div>
+      
+      <div class="flex justify-end space-x-3">
+        <button type="button" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none close-cancel-reason-modal">
+          Back
+        </button>
+        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
+          Confirm Cancellation
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

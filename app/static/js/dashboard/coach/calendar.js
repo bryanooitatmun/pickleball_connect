@@ -661,7 +661,8 @@ function addBookingModalEventListeners(modal) {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
         document.body.removeChild(modal);
-        showCancelBookingModal(bookingId);
+        //showCancelBookingModal(bookingId);
+        showCancelReasonModal('booking', bookingId);
       });
     });
   } else {

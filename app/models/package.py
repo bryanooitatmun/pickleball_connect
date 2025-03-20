@@ -23,6 +23,10 @@ class BookingPackage(db.Model):
     purchase_date = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, nullable=True)
 
+    rejection_reason = db.Column(db.Text, nullable=True)
+    rejected_by_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_package_rejected_by'), nullable=True)
+    rejected_at = db.Column(db.DateTime, nullable=True)
+
     status = db.Column(db.String(20), default='pending')  # 'pending', 'active', 'rejected', 'expired', 'completed'
     
     # Relationships

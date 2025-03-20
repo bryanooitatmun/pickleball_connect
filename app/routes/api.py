@@ -4467,11 +4467,14 @@ def get_student_bookings(status):
     
     if not current_user.is_coach:
         student_id = current_user.id
+        query = Booking.query.filter(Booking.student_id == student_id)
     else:
         student_id = request.args.get('student_id', type=int)
+        coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+        query = Booking.query.filter(Booking.student_id == student_id, Booking.coach_id == coach.id)
 
     # Define query based on status
-    query = Booking.query.filter(Booking.student_id == student_id)
+    #query = Booking.query.filter(Booking.student_id == student_id)
     
     if status == 'upcoming':
         query = query.filter(
@@ -4739,6 +4742,84 @@ def get_student_packages():
     
     return jsonify(result)
 
+@bp.route('/student/packages_for_coach', methods=['GET'])
+@login_required
+def get_student_packages_from_coach():
+    """API endpoint to get student packages that can be used with a specific coach"""
+    
+    student_id = request.args.get('student_id', type=int)
+
+    coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+    coach_id = coach.id
+
+    # Get all student packages
+    all_packages = BookingPackage.query.filter_by(student_id=student_id, coach_id=coach_id).all()
+    result = []
+    for package in all_packages:
+        package_data = {
+            'id': package.id,
+            'coach_id': package.coach_id,
+            'package_type': package.package_type,
+            'total_sessions': package.total_sessions,
+            'sessions_booked': package.sessions_booked,
+            'sessions_completed': package.sessions_completed,
+            'total_price': float(package.total_price),
+            'original_price': float(package.original_price),
+            'discount_amount': float(package.discount_amount) if package.discount_amount else None,
+            'purchase_date': package.purchase_date.isoformat(),
+            'expires_at': package.expires_at.isoformat() if package.expires_at else None,
+            'status': package.status
+        }
+        
+        # Add pricing plan info
+        if package.package_type == 'coach' and package.pricing_plan:
+            package_data['pricing_plan'] = {
+                'id': package.pricing_plan_id,
+                'name': package.pricing_plan.name,
+                'description': package.pricing_plan.description
+            }
+        elif package.package_type == 'academy' and package.academy_pricing_plan:
+            package_data['pricing_plan'] = {
+                'id': package.academy_pricing_plan_id,
+                'name': package.academy_pricing_plan.name,
+                'description': package.academy_pricing_plan.description
+            }
+        else:
+            package_data['pricing_plan'] = {
+                'id': None,
+                'name': 'Standard Package',
+                'description': 'Basic coaching package'
+            }
+        
+        # Add coach info if it's a coach package
+        if package.package_type == 'coach' and package.coach_id:
+            coach = Coach.query.get(package.coach_id)
+            if coach and coach.user_id:
+                coach_user = User.query.get(coach.user_id)
+                package_data['coach_id'] = package.coach_id
+                package_data['coach'] = {
+                    'id': coach.id,
+                    'user': {
+                        'first_name': coach_user.first_name,
+                        'last_name': coach_user.last_name
+                    }
+                }
+        
+        # Add academy info if it's an academy package
+        if package.package_type == 'academy' and package.academy_id:
+            academy = Academy.query.get(package.academy_id)
+            if academy:
+                package_data['academy_id'] = package.academy_id
+                package_data['academy'] = {
+                    'id': academy.id,
+                    'name': academy.name,
+                    'description': academy.description
+                }
+        
+        result.append(package_data)
+    return jsonify(result)
+
+
 @bp.route('/student/session-logs', methods=['GET'])
 @login_required
 def get_student_session_logs():
@@ -4746,10 +4827,13 @@ def get_student_session_logs():
     
     if not current_user.is_coach:
         student_id = current_user.id
+        session_logs = SessionLog.query.filter_by(student_id=student_id).order_by(SessionLog.created_at.desc()).all()
     else:
         student_id = request.args.get('student_id', type=int)
+        coach = Coach.query.filter_by(user_id=current_user.id).first_or_404()
+        session_logs = SessionLog.query.filter_by(student_id=student_id, coach_id=coach.id).order_by(SessionLog.created_at.desc()).all()
 
-    session_logs = SessionLog.query.filter_by(student_id=student_id).order_by(SessionLog.created_at.desc()).all()
+    
     
     result = []
     for log in session_logs:

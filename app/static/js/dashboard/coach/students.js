@@ -115,9 +115,6 @@ function displayStudents(students) {
     // Create HTML for student card
     studentCard.innerHTML = `
       <div class="flex items-start">
-        <div class="mr-3 flex-shrink-0">
-          ${profileImage}
-        </div>
         <div class="flex-1">
           <h3 class="font-semibold">${student.first_name} ${student.last_name}</h3>
           <p class="text-gray-500 text-sm">${student.email}</p>
@@ -418,7 +415,7 @@ function setActiveTab(tabName) {
 // Load student packages
 async function loadStudentPackages(studentId) {
   try {
-    const packages = await fetchAPI(`/student/packages?coach_id=${currentStudentId}`);
+    const packages = await fetchAPI(`/student/packages_for_coach?student_id=${currentStudentId}`);
     currentStudentPackages = packages;
     
     const container = document.getElementById('student-packages-container');
@@ -782,13 +779,8 @@ async function populateNewBookingForm(studentId) {
       courtSelect.appendChild(option);
     });
     
-    // Get default court booking responsibility
-    try {
-      const defaultResp = await fetchAPI('/coach/default-booking-responsibility');
-      document.getElementById('new-booking-responsibility').value = defaultResp.default_responsibility || 'student';
-    } catch (error) {
-      console.error('Error getting default booking responsibility:', error);
-    }
+    //document.getElementById('new-booking-responsibility').value = 'student';
+
   } catch (error) {
     console.error('Error populating new booking form:', error);
     showToast('Error', 'Failed to load form data', 'error');
@@ -808,8 +800,7 @@ async function handleNewBookingSubmit(e) {
     court_id: formData.get('court_id'),
     date: formData.get('date'),
     start_time: formData.get('start_time'),
-    end_time: formData.get('end_time'),
-    court_booking_responsibility: formData.get('court_booking_responsibility')
+    end_time: formData.get('end_time')
   };
   
   try {

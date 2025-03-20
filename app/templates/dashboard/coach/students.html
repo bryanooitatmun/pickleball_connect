@@ -36,7 +36,7 @@
 
 <!-- Student Detail Modal -->
 <div id="student-detail-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 hidden overflow-y-auto">
-  <div class="bg-white rounded-xl shadow-xl p-6 max-w-4xl w-full mx-4 my-8">
+  <div class="bg-white rounded-xl shadow-xl p-6 max-w-4xl w-full mx-4 my-8 overflow-y-auto max-h-screen">
     <div class="flex justify-between items-center mb-4">
       <h3 id="student-detail-name" class="text-lg font-semibold">Student Details</h3>
       <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-student-detail-modal">
@@ -167,14 +167,6 @@
             <label for="new-booking-end-time" class="block text-gray-700 font-medium mb-2">End Time*</label>
             <input type="time" id="new-booking-end-time" name="end_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
           </div>
-        </div>
-        
-        <div class="mb-4">
-          <label for="new-booking-responsibility" class="block text-gray-700 font-medium mb-2">Court Booking Responsibility*</label>
-          <select id="new-booking-responsibility" name="court_booking_responsibility" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-            <option value="coach">Coach books the court</option>
-            <option value="student">Student books the court</option>
-          </select>
         </div>
         
         <div class="flex justify-end space-x-3">

@@ -86,11 +86,8 @@ function displayStudents(students) {
       const prefs = student.availability_preferences;
       
       if (prefs.days && prefs.days.length > 0) {
-        const dayNames = {
-          0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat'
-        };
         
-        const daysList = prefs.days.map(day => dayNames[day]).join(', ');
+        const daysList = prefs.days;
         
         let timesList = '';
         if (prefs.times && prefs.times.length > 0) {
@@ -578,7 +575,7 @@ async function loadStudentBookings(studentId) {
       }
       
       // Create HTML for booking
-      bookingEl.innerHTML = `
+/*      bookingEl.innerHTML = `
         <div class="flex justify-between">
           <div>
             <h3 class="font-semibold">${bookingDate}</h3>
@@ -620,7 +617,26 @@ async function loadStudentBookings(studentId) {
           </div>
         ` : ''}
       `;
-      
+*/
+      bookingEl.innerHTML = `
+        <div class="flex justify-between">
+          <div>
+            <h3 class="font-semibold">${bookingDate}</h3>
+            <p class="text-gray-500 text-sm">${startTime} - ${endTime}</p>
+          </div>
+          <div class="text-right">
+            <span class="px-2 py-1 rounded-full text-xs ${statusClass}">${statusText}</span>
+            <p class="text-gray-600 text-sm mt-1">$${formatCurrency(booking.price)}</p>
+          </div>
+        </div>
+        
+        <div class="mt-3">
+          <p class="text-sm text-gray-600">
+            <i class="fas fa-map-marker-alt mr-1"></i> ${booking.court.name}
+          </p>
+        </div>      
+      `
+
       // Add event listeners to action buttons
       const confirmVenueBtn = bookingEl.querySelector('.confirm-venue-btn');
       if (confirmVenueBtn) {

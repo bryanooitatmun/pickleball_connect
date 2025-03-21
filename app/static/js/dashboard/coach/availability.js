@@ -226,6 +226,13 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
+    
+    document.querySelectorAll('.close-delete-availability-modal')?.forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.getElementById('delete-availability-modal').classList.add('hidden');
+      });
+    });
+
     document.getElementById('confirm-delete-availability-btn').addEventListener('click', async function() {
       const availabilityId = document.getElementById('delete-availability-id').value;
       

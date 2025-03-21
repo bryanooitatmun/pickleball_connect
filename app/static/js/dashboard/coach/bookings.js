@@ -132,11 +132,34 @@ let originalBookingsData = {
       let courtProofHtml = '';
       
       // View proofs button
-      const viewProofsButton = `
+      /*const viewProofsButton = `
         <button class="text-blue-600 hover:text-blue-800 view-proofs-btn" data-booking-id="${booking.id}">
           <i class="fas fa-receipt mr-1"></i> View Proofs
         </button>
       `;
+      */
+     
+      // Determine if we have proof buttons available
+      const hasCoachPaymentProof = booking.payment_proof || booking.coaching_payment_proof;
+      const hasCourtProof = booking.court_booking_proof;
+      
+
+      
+      const paymentProofButton = hasCoachPaymentProof ? 
+        `<a href="/static/${hasCoachPaymentProof}" target="_blank" class="text-blue-600 hover:underline flex items-center mb-2">
+            <i class="fas fa-file-image mr-2"></i>
+            <span>Coaching Payment</span>
+          </a>` : '';
+
+      const courtProofButton = hasCourtProof ? 
+          `<a href="/static/${hasCourtProof}" target="_blank" class="text-blue-600 hover:underline flex items-center mb-2">
+          <i class="fas fa-map-marker-alt mr-1"></i>
+          <span>Court booking</span>
+        </a>` : '';
+      
+      // If neither proof is available
+      const noProofMessage = !hasCoachPaymentProof && !hasCourtProof ? 
+        `<span class="text-gray-500 text-sm">No proofs available</span>` : '';
       
       if (status === 'upcoming') {
         // Show court booking responsibility and status
@@ -191,7 +214,11 @@ let originalBookingsData = {
               <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-booking-btn" data-booking-id="${booking.id}">
                 <i class="fas fa-times-circle mr-1"></i> Cancel
               </button>
-              ${viewProofsButton}
+              <div class="mt-2">
+              ${paymentProofButton}
+              ${courtProofButton}
+              ${noProofMessage}
+              </div>
             </div>
           `;
         } else {
@@ -200,7 +227,9 @@ let originalBookingsData = {
               <button class="text-red-600 hover:text-red-800 request-cancel-btn" data-booking-id="${booking.id}">
                 <i class="fas fa-times-circle mr-1"></i> Request Cancellation
               </button>
-              ${viewProofsButton}
+              ${paymentProofButton}
+              ${courtProofButton}
+              ${noProofMessage}
             </div>
           `;
         }
@@ -213,7 +242,9 @@ let originalBookingsData = {
               <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 edit-log-btn" data-booking-id="${booking.id}" data-log-id="${hasSessionLog ? booking.session_log.id : ''}">
                 <i class="fas fa-clipboard-list mr-1"></i> ${hasSessionLog ? 'Edit Log' : 'Add Log'}
               </button>
-              ${viewProofsButton}
+              ${paymentProofButton}
+              ${courtProofButton}
+              ${noProofMessage}
             </div>
           `;
         } else {
@@ -224,14 +255,18 @@ let originalBookingsData = {
                   <i class="fas fa-clipboard-list mr-1"></i> View Session Log
                 </button>
               ` : ''}
-              ${viewProofsButton}
+              ${paymentProofButton}
+              ${courtProofButton}
+              ${noProofMessage}
             </div>
           `;
         }
       } else if (status === 'cancelled') {
         actionsHtml = `
           <div class="flex flex-wrap gap-2 mt-4">
-            ${viewProofsButton}
+              ${paymentProofButton}
+              ${courtProofButton}
+              ${noProofMessage}
           </div>
         `;
       }

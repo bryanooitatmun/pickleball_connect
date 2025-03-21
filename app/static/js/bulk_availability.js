@@ -169,15 +169,23 @@ async function saveAvailabilityTemplate(templateData) {
     const firstDayOfMonth = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     
-    // Group availability data by date
+    // Group availability data by date and booking status
     const availabilityByDate = {};
     if (availabilityData && availabilityData.length > 0) {
       availabilityData.forEach(slot => {
         const slotDate = slot.date;
         if (!availabilityByDate[slotDate]) {
-          availabilityByDate[slotDate] = [];
+          availabilityByDate[slotDate] = {
+            available: [],
+            booked: []
+          };
         }
-        availabilityByDate[slotDate].push(slot);
+        
+        if (slot.is_booked) {
+          availabilityByDate[slotDate].booked.push(slot);
+        } else {
+          availabilityByDate[slotDate].available.push(slot);
+        }
       });
     }
     
@@ -206,12 +214,28 @@ async function saveAvailabilityTemplate(templateData) {
           dateNumber.textContent = date;
           cell.appendChild(dateNumber);
           
-          // Add availability info if any exists for this date
-          if (availabilityByDate[dateStr] && availabilityByDate[dateStr].length > 0) {
-            const availabilityCount = document.createElement('div');
-            availabilityCount.className = 'text-xs bg-blue-100 rounded p-1 mb-1 text-center text-blue-800';
-            availabilityCount.textContent = `${availabilityByDate[dateStr].length} slots`;
-            cell.appendChild(availabilityCount);
+          // Check if there are any slots for this date
+          if (availabilityByDate[dateStr]) {
+            const slotsContainer = document.createElement('div');
+            slotsContainer.className = 'flex flex-col gap-1';
+            
+            // Show available slots
+            if (availabilityByDate[dateStr].available.length > 0) {
+              const availableCount = document.createElement('div');
+              availableCount.className = 'text-xs bg-green-100 rounded p-1 mb-1 text-center text-green-800';
+              availableCount.textContent = `${availabilityByDate[dateStr].available.length} available`;
+              slotsContainer.appendChild(availableCount);
+            }
+            
+            // Show booked slots
+            if (availabilityByDate[dateStr].booked.length > 0) {
+              const bookedCount = document.createElement('div');
+              bookedCount.className = 'text-xs bg-orange-100 rounded p-1 mb-1 text-center text-orange-800';
+              bookedCount.textContent = `${availabilityByDate[dateStr].booked.length} booked`;
+              slotsContainer.appendChild(bookedCount);
+            }
+            
+            cell.appendChild(slotsContainer);
             
             // Add a View button if there are slots
             const viewButton = document.createElement('button');
@@ -219,7 +243,11 @@ async function saveAvailabilityTemplate(templateData) {
             viewButton.textContent = 'View Details';
             viewButton.setAttribute('data-date', dateStr);
             viewButton.addEventListener('click', function() {
-              showDateAvailability(dateStr, availabilityByDate[dateStr]);
+              // Pass both available and booked slots for this date
+              showDateAvailability(dateStr, {
+                available: availabilityByDate[dateStr].available,
+                booked: availabilityByDate[dateStr].booked
+              });
             });
             cell.appendChild(viewButton);
           }
@@ -242,6 +270,7 @@ async function saveAvailabilityTemplate(templateData) {
     table.appendChild(tbody);
     calendarContainer.appendChild(table);
   }
+
   
   // Function to show availability details for a specific date
   function showDateAvailability(date, slots) {
@@ -263,49 +292,110 @@ async function saveAvailabilityTemplate(templateData) {
     
     content.appendChild(header);
     
-    // Group slots by court
-    const slotsByCourt = {};
-
-    slots.forEach(slot => {
-      if (!slotsByCourt[slot.court.name]) {
-        slotsByCourt[slot.court.name] = [];
-      }
-      slotsByCourt[slot.court.name].push(slot);
-    });
+    // Group slots by court for both available and booked slots
+    const slotsByCourt = {
+      available: {},
+      booked: {}
+    };
+  
+    // Process available slots
+    if (slots.available && slots.available.length > 0) {
+      slots.available.forEach(slot => {
+        if (!slotsByCourt.available[slot.court.name]) {
+          slotsByCourt.available[slot.court.name] = [];
+        }
+        slotsByCourt.available[slot.court.name].push(slot);
+      });
+    }
+    
+    // Process booked slots
+    if (slots.booked && slots.booked.length > 0) {
+      slots.booked.forEach(slot => {
+        if (!slotsByCourt.booked[slot.court.name]) {
+          slotsByCourt.booked[slot.court.name] = [];
+        }
+        slotsByCourt.booked[slot.court.name].push(slot);
+      });
+    }
     
     // Create list of slots grouped by court
     const slotsList = document.createElement('div');
     slotsList.className = 'max-h-96 overflow-y-auto';
     
-    for (const [courtName, courtSlots] of Object.entries(slotsByCourt)) {
-      const courtHeader = document.createElement('h4');
-      courtHeader.className = 'font-medium text-gray-800 mt-4 mb-2';
-      courtHeader.textContent = courtName;
-      slotsList.appendChild(courtHeader);
+    // Show available slots
+    if (Object.keys(slotsByCourt.available).length > 0) {
+      const availableHeader = document.createElement('h4');
+      availableHeader.className = 'font-semibold text-green-700 mt-2 mb-3';
+      availableHeader.textContent = 'Available Slots';
+      slotsList.appendChild(availableHeader);
       
-      const slotItems = document.createElement('div');
-      slotItems.className = 'space-y-2';
-      
-      // Sort slots by start time
-      courtSlots.sort((a, b) => {
-        return a.start_time.localeCompare(b.start_time);
-      });
-      
-      courtSlots.forEach(slot => {
-        const slotItem = document.createElement('div');
-        slotItem.className = 'flex justify-between items-center bg-gray-50 p-2 rounded';
+      for (const [courtName, courtSlots] of Object.entries(slotsByCourt.available)) {
+        const courtHeader = document.createElement('h5');
+        courtHeader.className = 'font-medium text-gray-800 mt-3 mb-2';
+        courtHeader.textContent = courtName;
+        slotsList.appendChild(courtHeader);
         
-        slotItem.innerHTML = `
-          <span>${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}</span>
-          <button class="text-red-600 hover:text-red-700 delete-availability-btn" data-availability-id="${slot.id}">
-            <i class="fas fa-trash"></i>
-          </button>
-        `;
+        const slotItems = document.createElement('div');
+        slotItems.className = 'space-y-2';
         
-        slotItems.appendChild(slotItem);
-      });
+        // Sort slots by start time
+        courtSlots.sort((a, b) => {
+          return a.start_time.localeCompare(b.start_time);
+        });
+        
+        courtSlots.forEach(slot => {
+          const slotItem = document.createElement('div');
+          slotItem.className = 'flex justify-between items-center bg-green-50 p-2 rounded';
+          
+          slotItem.innerHTML = `
+            <span>${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}</span>
+            <button class="text-red-600 hover:text-red-700 delete-availability-btn" data-availability-id="${slot.id}">
+              <i class="fas fa-trash"></i>
+            </button>
+          `;
+          
+          slotItems.appendChild(slotItem);
+        });
+        
+        slotsList.appendChild(slotItems);
+      }
+    }
+    
+    // Show booked slots
+    if (Object.keys(slotsByCourt.booked).length > 0) {
+      const bookedHeader = document.createElement('h4');
+      bookedHeader.className = 'font-semibold text-orange-700 mt-4 mb-3';
+      bookedHeader.textContent = 'Booked Slots';
+      slotsList.appendChild(bookedHeader);
       
-      slotsList.appendChild(slotItems);
+      for (const [courtName, courtSlots] of Object.entries(slotsByCourt.booked)) {
+        const courtHeader = document.createElement('h5');
+        courtHeader.className = 'font-medium text-gray-800 mt-3 mb-2';
+        courtHeader.textContent = courtName;
+        slotsList.appendChild(courtHeader);
+        
+        const slotItems = document.createElement('div');
+        slotItems.className = 'space-y-2';
+        
+        // Sort slots by start time
+        courtSlots.sort((a, b) => {
+          return a.start_time.localeCompare(b.start_time);
+        });
+        
+        courtSlots.forEach(slot => {
+          const slotItem = document.createElement('div');
+          slotItem.className = 'flex justify-between items-center bg-orange-50 p-2 rounded';
+          
+          slotItem.innerHTML = `
+            <span>${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}</span>
+            <span class="text-xs bg-orange-200 rounded px-2 py-1">Booked</span>
+          `;
+          
+          slotItems.appendChild(slotItem);
+        });
+        
+        slotsList.appendChild(slotItems);
+      }
     }
     
     content.appendChild(slotsList);
@@ -655,10 +745,10 @@ function initBulkAvailability() {
     
     // Get current week
     const today = new Date();
-
-      // Use custom start date if provided, otherwise use start of current week
+  
+    // Use custom start date if provided, otherwise use start of current week
     let startOfWeek;
-
+  
     if (customStartDate) {
         startOfWeek = new Date(customStartDate);
     } else {
@@ -666,7 +756,7 @@ function initBulkAvailability() {
         startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - currentDay);
     }
-
+  
     // Calculate end of week (Saturday)
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
@@ -746,18 +836,30 @@ function initBulkAvailability() {
           
           // Check if there are any availability slots for this date and time
           if (availabilityData && availabilityData.length > 0) {
-            const slotsForDateAndTime = availabilityData.filter(slot => {
-              return slot.date === dateStr && 
-                     slot.start_time <= timeStr && 
-                     slot.end_time > timeStr;
+            // Separate booked and available slots
+            const availableSlotsForDateAndTime = [];
+            const bookedSlotsForDateAndTime = [];
+            
+            availabilityData.forEach(slot => {
+              if (slot.date === dateStr && 
+                  slot.start_time <= timeStr && 
+                  slot.end_time > timeStr) {
+                
+                if (slot.is_booked) {
+                  bookedSlotsForDateAndTime.push(slot);
+                } else {
+                  availableSlotsForDateAndTime.push(slot);
+                }
+              }
             });
             
-            if (slotsForDateAndTime.length > 0) {
+            // Handle available slots
+            if (availableSlotsForDateAndTime.length > 0) {
               cell.className += ' bg-green-100';
               
               // Group by court
               const courts = {};
-              slotsForDateAndTime.forEach(slot => {
+              availableSlotsForDateAndTime.forEach(slot => {
                 if (!courts[slot.court.name]) {
                   courts[slot.court.name] = [];
                 }
@@ -779,8 +881,49 @@ function initBulkAvailability() {
               // Add click handler to show details
               cell.style.cursor = 'pointer';
               cell.addEventListener('click', () => {
-                showTimeSlotDetails(dateStr, timeStr, slotsForDateAndTime);
+                showTimeSlotDetails(dateStr, timeStr, availableSlotsForDateAndTime, 'available');
               });
+            }
+            
+            // Handle booked slots
+            if (bookedSlotsForDateAndTime.length > 0) {
+              // If there are both available and booked slots, add a divider
+              if (availableSlotsForDateAndTime.length > 0) {
+                const divider = document.createElement('div');
+                divider.className = 'border-t border-gray-300 my-1';
+                cell.appendChild(divider);
+              } else {
+                cell.className += ' bg-orange-100';
+              }
+              
+              // Group by court
+              const courts = {};
+              bookedSlotsForDateAndTime.forEach(slot => {
+                if (!courts[slot.court.name]) {
+                  courts[slot.court.name] = [];
+                }
+                courts[slot.court.name].push(slot);
+              });
+              
+              const courtsList = document.createElement('div');
+              courtsList.className = 'text-xs';
+              
+              for (const courtName in courts) {
+                const courtBadge = document.createElement('div');
+                courtBadge.className = 'bg-orange-200 rounded px-1 text-orange-800 mb-1 truncate';
+                courtBadge.textContent = courtName;
+                courtsList.appendChild(courtBadge);
+              }
+              
+              cell.appendChild(courtsList);
+              
+              // Add click handler to show details
+              if (!cell.style.cursor) {
+                cell.style.cursor = 'pointer';
+                cell.addEventListener('click', () => {
+                  showTimeSlotDetails(dateStr, timeStr, bookedSlotsForDateAndTime, 'booked');
+                });
+              }
             }
           }
           
@@ -796,7 +939,7 @@ function initBulkAvailability() {
   }
   
   // Show time slot details in a modal
-  function showTimeSlotDetails(date, time, slots) {
+  function showTimeSlotDetails(date, time, slots, slotType = null) {
     // Create modal to show details
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50';
@@ -806,8 +949,17 @@ function initBulkAvailability() {
     
     const header = document.createElement('div');
     header.className = 'flex justify-between items-center mb-4';
+    
+    // Customize header based on slot type
+    let headerTitle = `Availability for ${formatDate(date)} at ${formatTime(time)}`;
+    if (slotType === 'available') {
+      headerTitle = `Available Slots for ${formatDate(date)} at ${formatTime(time)}`;
+    } else if (slotType === 'booked') {
+      headerTitle = `Booked Slots for ${formatDate(date)} at ${formatTime(time)}`;
+    }
+    
     header.innerHTML = `
-      <h3 class="text-lg font-semibold">Availability for ${formatDate(date)} at ${formatTime(time)}</h3>
+      <h3 class="text-lg font-semibold">${headerTitle}</h3>
       <button class="text-gray-500 hover:text-gray-700 focus:outline-none close-modal">
         <i class="fas fa-times"></i>
       </button>
@@ -839,14 +991,23 @@ function initBulkAvailability() {
       
       courtSlots.forEach(slot => {
         const slotItem = document.createElement('div');
-        slotItem.className = 'flex justify-between items-center bg-gray-50 p-2 rounded';
         
-        slotItem.innerHTML = `
-          <span>${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}</span>
-          <button class="text-red-600 hover:text-red-700 delete-availability-btn" data-availability-id="${slot.id}">
-            <i class="fas fa-trash"></i>
-          </button>
-        `;
+        // Style differently based on booking status
+        if (slot.is_booked) {
+          slotItem.className = 'flex justify-between items-center bg-orange-50 p-2 rounded';
+          slotItem.innerHTML = `
+            <span>${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}</span>
+            <span class="text-xs bg-orange-200 rounded px-2 py-1">Booked</span>
+          `;
+        } else {
+          slotItem.className = 'flex justify-between items-center bg-green-50 p-2 rounded';
+          slotItem.innerHTML = `
+            <span>${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}</span>
+            <button class="text-red-600 hover:text-red-700 delete-availability-btn" data-availability-id="${slot.id}">
+              <i class="fas fa-trash"></i>
+            </button>
+          `;
+        }
         
         slotItems.appendChild(slotItem);
       });

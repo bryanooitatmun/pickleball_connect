@@ -596,7 +596,7 @@ function addPackageApprovalEventListeners() {
 // Add event listeners to venue approval buttons
 function addVenueApprovalEventListeners() {
   // Venue confirmation buttons
-  document.querySelectorAll('.confirm-venue-btn').forEach(btn => {
+  document.querySelectorAll('.confirm-venue-btn')?.forEach(btn => {
     btn.addEventListener('click', function() {
       const bookingId = this.getAttribute('data-id');
       // Reuse the existing function from bookings.js
@@ -605,7 +605,7 @@ function addVenueApprovalEventListeners() {
   });
   
   // Booking cancel buttons
-  document.querySelectorAll('.cancel-booking-btn').forEach(btn => {
+  document.querySelectorAll('.cancel-booking-btn')?.forEach(btn => {
     btn.addEventListener('click', function() {
       const bookingId = this.getAttribute('data-id');
       showCancelReasonModal('booking', bookingId);
@@ -613,7 +613,7 @@ function addVenueApprovalEventListeners() {
   });
   
   // View payment proof buttons
-  document.querySelectorAll('.view-payment-proof-btn').forEach(btn => {
+  document.querySelectorAll('.view-payment-proof-btn')?.forEach(btn => {
     btn.addEventListener('click', function() {
       const bookingId = this.getAttribute('data-id');
       const img = this.getAttribute('data-proof');
@@ -622,7 +622,7 @@ function addVenueApprovalEventListeners() {
   });
   
   // View court proof buttons
-  document.querySelectorAll('.view-court-proof-btn').forEach(btn => {
+  document.querySelectorAll('.view-court-proof-btn')?.forEach(btn => {
     btn.addEventListener('click', function() {
       const bookingId = this.getAttribute('data-id');
       const img = this.getAttribute('data-proof');
@@ -634,14 +634,14 @@ function addVenueApprovalEventListeners() {
 // Setup the cancel reason modal
 function setupCancelReasonModal() {
   // Close modal buttons
-  document.querySelectorAll('.close-cancel-reason-modal').forEach(btn => {
+  document.querySelectorAll('.close-cancel-reason-modal')?.forEach(btn => {
     btn.addEventListener('click', function() {
       document.getElementById('cancel-reason-modal').classList.add('hidden');
     });
   });
   
   // Form submission
-  document.getElementById('cancel-reason-form').addEventListener('submit', async function(e) {
+  document.getElementById('cancel-reason-form')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const itemId = document.getElementById('cancel-item-id').value;
@@ -683,8 +683,8 @@ function setupCancelReasonModal() {
       this.reset();
       
       // Reload pending approvals and stats
-      loadPendingPackages();
-      loadPendingVenues();
+      await loadPendingPackages();
+      await loadPendingVenues();
       updateDashboardStats();
       
       // If bookings.js or packages.js are available, trigger their data reload

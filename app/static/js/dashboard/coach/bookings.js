@@ -167,7 +167,7 @@ let originalBookingsData = {
           if (IS_COACH) {
             venueStatusHtml = booking.venue_confirmed ? 
               `<div class="mt-3 px-3 py-1.5 rounded-md bg-green-100 border border-green-300 text-green-700 text-sm"><i class="fas fa-check-circle mr-1"></i> Venue Confirmed</div>` : 
-              `<button class="mt-3 px-3 py-1.5 rounded-md ${booking.court_booking_proof ? 'bg-yellow-100 border border-yellow-300 text-yellow-700 hover:bg-yellow-200' : 'bg-red-100 border border-red-300 text-red-700 hover:bg-red-200'}  focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm font-medium flex items-center space-x-1.5 transition-colors confirm-venue-btn" data-booking-id="${booking.id}" data-has-proof="${booking.court_booking_proof ? 'true' : 'false'}">
+              `<button class="mt-3 px-3 py-1.5 rounded-md ${booking.court_booking_proof ? 'bg-yellow-100 border border-yellow-300 text-yellow-700 hover:bg-yellow-200' : 'bg-red-100 border border-red-300 text-red-700 hover:bg-red-200'}  focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm font-medium flex items-center space-x-1.5 transition-colors confirm-tab-venue-btn" data-booking-id="${booking.id}" data-has-proof="${booking.court_booking_proof ? 'true' : 'false'}">
                 <i class="fas fa-exclamation-circle mr-1"></i>
                 <span>${booking.court_booking_proof ? 'Confirm Venue Booking' : 'Please Book The Venue and Upload Court Booking Proof'}</span>
               </button>`;
@@ -179,7 +179,7 @@ let originalBookingsData = {
         } else {
           venueStatusHtml = booking.venue_confirmed ? 
             `<div class="mt-3 px-3 py-1.5 rounded-md bg-green-100 border border-green-300 text-green-700 text-sm"><i class="fas fa-check-circle mr-1"></i> Venue Confirmed</div>` : 
-            `<button class="mt-3 px-3 py-1.5 rounded-md ${booking.court_booking_proof ? 'bg-yellow-100 border border-yellow-300 text-yellow-700 hover:bg-yellow-200' : 'bg-red-100 border border-red-300 text-red-700 hover:bg-red-200'} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm font-medium flex items-center space-x-1.5 transition-colors confirm-venue-btn" data-booking-id="${booking.id}" data-has-proof="${booking.court_booking_proof ? 'true' : 'false'}">
+            `<button class="mt-3 px-3 py-1.5 rounded-md ${booking.court_booking_proof ? 'bg-yellow-100 border border-yellow-300 text-yellow-700 hover:bg-yellow-200' : 'bg-red-100 border border-red-300 text-red-700 hover:bg-red-200'} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm font-medium flex items-center space-x-1.5 transition-colors confirm-tab-venue-btn" data-booking-id="${booking.id}" data-has-proof="${booking.court_booking_proof ? 'true' : 'false'}">
                 <i class="fas fa-exclamation-circle mr-1"></i>
                 <span>${booking.court_booking_proof ? 'Student Has Booked the Venue. Please Confirm Venue Booking' : 'ERROR: Student is responsible for court booking but image proof not available'}</span>
               </button>`;
@@ -205,13 +205,13 @@ let originalBookingsData = {
         if (IS_COACH) {
           actionsHtml = `
             <div class="flex flex-wrap gap-2 mt-4">
-              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 complete-booking-btn" data-booking-id="${booking.id}">
+              <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 complete-tab-booking-btn" data-booking-id="${booking.id}">
                 <i class="fas fa-check-circle mr-1"></i> Complete
               </button>
-              <button class="bg-yellow-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-yellow-700 reschedule-booking-btn" data-booking-id="${booking.id}">
+              <button class="bg-yellow-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-yellow-700 reschedule-tab-booking-btn" data-booking-id="${booking.id}">
                 <i class="fas fa-clock mr-1"></i> Reschedule
               </button>
-              <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-booking-btn" data-booking-id="${booking.id}">
+              <button class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-red-700 cancel-tab-booking-btn" data-booking-id="${booking.id}">
                 <i class="fas fa-times-circle mr-1"></i> Cancel
               </button>
               <div class="mt-2">
@@ -358,7 +358,7 @@ let originalBookingsData = {
   // Add event listeners to booking action buttons
   function addBookingButtonEventListeners(status) {
     // Complete booking buttons
-    document.querySelectorAll('.complete-booking-btn').forEach(btn => {
+    document.querySelectorAll('.complete-tab-booking-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
         showCompleteBookingModal(bookingId);
@@ -366,7 +366,7 @@ let originalBookingsData = {
     });
     
     // Confirm venue buttons
-    document.querySelectorAll('.confirm-venue-btn').forEach(btn => {
+    document.querySelectorAll('.confirm-tab-venue-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
         
@@ -375,7 +375,7 @@ let originalBookingsData = {
     });
     
     // Reschedule booking buttons
-    document.querySelectorAll('.reschedule-booking-btn').forEach(btn => {
+    document.querySelectorAll('.reschedule-tab-booking-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
         showRescheduleBookingModal(bookingId);
@@ -383,7 +383,7 @@ let originalBookingsData = {
     });
     
     // Cancel booking buttons
-    document.querySelectorAll('.cancel-booking-btn').forEach(btn => {
+    document.querySelectorAll('.cancel-tab-booking-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const bookingId = this.getAttribute('data-booking-id');
         //showCancelBookingModal(bookingId);
@@ -846,7 +846,7 @@ let originalBookingsData = {
     });
     
     // Add event listener to confirm button if not already added
-    const confirmBtn = document.getElementById('confirm-venue-btn');
+    const confirmBtn = document.getElementById('confirm-tab-venue-btn');
     const existingHandler = confirmBtn.getAttribute('data-handler-added');
     
     if (!existingHandler) {

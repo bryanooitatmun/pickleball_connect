@@ -567,12 +567,25 @@ function createVenueApprovalCard(bookingData) {
 // Add event listeners to package approval buttons
 function addPackageApprovalEventListeners() {
   // Package approval buttons
+
+  document.querySelectorAll('.approve-purchase-btn').forEach(btn => {
+    // Clone and replace to remove all listeners
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+  });
+
   document.querySelectorAll('.approve-purchase-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       const packageId = this.getAttribute('data-id');
       // Reuse the existing function from packages.js
       showApprovePurchaseModal(packageId, IS_ACADEMY_MANAGER);
     });
+  });
+  
+  document.querySelectorAll('.cancel-package-btn').forEach(btn => {
+    // Clone and replace to remove all listeners
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
   });
   
   // Package cancel buttons
@@ -596,7 +609,14 @@ function addPackageApprovalEventListeners() {
 // Add event listeners to venue approval buttons
 function addVenueApprovalEventListeners() {
   // Venue confirmation buttons
-  document.querySelectorAll('.confirm-venue-btn')?.forEach(btn => {
+
+  document.querySelectorAll('.confirm-venue-btn').forEach(btn => {
+    // Clone and replace to remove all listeners
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+  });
+
+  document.querySelectorAll('.confirm-venue-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       const bookingId = this.getAttribute('data-id');
       // Reuse the existing function from bookings.js
@@ -604,16 +624,28 @@ function addVenueApprovalEventListeners() {
     });
   });
   
+  document.querySelectorAll('.cancel-booking-btn').forEach(btn => {
+    // Clone and replace to remove all listeners
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+  });
+
   // Booking cancel buttons
-  document.querySelectorAll('.cancel-booking-btn')?.forEach(btn => {
-    btn.addEventListener('click', function() {
+  document.querySelectorAll('.cancel-booking-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault(); // Prevent any default actions
       const bookingId = this.getAttribute('data-id');
-      showCancelReasonModal('booking', bookingId);
+      console.log("Cancel button clicked, ID:", bookingId); // Debug
+      if (bookingId) {
+        showCancelReasonModal('booking', bookingId);
+      } else {
+        console.error("No data-id found on button:", this);
+      }
     });
   });
   
   // View payment proof buttons
-  document.querySelectorAll('.view-payment-proof-btn')?.forEach(btn => {
+  document.querySelectorAll('.view-payment-proof-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       const bookingId = this.getAttribute('data-id');
       const img = this.getAttribute('data-proof');
@@ -622,7 +654,7 @@ function addVenueApprovalEventListeners() {
   });
   
   // View court proof buttons
-  document.querySelectorAll('.view-court-proof-btn')?.forEach(btn => {
+  document.querySelectorAll('.view-court-proof-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       const bookingId = this.getAttribute('data-id');
       const img = this.getAttribute('data-proof');
@@ -705,8 +737,21 @@ function setupCancelReasonModal() {
 
 // Function to show the cancel reason modal
 function showCancelReasonModal(itemType, itemId) {
+  console.log("Setting values:", itemType, itemId);
+  console.log("Element exists:", !!document.getElementById('cancel-item-id'));
+
   // Set modal values
-  document.getElementById('cancel-item-id').value = itemId;
+  const idElement = document.getElementById('cancel-item-id');
+  if (idElement) {
+    idElement.value = itemId;
+    console.log("Value set to:", idElement.value);
+  } else {
+    console.error("cancel-item-id element not found!");
+  }
+
+
+  // Set modal values
+  //document.getElementById('cancel-item-id').value = itemId;
   document.getElementById('cancel-item-type').value = itemType;
   document.getElementById('cancel-reason').value = '';
   

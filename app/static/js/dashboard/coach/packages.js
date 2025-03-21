@@ -160,7 +160,7 @@ let originalPackagesData = {
       let actionButtons = '';
       if (purchase.status === 'pending') {
         actionButtons = `
-          <button class="bg-green-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-green-700 approve-purchase-btn" data-purchase-id="${purchase.id}">
+          <button class="bg-green-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-green-700 approve-tab-purchase-btn" data-purchase-id="${purchase.id}">
             <i class="fas fa-check-circle mr-1"></i> Approve
           </button>
         `;
@@ -210,7 +210,7 @@ let originalPackagesData = {
     });
     
     // Add event listeners
-    container.querySelectorAll('.approve-purchase-btn').forEach(btn => {
+    container.querySelectorAll('.approve-tab-purchase-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const purchaseId = this.getAttribute('data-purchase-id');
         showApprovePurchaseModal(purchaseId);
@@ -514,7 +514,7 @@ let originalPackagesData = {
     });
     
     // // Approve purchase
-    document.getElementById('approve-purchase-btn')?.addEventListener('click', async function() {
+    document.getElementById('approve-tab-purchase-btn')?.addEventListener('click', async function() {
       const purchaseId = this.getAttribute('data-purchase-id');
       const isAcademy = this.getAttribute('data-is-academy') === 'true';
       
@@ -656,8 +656,8 @@ let originalPackagesData = {
       }
       
       // Set data attributes for approve/reject buttons
-      document.getElementById('approve-purchase-btn').setAttribute('data-purchase-id', purchaseId);
-      document.getElementById('approve-purchase-btn').setAttribute('data-is-academy', isAcademy.toString());
+      document.getElementById('approve-tab-purchase-btn').setAttribute('data-purchase-id', purchaseId);
+      document.getElementById('approve-tab-purchase-btn').setAttribute('data-is-academy', isAcademy.toString());
       
       document.getElementById('reject-purchase-btn').setAttribute('data-purchase-id', purchaseId);
       document.getElementById('reject-purchase-btn').setAttribute('data-is-academy', isAcademy.toString());
@@ -667,7 +667,7 @@ let originalPackagesData = {
         document.getElementById('rejection-reason-container').classList.remove('hidden');
       });
       
-      document.getElementById('approve-purchase-btn').addEventListener('mousedown', function() {
+      document.getElementById('approve-tab-purchase-btn').addEventListener('mousedown', function() {
         document.getElementById('rejection-reason-container').classList.add('hidden');
       });
       
